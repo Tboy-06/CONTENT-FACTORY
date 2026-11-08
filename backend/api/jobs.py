@@ -64,11 +64,13 @@ async def get_jobs():
             
         assets_data = []
         for a in assets:
+            meta = a.metadata_json if isinstance(a.metadata_json, dict) else {}
             assets_data.append({
                 "id": a.id,
                 "type": (a.asset_type or "UNKNOWN").upper(),
                 "path": a.path,
-                "description": a.metadata_json.get("description", a.asset_type) if isinstance(a.metadata_json, dict) else a.asset_type
+                "description": meta.get("description", a.asset_type),
+                "metadata": meta,
             })
             
         costs_data = []

@@ -8,6 +8,8 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 from backend.config import get_settings
 from backend.scheduler import init_scheduler, shutdown_scheduler
@@ -74,6 +76,9 @@ app.include_router(copilot_router, prefix="/api/copilot", tags=["copilot"])
 app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"])
 app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
 app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
+
+os.makedirs("output", exist_ok=True)
+app.mount("/output", StaticFiles(directory="output"), name="output")
 
 @app.get("/health")
 async def health_check() -> JSONResponse:

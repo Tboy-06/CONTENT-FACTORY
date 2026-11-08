@@ -17,29 +17,40 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
   const jobNiche = job?.niche || 'Video Project';
   const opencutUrl = 'https://opencut.app';
 
-  // Sample or generated timeline representation
+  // Dynamic timeline representation extracted from real job assets
+  const videoAsset = job?.assets?.find((a: any) => a.type === 'VIDEO');
+  const jobMeta = videoAsset?.metadata || {};
+  const scenes = jobMeta.scenes || [];
+  const totalDur = jobMeta.duration ? `${Math.round(jobMeta.duration)}s` : '18s';
+
+  const visualItems = scenes.length > 0
+    ? scenes.map((s: any) => ({
+        title: s.title ? `${s.title}: ${s.text.slice(0, 24)}...` : (s.text || 'Scene').slice(0, 28),
+        dur: `${s.duration}s`
+      }))
+    : [
+        { title: 'Hook / Intro', dur: '4s' },
+        { title: 'Core Insight', dur: '5s' },
+        { title: 'Breakdown', dur: '5s' },
+        { title: 'CTA / Outro', dur: '4s' }
+      ];
+
   const timelineTracks = [
     {
       name: 'Main Video Track',
       color: 'bg-blue-600/40 border-blue-500/60',
-      items: [
-        { title: 'Hook / Intro', dur: '8s' },
-        { title: 'Scene 1: Problem', dur: '12s' },
-        { title: 'Scene 2: Solution', dur: '12s' },
-        { title: 'Scene 3: Proof', dur: '14s' },
-        { title: 'CTA / Outro', dur: '6s' },
-      ],
+      items: visualItems,
     },
     {
       name: 'Voiceover (TTS)',
       color: 'bg-emerald-600/40 border-emerald-500/60',
-      items: [{ title: `${job?.config?.voice || 'Aria'} Voice Audio (Loudness -14 LUFS)`, dur: '52s' }],
+      items: [{ title: `${jobMeta.voice || job?.config?.voice || 'Aria'} Voice Audio (-14 LUFS)`, dur: totalDur }],
     },
     {
       name: 'Smart Captions (Whisper / Nuzky)',
       color: 'bg-sky-600/30 border-sky-500/50',
       items: [
-        { title: 'Word-by-word animated highlights', dur: '52s' },
+        { title: 'Word-by-word synced animated captions', dur: totalDur },
       ],
     },
   ];

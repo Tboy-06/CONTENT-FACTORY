@@ -37,10 +37,10 @@ export default function App() {
   const { data: spend } = useSpend();
 
   return (
-    <div className={`grid h-screen w-full overflow-hidden transition-all duration-250 ${isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[220px_1fr]'}`}>
+    <div className={`grid min-h-screen w-full transition-all duration-200 ${isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[220px_1fr]'}`}>
       
-      {/* Sidebar */}
-      <aside className="border-r border-[var(--ln)] bg-[rgba(11,14,23,0.7)] p-[14px_10px] flex flex-col gap-1 overflow-hidden z-10">
+      {/* Sidebar - Sticky and scrollable if viewport is short */}
+      <aside className="border-r border-[var(--ln)] bg-[rgba(11,14,23,0.85)] p-[14px_10px] flex flex-col gap-1 overflow-y-auto sticky top-0 h-screen z-20">
         <div 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           className="flex items-center gap-2.5 p-[6px_8px] rounded-lg cursor-pointer mb-3 hover:bg-[var(--gl)]"
@@ -75,9 +75,9 @@ export default function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-col min-w-0 h-full relative">
-        {/* Top bar */}
-        <header className="flex items-center justify-between gap-3 p-[12px_24px] border-b border-[var(--ln)] bg-[var(--bg)] z-10 shrink-0">
+      <div className="flex flex-col min-w-0 min-h-screen relative">
+        {/* Top bar - Sticky with blur */}
+        <header className="sticky top-0 flex items-center justify-between gap-3 p-[12px_24px] border-b border-[var(--ln)] bg-[rgba(11,14,23,0.9)] backdrop-blur-md z-20 shrink-0">
           <input type="text" placeholder="Search videos, scripts, jobs" className="flex-1 max-w-[340px] px-3 py-2 rounded-lg bg-[var(--gl)] border border-[var(--ln)] text-[var(--mu)] text-[13px] outline-none focus:border-[var(--ac)] transition-colors" />
           
           <div className="flex items-center gap-3 text-xs text-[var(--mu)]">
@@ -103,8 +103,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Routes */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-[22px_24px] relative bg-transparent min-h-0">
+        {/* Routes: naturally scrollable */}
+        <main className="flex-1 p-[22px_24px] relative bg-transparent">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/create" element={<Create />} />

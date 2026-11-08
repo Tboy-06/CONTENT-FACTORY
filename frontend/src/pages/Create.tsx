@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Loader2 } from 'lucide-react';
 import { Button, Card, EmptyState } from '../components/ui';
-import { useCreateInstantJob } from '../api/client';
+import { useCreateInstantJob, api } from '../api/client';
 
 const creationModes = [
   { id: 'idea', title: 'From idea', desc: 'Turn your idea into a video', bg: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
@@ -38,7 +38,7 @@ export default function Create() {
   const handleInstantGenerate = async () => {
     if (!instantTopic.trim() || isGenerating) return;
     setIsGenerating(true);
-    setGenerationStep('1/4: Generating script & scene breakdown...');
+    setGenerationStep('Initiating pipeline...');
 
     try {
       const res = await instantMutation.mutateAsync({
@@ -46,12 +46,40 @@ export default function Create() {
         voice: selectedVoice
       });
 
-      setGenerationStep('2/4: Generating voiceover with Edge-TTS...');
-      setTimeout(() => setGenerationStep('3/4: Assembling 9:16 vertical MP4...'), 3000);
-      setTimeout(() => {
-        setGenerationStep('4/4: Ready for Quality Review!');
-        navigate(`/qc1/${res.id}`);
-      }, 7000);
+      const jobId = res.id;
+      setGenerationStep('Building audio, subtitles, and scene plates...');
+
+      // Real active polling
+      const startTime = Date.now();
+      const interval = setInterval(async () => {
+        try {
+          const jobs = await api.get('/api/jobs');
+          const currentJob = jobs.find((j: any) => j.id === jobId);
+          
+          if (currentJob) {
+            if (currentJob.current_stage === 'QC1' || currentJob.status === 'AWAITING_APPROVAL') {
+              clearInterval(interval);
+              setGenerationStep('Render complete. Directing to Studio Review...');
+              setTimeout(() => navigate(`/qc1/${jobId}`), 500);
+            } else if (currentJob.status === 'FAILED') {
+              clearInterval(interval);
+              setIsGenerating(false);
+              setGenerationStep('Pipeline failed. Check server logs.');
+            } else {
+              setGenerationStep(`Active stage: ${currentJob.current_stage || 'Rendering'}`);
+            }
+          }
+        } catch {
+          // Ignore transient poll failures
+        }
+
+        // Timeout safeguard after 60s
+        if (Date.now() - startTime > 60000) {
+          clearInterval(interval);
+          navigate(`/qc1/${jobId}`);
+        }
+      }, 1500);
+
     } catch (e) {
       console.error(e);
       setIsGenerating(false);

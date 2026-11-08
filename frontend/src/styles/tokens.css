@@ -23,7 +23,9 @@ body {
   font-size: 14px;
   line-height: 1.5;
   margin: 0;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Glass effect utilities */
