@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import sys
 from typing import AsyncGenerator
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

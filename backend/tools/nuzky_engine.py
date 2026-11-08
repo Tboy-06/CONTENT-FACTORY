@@ -170,17 +170,12 @@ async def render_with_nuzky_or_ffmpeg(
         cmd = [nuzky_bin, "render", project_path, output_mp4_path, "--preset", preset]
         logger.info(f"Rendering via Nuzky CLI: {' '.join(cmd)}")
         try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await proc.communicate()
-            if proc.returncode == 0 and os.path.exists(output_mp4_path):
+            res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode == 0 and os.path.exists(output_mp4_path):
                 logger.info(f"Nuzky CLI render succeeded: {output_mp4_path}")
                 return True
             else:
-                logger.warning(f"Nuzky CLI render failed (code {proc.returncode}): {stderr.decode()}")
+                logger.warning(f"Nuzky CLI render failed (code {res.returncode}): {res.stderr.decode(errors='ignore')}")
         except Exception as e:
             logger.warning(f"Error executing Nuzky CLI: {e}. Falling back to FFmpeg.")
 

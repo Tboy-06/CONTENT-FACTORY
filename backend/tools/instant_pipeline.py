@@ -275,11 +275,10 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
         final_video_path
     ])
 
-    proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    stdout, stderr = await proc.communicate()
+    res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    if proc.returncode != 0:
-        logger.error(f"[Instant Pipeline] FFmpeg render error: {stderr.decode()}")
+    if res.returncode != 0:
+        logger.error(f"[Instant Pipeline] FFmpeg render error: {res.stderr.decode(errors='ignore')}")
     else:
         logger.info(f"[Instant Pipeline] Video assembled successfully.")
 
@@ -302,7 +301,7 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
 
     # Set job state to QC1 and create pending approval
     await repository.create_stage(job_id, "QC1")
-    await repository.update_job_status(job_id, JobStatus.AWAITING_APPROVAL, "QC1")
+    await repository.update_job_status(job_id, JobStatus.RUNNING, "QC1")
     await repository.create_approval(job_id, "QC1")
 
     logger.info(f"[Instant Pipeline] Completed successfully for Job {job_id}. Ready at QC1.")

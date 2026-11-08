@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +25,14 @@ async def generate_audio(text: str, output_path: str, voice: str = "en-US-AriaNe
     ]
     
     try:
-        # Run process asynchronously to not block the FastAPI event loop
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode == 0:
+        if res.returncode == 0:
             logger.info(f"TTS generation successful: {output_path}")
             return True
         else:
-            logger.error(f"TTS generation failed. Code: {process.returncode}")
-            logger.error(f"Stderr: {stderr.decode()}")
+            logger.error(f"TTS generation failed. Code: {res.returncode}")
+            logger.error(f"Stderr: {res.stderr.decode(errors='ignore')}")
             return False
             
     except Exception as e:

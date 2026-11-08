@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -39,20 +40,14 @@ async def assemble_video(audio_path: str, background_path: str, output_path: str
     cmd.append(output_path)
     
     try:
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+        res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode == 0:
+        if res.returncode == 0:
             logger.info(f"Video assembly successful: {output_path}")
             return True
         else:
-            logger.error(f"FFmpeg failed with code {process.returncode}")
-            logger.error(f"FFmpeg stderr: {stderr.decode()}")
+            logger.error(f"FFmpeg failed with code {res.returncode}")
+            logger.error(f"FFmpeg stderr: {res.stderr.decode(errors='ignore')}")
             return False
             
     except Exception as e:

@@ -178,8 +178,9 @@ async def advance_job(job_id: int):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
         
-    if job.status in [JobStatus.AWAITING_APPROVAL, JobStatus.AWAITING_PREMIUM]:
-        raise HTTPException(status_code=400, detail="Cannot advance while waiting for approval/premium")
+    approvals = await repository.get_pending_approvals()
+    if any(a.job_id == job_id for a in approvals):
+        raise HTTPException(status_code=400, detail="Cannot advance while waiting for approval")
         
     agent_job = _db_job_to_agent_job(job)
     asyncio.create_task(process_job_stage(agent_job))
@@ -188,8 +189,8 @@ async def advance_job(job_id: int):
 @router.post('/{job_id}/approve')
 async def approve_job(job_id: int, req: ApproveRequest):
     job = await repository.get_job(job_id)
-    if not job or job.status != JobStatus.AWAITING_APPROVAL:
-        raise HTTPException(status_code=400, detail="Job not awaiting approval")
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
         
     approvals = await repository.get_pending_approvals()
     job_approvals = [a for a in approvals if a.job_id == job_id]
@@ -209,8 +210,8 @@ async def approve_job(job_id: int, req: ApproveRequest):
 @router.post('/{job_id}/reject')
 async def reject_job(job_id: int, req: RejectRequest):
     job = await repository.get_job(job_id)
-    if not job or job.status != JobStatus.AWAITING_APPROVAL:
-        raise HTTPException(status_code=400, detail="Job not awaiting approval")
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
         
     approvals = await repository.get_pending_approvals()
     job_approvals = [a for a in approvals if a.job_id == job_id]
