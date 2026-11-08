@@ -68,9 +68,90 @@ export function useCreateJob() {
 
 export function useCreateInstantJob() {
   return useMutation({
-    mutationFn: async ({ topic, voice }: { topic: string, voice?: string }) => {
-      const data = await api.post('/api/jobs/instant', { topic, voice });
+    mutationFn: async ({ topic, voice, style_preset }: { topic: string, voice?: string, style_preset?: string }) => {
+      const data = await api.post('/api/jobs/instant', { topic, voice, style_preset });
       return data;
+    }
+  });
+}
+
+export function useBrainstormHooks() {
+  return useMutation({
+    mutationFn: async (topic: string) => {
+      const data = await api.post('/api/jobs/brainstorm-hooks', { topic });
+      return data.hooks || [];
+    }
+  });
+}
+
+export function useCacheStatus() {
+  return useQuery({
+    queryKey: ['system-cache'],
+    queryFn: async () => {
+      return await api.get('/api/system/cache');
+    },
+    refetchInterval: 10000,
+  });
+}
+
+export function useClearCache() {
+  return useMutation({
+    mutationFn: async () => {
+      return await api.post('/api/system/cache/clear');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-cache'] });
+    }
+  });
+}
+
+export function useRerollVisual() {
+  return useMutation({
+    mutationFn: async ({ jobId, sceneIndex, customPrompt, stylePreset }: { jobId: string | number, sceneIndex: number, customPrompt?: string, stylePreset?: string }) => {
+      return await api.post(`/api/jobs/${jobId}/reroll-visual`, {
+        scene_index: sceneIndex,
+        custom_prompt: customPrompt,
+        style_preset: stylePreset,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
+export function useRegenerateAudio() {
+  return useMutation({
+    mutationFn: async ({ jobId, voice, scenes }: { jobId: string | number, voice?: string, scenes?: any[] }) => {
+      return await api.post(`/api/jobs/${jobId}/regenerate-audio`, {
+        voice,
+        scenes,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
+export function usePublishJob() {
+  return useMutation({
+    mutationFn: async ({ jobId, platforms }: { jobId: string | number, platforms: string[] }) => {
+      return await api.post(`/api/jobs/${jobId}/publish`, { platforms });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
+export function useDeleteJobTemp() {
+  return useMutation({
+    mutationFn: async (jobId: string | number) => {
+      return await api.post(`/api/jobs/${jobId}/delete-temp`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-cache'] });
     }
   });
 }

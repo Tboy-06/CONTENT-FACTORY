@@ -78,11 +78,14 @@ app.add_middleware(
 
 app.include_router(copilot_router, prefix="/api/copilot", tags=["copilot"])
 app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"])
+app.include_router(jobs_router, prefix="/api", tags=["jobs_alias"])
 app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
 app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 
 os.makedirs("output", exist_ok=True)
+os.makedirs("temp", exist_ok=True)
 app.mount("/output", StaticFiles(directory="output"), name="output")
+app.mount("/temp", StaticFiles(directory="temp"), name="temp")
 
 @app.get("/health")
 async def health_check() -> JSONResponse:

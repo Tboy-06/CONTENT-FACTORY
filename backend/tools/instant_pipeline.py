@@ -34,6 +34,53 @@ def wrap_text(text: str, max_chars: int = 34) -> List[str]:
         lines.append(" ".join(current_line))
     return lines
 
+STYLE_PRESETS = {
+    "Dark Documentary": {
+        "name": "Dark Documentary",
+        "bg": (11, 15, 25),
+        "card_bg": (15, 23, 42),
+        "card_border": (51, 65, 85),
+        "badge_bg": (30, 58, 138),
+        "badge_text": (186, 230, 253),
+        "text": (248, 250, 252),
+        "accent": (217, 119, 6),
+        "prompt_vibe": "cinematic dark documentary aesthetic, moody natural lighting, 85mm anamorphic lens, 35mm film grain, desaturated realism"
+    },
+    "Vintage 35mm": {
+        "name": "Vintage 35mm",
+        "bg": (24, 20, 18),
+        "card_bg": (38, 30, 26),
+        "card_border": (87, 65, 52),
+        "badge_bg": (120, 53, 15),
+        "badge_text": (254, 215, 170),
+        "text": (254, 243, 199),
+        "accent": (245, 158, 11),
+        "prompt_vibe": "vintage 35mm photography, Kodak Portra 400 tones, warm cinematic bloom, subtle organic halation, editorial texture"
+    },
+    "Cyberpunk Neo-Noir": {
+        "name": "Cyberpunk Neo-Noir",
+        "bg": (6, 9, 20),
+        "card_bg": (13, 20, 38),
+        "card_border": (14, 116, 144),
+        "badge_bg": (3, 105, 161),
+        "badge_text": (56, 189, 248),
+        "text": (224, 242, 254),
+        "accent": (6, 182, 212),
+        "prompt_vibe": "cyberpunk neo-noir, rain-slicked dark atmosphere, volumetric neon blue and cyan rim lighting, high-contrast reflections"
+    },
+    "Minimalist Studio": {
+        "name": "Minimalist Studio",
+        "bg": (18, 18, 18),
+        "card_bg": (26, 26, 26),
+        "card_border": (64, 64, 64),
+        "badge_bg": (45, 45, 45),
+        "badge_text": (229, 231, 235),
+        "text": (255, 255, 255),
+        "accent": (163, 163, 163),
+        "prompt_vibe": "clean minimalist studio photography, neutral matte backdrop, soft diffused key lighting, architectural precision"
+    }
+}
+
 def render_scene_card(
     output_path: str,
     topic: str,
@@ -41,10 +88,12 @@ def render_scene_card(
     scene_index: int,
     total_scenes: int,
     text: str,
-    bg_color=(11, 15, 25)
+    style_preset: str = "Dark Documentary",
+    image_prompt: Optional[str] = None
 ):
     """Renders a pixel-perfect, crisp 1080x1920 vertical scene plate."""
-    img = Image.new("RGB", (1080, 1920), color=bg_color)
+    preset = STYLE_PRESETS.get(style_preset, STYLE_PRESETS["Dark Documentary"])
+    img = Image.new("RGB", (1080, 1920), color=preset["bg"])
     draw = ImageDraw.Draw(img)
 
     try:
@@ -59,16 +108,16 @@ def render_scene_card(
         font_badge = font_large
 
     # Border & frame
-    draw.rectangle([40, 40, 1040, 1880], outline=(30, 41, 59), width=3)
-    draw.rectangle([50, 50, 1030, 1870], outline=(15, 23, 42), width=2)
+    draw.rectangle([40, 40, 1040, 1880], outline=preset["card_border"], width=3)
+    draw.rectangle([50, 50, 1030, 1870], outline=preset["card_bg"], width=2)
 
     # Top Category / Topic Header
     draw.text((80, 100), topic.upper()[:40], fill=(148, 163, 184), font=font_small)
 
     # Scene Badge pill
     badge_text = f"SCENE {scene_index + 1} OF {total_scenes}: {badge.upper()}"
-    draw.rounded_rectangle([80, 160, 80 + len(badge_text) * 18 + 40, 220], radius=8, fill=(30, 58, 138))
-    draw.text((100, 175), badge_text, fill=(186, 230, 253), font=font_badge)
+    draw.rounded_rectangle([80, 160, 80 + len(badge_text) * 18 + 40, 220], radius=8, fill=preset["badge_bg"])
+    draw.text((100, 175), badge_text, fill=preset["badge_text"], font=font_badge)
 
     # Main text content box (centered vertically in middle screen)
     lines = wrap_text(text, max_chars=32)
@@ -77,13 +126,13 @@ def render_scene_card(
     
     # Background accent card for readability
     card_h = len(lines) * line_height + 120
-    draw.rounded_rectangle([70, start_y - 60, 1010, start_y - 60 + card_h], radius=16, fill=(15, 23, 42), outline=(51, 65, 85), width=2)
+    draw.rounded_rectangle([70, start_y - 60, 1010, start_y - 60 + card_h], radius=16, fill=preset["card_bg"], outline=preset["card_border"], width=2)
 
     for i, line in enumerate(lines):
-        draw.text((110, start_y + (i * line_height)), line, fill=(248, 250, 252), font=font_large)
+        draw.text((110, start_y + (i * line_height)), line, fill=preset["text"], font=font_large)
 
-    # Bottom Branding
-    draw.text((80, 1800), "CONTENT-FACTORY  |  VERIFIED CUT", fill=(71, 85, 105), font=font_small)
+    # Bottom Branding with style preset
+    draw.text((80, 1800), f"CONTENT-FACTORY  |  {preset['name'].upper()}", fill=(100, 116, 139), font=font_small)
 
     img.save(output_path, quality=95)
 
@@ -105,7 +154,36 @@ def get_audio_duration(file_path: str) -> float:
         return 15.0
 
 
-async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-AriaNeural") -> Dict[str, Any]:
+async def render_video_from_scenes(job_id: int, scenes: List[Dict[str, Any]], audio_path: str, final_video_path: str) -> bool:
+    """Assembles final 9:16 vertical MP4 from scene images and audio via FFmpeg."""
+    cmd = ["ffmpeg", "-y", "-i", audio_path]
+    for sc in scenes:
+        cmd.extend(["-loop", "1", "-t", str(sc["duration"]), "-i", sc["image_path"]])
+
+    filter_inputs = "".join(f"[{i+1}:v]" for i in range(len(scenes)))
+    filter_complex = f"{filter_inputs}concat=n={len(scenes)}:v=1:a=0[v];[v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[outv]"
+
+    cmd.extend([
+        "-filter_complex", filter_complex,
+        "-map", "[outv]",
+        "-map", "0:a",
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-pix_fmt", "yuv420p",
+        "-shortest",
+        final_video_path
+    ])
+
+    res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode != 0:
+        logger.error(f"[Instant Pipeline] FFmpeg render error: {res.stderr.decode(errors='ignore')}")
+        return False
+    logger.info(f"[Instant Pipeline] Video assembled successfully: {final_video_path}")
+    return True
+
+
+async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-AriaNeural", style_preset: str = "Dark Documentary") -> Dict[str, Any]:
     """
     Lean, dynamic 4-step execution engine:
     1. Real dynamic script generation (Ollama / Fallback)
@@ -205,16 +283,13 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
     # -------------------------------------------------------------
     # STEP 3: HIGH-RESOLUTION SCENE PLATES (Pillow)
     # -------------------------------------------------------------
-    palette = [
-        (11, 15, 25),    # Dark Navy
-        (15, 23, 42),    # Slate
-        (18, 20, 32),    # Deep Charcoal
-        (10, 22, 36),    # Deep Ocean
-    ]
     image_paths: List[str] = []
+    preset = STYLE_PRESETS.get(style_preset, STYLE_PRESETS["Dark Documentary"])
 
     for i, sc in enumerate(scenes):
         img_path = f"temp/instant_{job_id}_{i}.jpg"
+        prompt = f"{sc['text']}, {preset['prompt_vibe']}"
+        sc["prompt"] = prompt
         render_scene_card(
             output_path=img_path,
             topic=title,
@@ -222,7 +297,8 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
             scene_index=i,
             total_scenes=len(scenes),
             text=sc["text"],
-            bg_color=palette[i % len(palette)]
+            style_preset=style_preset,
+            image_prompt=prompt
         )
         image_paths.append(img_path)
         sc["image_path"] = img_path
@@ -255,32 +331,7 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
     final_video_path = f"{output_dir}/video_{job_id}_9x16.mp4"
     logger.info(f"[Instant Pipeline] Rendering final MP4: {final_video_path}")
 
-    cmd = ["ffmpeg", "-y"]
-    cmd.extend(["-i", audio_path])
-    for i, sc in enumerate(scenes):
-        cmd.extend(["-loop", "1", "-t", str(sc["duration"]), "-i", sc["image_path"]])
-
-    filter_inputs = "".join(f"[{i+1}:v]" for i in range(len(scenes)))
-    filter_complex = f"{filter_inputs}concat=n={len(scenes)}:v=1:a=0[v];[v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[outv]"
-
-    cmd.extend([
-        "-filter_complex", filter_complex,
-        "-map", "[outv]",
-        "-map", "0:a",
-        "-c:v", "libx264",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        "-pix_fmt", "yuv420p",
-        "-shortest",
-        final_video_path
-    ])
-
-    res = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    if res.returncode != 0:
-        logger.error(f"[Instant Pipeline] FFmpeg render error: {res.stderr.decode(errors='ignore')}")
-    else:
-        logger.info(f"[Instant Pipeline] Video assembled successfully.")
+    await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
 
     # Save video asset with full dynamic metadata
     await repository.add_asset(job_id, "video", final_video_path, {
@@ -289,6 +340,7 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
         "duration": total_audio_duration,
         "video_url": f"/output/video_{job_id}_9x16.mp4",
         "scenes": scenes,
+        "style_preset": style_preset,
         "script": {
             "hook": hook,
             "body": f"{part1} {part2}",

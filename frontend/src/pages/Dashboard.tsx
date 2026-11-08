@@ -1,15 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { useJobs, useSpend } from '../api/client';
+import { useJobs, useCacheStatus, useClearCache } from '../api/client';
 import { Button } from '../components/ui';
+import { Trash2 } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { data: jobs = [] } = useJobs();
-  const { data: spend } = useSpend();
+  const { data: cache } = useCacheStatus();
+  const clearCacheMutation = useClearCache();
 
   const activeJobs = jobs.filter((j: any) => j.status === 'RUNNING' || j.status === 'PENDING' || j.status === 'QUEUED');
   const qcJobs = jobs.filter((j: any) => j.status === 'AWAITING_APPROVAL' || j.current_stage === 'QC1');
-  const recentJobs = jobs.filter((j: any) => j.status === 'COMPLETED' || j.status === 'PUBLISHED').slice(0, 3);
+  const recentJobs = jobs.filter((j: any) => j.status === 'COMPLETED' || j.status === 'PUBLISHED').slice(0, 5);
 
   return (
     <div className="animate-in fade-in min-h-full flex flex-col pb-8">
@@ -45,18 +47,30 @@ export default function Dashboard() {
           </Button>
         </div>
         
+        {/* Real Temp Folder & Cache Counter */}
         <div className="glass-panel flex justify-between items-center p-5">
           <div>
-            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Spend this month</div>
-            <b className="text-3xl">${spend != null ? spend.toFixed(2) : '0.00'}</b>
+            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Temp Cache Folder</div>
+            <b className="text-3xl">{cache?.temp_mb ?? '0.0'} MB</b>
+            <div className="text-[11px] text-slate-500 mt-0.5">{cache?.temp_count ?? 0} intermediate files</div>
           </div>
-          <div className="text-[var(--mu)] text-[13px] bg-[var(--gl2)] px-2.5 py-1 rounded-lg">of $50 cap</div>
+          <Button 
+            variant="secondary"
+            onClick={() => clearCacheMutation.mutate()}
+            disabled={clearCacheMutation.isPending || !(cache?.temp_mb > 0)}
+            className="flex items-center gap-1.5 text-xs border-slate-700"
+          >
+            <Trash2 size={13} className="text-red-400" />
+            <span>{clearCacheMutation.isPending ? 'Clearing...' : 'Clear Cache'}</span>
+          </Button>
         </div>
         
+        {/* Video Output Storage */}
         <div className="glass-panel flex justify-between items-center p-5">
           <div>
-            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Storage</div>
-            <b className="text-3xl">12 GB</b>
+            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Output Storage</div>
+            <b className="text-3xl">{cache?.output_mb ?? '0.0'} MB</b>
+            <div className="text-[11px] text-slate-500 mt-0.5">{cache?.output_count ?? 0} finished renders</div>
           </div>
         </div>
       </div>

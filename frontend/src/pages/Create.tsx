@@ -1,188 +1,312 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Loader2 } from 'lucide-react';
-import { Button, Card, EmptyState } from '../components/ui';
-import { useCreateInstantJob, api } from '../api/client';
+import { Zap, Sparkles, Loader2, Film, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Button, Card, Badge } from '../components/ui';
+import { useCreateInstantJob, useBrainstormHooks, useJobs, api } from '../api/client';
 
-const creationModes = [
-  { id: 'idea', title: 'From idea', desc: 'Turn your idea into a video', bg: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'clone', title: 'Clone a video', desc: 'Reuse a reference video\'s structure', bg: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'shorts', title: 'Create shorts', desc: 'YouTube Shorts, TikTok, Reels', bg: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'ugc', title: 'Create UGC', desc: 'Creator-style product videos', bg: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'url', title: 'From URL', desc: 'Turn a blog post into a video', bg: 'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'clip', title: 'Clip a long video', desc: 'Cut your own footage into shorts', bg: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }
+const stylePresets = [
+  { id: 'Dark Documentary', label: 'Dark Documentary', desc: 'Moody lighting, anamorphic lens, 35mm grain' },
+  { id: 'Vintage 35mm', label: 'Vintage 35mm', desc: 'Warm Kodak Portra tones, subtle film halation' },
+  { id: 'Cyberpunk Neo-Noir', label: 'Cyberpunk Neo-Noir', desc: 'Rain-slicked dark atmosphere, neon cyan rim' },
+  { id: 'Minimalist Studio', label: 'Minimalist Studio', desc: 'Clean neutral backdrop, high-key editorial' }
 ];
 
 const voices = [
-  { id: 'en-US-AriaNeural', label: 'Aria (Female, Clear)' },
-  { id: 'en-US-ChristopherNeural', label: 'Christopher (Male, Storytelling)' },
+  { id: 'en-US-AriaNeural', label: 'Aria (Female, Clear & Polished)' },
+  { id: 'en-US-ChristopherNeural', label: 'Christopher (Male, Deep Storytelling)' },
   { id: 'en-US-GuyNeural', label: 'Guy (Male, Conversational)' },
-  { id: 'en-US-JennyNeural', label: 'Jenny (Female, Energetic)' }
+  { id: 'en-US-AndrewNeural', label: 'Andrew (Male, Warm & Authoritative)' }
+];
+
+const pipelineSteps = [
+  { id: 1, name: 'Writing Script', stage: 'SCRIPT' },
+  { id: 2, name: 'Generating Voice & Subs', stage: 'AUDIO' },
+  { id: 3, name: 'Rendering Visual Plates', stage: 'PLATES' },
+  { id: 4, name: 'FFmpeg 9:16 Render', stage: 'FFMPEG' }
 ];
 
 export default function Create() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [instantTopic, setInstantTopic] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('en-US-AriaNeural');
+  const [topic, setTopic] = useState('');
+  const [stylePreset, setStylePreset] = useState('Dark Documentary');
+  const [voice, setVoice] = useState('en-US-AriaNeural');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState('');
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [suggestedHooks, setSuggestedHooks] = useState<string[]>([]);
 
+  const { data: recentJobs = [] } = useJobs();
   const instantMutation = useCreateInstantJob();
+  const brainstormMutation = useBrainstormHooks();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 200);
-    return () => clearTimeout(timer);
-  }, []);
+  const handleBrainstorm = async () => {
+    const query = topic.trim() || 'Stoic Mindset';
+    try {
+      const hooks = await brainstormMutation.mutateAsync(query);
+      setSuggestedHooks(hooks);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const handleInstantGenerate = async () => {
-    if (!instantTopic.trim() || isGenerating) return;
+  const handleGenerate = async (targetTopic?: string) => {
+    const finalTopic = (targetTopic || topic).trim();
+    if (!finalTopic || isGenerating) return;
+
     setIsGenerating(true);
-    setGenerationStep('Initiating pipeline...');
+    setActiveStepIndex(0);
 
     try {
       const res = await instantMutation.mutateAsync({
-        topic: instantTopic.trim(),
-        voice: selectedVoice
+        topic: finalTopic,
+        voice,
+        style_preset: stylePreset
       });
 
       const jobId = res.id;
-      setGenerationStep('Building audio, subtitles, and scene plates...');
 
-      // Real active polling
+      // Realistic 4-step progress animation while polling
+      const stepTimer1 = setTimeout(() => setActiveStepIndex(1), 1800);
+      const stepTimer2 = setTimeout(() => setActiveStepIndex(2), 3800);
+      const stepTimer3 = setTimeout(() => setActiveStepIndex(3), 5800);
+
+      // Active polling
       const startTime = Date.now();
       const interval = setInterval(async () => {
         try {
           const jobs = await api.get('/api/jobs');
           const currentJob = jobs.find((j: any) => j.id === jobId);
-          
+
           if (currentJob) {
-            if (currentJob.current_stage === 'QC1' || currentJob.status === 'AWAITING_APPROVAL') {
+            if (currentJob.current_stage === 'QC1' || currentJob.status === 'RUNNING' && currentJob.stages?.some((s: any) => s.stage === 'QC1')) {
               clearInterval(interval);
-              setGenerationStep('Render complete. Directing to Studio Review...');
-              setTimeout(() => navigate(`/qc1/${jobId}`), 500);
+              clearTimeout(stepTimer1);
+              clearTimeout(stepTimer2);
+              clearTimeout(stepTimer3);
+              setActiveStepIndex(4);
+              setTimeout(() => navigate(`/qc1/${jobId}`), 400);
             } else if (currentJob.status === 'FAILED') {
               clearInterval(interval);
               setIsGenerating(false);
-              setGenerationStep('Pipeline failed. Check server logs.');
-            } else {
-              setGenerationStep(`Active stage: ${currentJob.current_stage || 'Rendering'}`);
             }
           }
         } catch {
-          // Ignore transient poll failures
+          // ignore transient errors
         }
 
-        // Timeout safeguard after 60s
-        if (Date.now() - startTime > 60000) {
+        if (Date.now() - startTime > 45000) {
           clearInterval(interval);
           navigate(`/qc1/${jobId}`);
         }
-      }, 1500);
+      }, 1200);
 
     } catch (e) {
       console.error(e);
       setIsGenerating(false);
-      setGenerationStep('Generation failed. Please try again.');
     }
   };
 
   return (
-    <div className="animate-in fade-in min-h-full flex flex-col pb-8 space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-3">
+    <div className="animate-in fade-in min-h-full flex flex-col pb-12 space-y-6 max-w-5xl mx-auto">
+      
+      {/* Header */}
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight">Create a New Video</h1>
-          <div className="text-[var(--mu)] text-[13px]">Enter a topic for instant generation or choose an advanced method.</div>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Video Launchpad</h1>
+          <p className="text-[13px] text-[var(--mu)]">Zero-cost local short video production engine (Edge-TTS + FFmpeg + Pillow).</p>
         </div>
+        <Badge variant="success">Zero API Cost</Badge>
       </div>
 
-      {/* Instant 1-Click Video Generator Card */}
-      <Card className="!p-6 bg-slate-900/60 border-slate-700/70 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
-              <Zap size={18} />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-white">Instant 1-Click Video (Zero Cost)</h2>
-              <p className="text-xs text-[var(--mu)]">Direct 4-step pipeline: Script + Edge-TTS Voice + Subtitles + 9:16 Render straight to QC1</p>
-            </div>
+      {/* View 1: The "New Video" Launchpad Card */}
+      <Card className="!p-6 bg-slate-900/70 border-slate-700/80 space-y-5 shadow-xl">
+        
+        {/* Topic Input Box & Viral Hook Button */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            1. Topic or Idea
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder='e.g. "3 psychological tricks people use on you" or "Why waking up at 5 AM actually works"'
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+              disabled={isGenerating}
+              className="flex-1 px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 text-sm outline-none focus:border-blue-500 transition-colors"
+            />
+            <Button
+              variant="secondary"
+              onClick={handleBrainstorm}
+              disabled={brainstormMutation.isPending || isGenerating}
+              className="flex items-center gap-1.5 whitespace-nowrap !py-3 !px-4 text-xs font-medium border-slate-700"
+            >
+              {brainstormMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-amber-400" />}
+              <span>Brainstorm 3 Viral Hooks</span>
+            </Button>
           </div>
+
+          {/* Brainstormed Hook Suggestions */}
+          {suggestedHooks.length > 0 && (
+            <div className="space-y-1.5 pt-1 animate-in fade-in">
+              <span className="text-[11px] font-medium text-slate-400">Click any high-retention hook to use it:</span>
+              <div className="grid grid-cols-1 gap-1.5">
+                {suggestedHooks.map((hook, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setTopic(hook);
+                      handleGenerate(hook);
+                    }}
+                    disabled={isGenerating}
+                    className="text-left text-xs p-2.5 rounded-lg bg-blue-950/30 border border-blue-800/40 text-blue-200 hover:bg-blue-900/40 hover:border-blue-500 transition-colors flex items-center justify-between group"
+                  >
+                    <span>“{hook}”</span>
+                    <ArrowRight size={14} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-1">
-          <input
-            type="text"
-            placeholder='Enter topic, e.g. "3 psychological tricks people use on you" or "Why the Roman Empire fell"'
-            value={instantTopic}
-            onChange={(e) => setInstantTopic(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleInstantGenerate()}
-            disabled={isGenerating}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--gl)] border border-[var(--ln)] text-[var(--tx)] text-sm outline-none focus:border-blue-500 transition-colors"
-          />
+        {/* Style Preset & Voice Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          
+          {/* 2. Visual Style Preset Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              2. Visual Aesthetic Preset
+            </label>
+            <select
+              value={stylePreset}
+              onChange={(e) => setStylePreset(e.target.value)}
+              disabled={isGenerating}
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+            >
+              {stylePresets.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label} - {p.desc}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={selectedVoice}
-            onChange={(e) => setSelectedVoice(e.target.value)}
-            disabled={isGenerating}
-            className="px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--ln)] text-xs text-[var(--tx)] outline-none focus:border-blue-500"
-          >
-            {voices.map((v) => (
-              <option key={v.id} value={v.id}>{v.label}</option>
-            ))}
-          </select>
+          {/* 3. Voice Selector Dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              3. Voice Narration (Edge-TTS)
+            </label>
+            <select
+              value={voice}
+              onChange={(e) => setVoice(e.target.value)}
+              disabled={isGenerating}
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+            >
+              {voices.map((v) => (
+                <option key={v.id} value={v.id}>{v.label}</option>
+              ))}
+            </select>
+          </div>
 
+        </div>
+
+        {/* 4. Action Button: Generate Short */}
+        <div className="pt-2">
           <Button
-            onClick={handleInstantGenerate}
-            disabled={!instantTopic.trim() || isGenerating}
-            className="flex items-center gap-2 whitespace-nowrap !px-5"
+            onClick={() => handleGenerate()}
+            disabled={!topic.trim() || isGenerating}
+            className="w-full py-3.5 text-sm font-semibold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/25 transition-all"
           >
-            {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-            {isGenerating ? 'Building Video...' : 'Generate Video'}
+            {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+            <span>{isGenerating ? 'Assembling Video...' : 'Generate Short (9:16 Vertical)'}</span>
           </Button>
         </div>
 
+        {/* Live 4-Step Status Bar */}
         {isGenerating && (
-          <div className="flex items-center gap-3 pt-2 text-xs text-blue-400">
-            <Loader2 size={14} className="animate-spin shrink-0" />
-            <span>{generationStep}</span>
+          <div className="pt-3 space-y-3 border-t border-slate-800">
+            <div className="flex items-center justify-between text-xs font-medium text-slate-300">
+              <span>Assembly Pipeline Progress</span>
+              <span className="font-mono text-blue-400">Step {Math.min(activeStepIndex + 1, 4)} of 4</span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2">
+              {pipelineSteps.map((step, idx) => {
+                const isPast = idx < activeStepIndex;
+                const isCurrent = idx === activeStepIndex;
+                return (
+                  <div
+                    key={step.id}
+                    className={`p-2.5 rounded-lg border text-xs flex flex-col justify-between transition-all ${
+                      isPast
+                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                        : isCurrent
+                        ? 'bg-blue-950/60 border-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)] animate-pulse'
+                        : 'bg-slate-950/40 border-slate-800 text-slate-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[10px]">0{step.id}</span>
+                      {isPast ? (
+                        <CheckCircle2 size={12} className="text-emerald-400" />
+                      ) : isCurrent ? (
+                        <Loader2 size={12} className="animate-spin text-blue-400" />
+                      ) : null}
+                    </div>
+                    <span className="font-medium text-[11px] leading-tight">{step.name}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
+
       </Card>
 
-      {/* Alternative Advanced Modes Header */}
-      <div className="pt-2">
-        <h2 className="text-sm font-semibold text-slate-300 mb-1">Advanced Multi-Agent Workflows</h2>
-        <p className="text-xs text-[var(--mu)] mb-3">Optional deep exploration pipelines with research scraping and character bibles.</p>
+      {/* Recent Video Projects Quick Access */}
+      {recentJobs.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-300">Recent Videos Ready for Review</h2>
+            <span className="text-xs text-[var(--mu)]">{recentJobs.length} Projects Total</span>
+          </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="glass-panel overflow-hidden animate-pulse h-[200px]" />
-            ))}
-          </div>
-        ) : creationModes.length === 0 ? (
-          <EmptyState title="No creation modes" description="There are no creation methods available right now." />
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-            {creationModes.map((mode) => (
-              <div 
-                key={mode.id}
-                onClick={() => navigate(`/copilot/${mode.id}`)}
-                className="glass-panel overflow-hidden cursor-pointer group hover:border-blue-500/50 hover:shadow-lg transition-all flex flex-col h-[260px] !p-0"
-              >
-                <div className="h-[130px] w-full bg-cover bg-center relative" style={{backgroundImage: `url('${mode.bg}')`}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] to-transparent" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {recentJobs.slice(0, 6).map((j: any) => {
+              const videoAsset = j.assets?.find((a: any) => a.type === 'VIDEO');
+              const hasVideo = !!videoAsset;
+              return (
+                <div
+                  key={j.id}
+                  onClick={() => navigate(`/qc1/${j.id}`)}
+                  className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/60 cursor-pointer transition-all flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3 truncate">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                      <Film size={16} />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
+                        {j.niche}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                        Job #{j.id} · {j.current_stage || j.status}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${
+                    hasVideo ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-amber-400 border-amber-500/30 bg-amber-950/40'
+                  }`}>
+                    {hasVideo ? '9:16 MP4' : 'Pending'}
+                  </span>
                 </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="text-[15px] font-semibold mb-1 group-hover:text-blue-400 transition-colors">{mode.title}</h3>
-                  <p className="text-[12px] text-[var(--mu)] leading-relaxed flex-1">{mode.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
     </div>
   );
 }

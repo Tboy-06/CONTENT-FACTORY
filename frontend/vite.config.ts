@@ -27,6 +27,10 @@ export default defineConfig(() => {
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
+        '/temp': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
       },
     },
   };

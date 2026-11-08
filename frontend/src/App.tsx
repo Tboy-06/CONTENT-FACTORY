@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, AlignEndHorizontal, Vault as VaultIcon, Bot, Settings as SettingsIcon, Menu } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, AlignEndHorizontal, Vault as VaultIcon, Bot, Settings as SettingsIcon, Menu, HardDrive, Trash2 } from 'lucide-react';
 import { useConnectivity } from './lib/connectivity';
-import { useSpend } from './api/client';
+import { useCacheStatus, useClearCache } from './api/client';
 import Create from './pages/Create';
 import Copilot from './pages/Copilot';
 import Pipeline from './pages/Pipeline';
@@ -11,8 +11,6 @@ import Vault from './pages/Vault';
 import Settings from './pages/Settings';
 import Dashboard from './pages/Dashboard';
 import Agents from './pages/Agents';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
 
 const NavItem = ({ to, icon: Icon, label, isCollapsed }: any) => {
   const navigate = useNavigate();
@@ -34,7 +32,8 @@ const NavItem = ({ to, icon: Icon, label, isCollapsed }: any) => {
 export default function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isOnline = useConnectivity();
-  const { data: spend } = useSpend();
+  const { data: cache } = useCacheStatus();
+  const clearCacheMutation = useClearCache();
 
   return (
     <div className={`grid min-h-screen w-full transition-all duration-200 ${isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[220px_1fr]'}`}>
@@ -64,13 +63,6 @@ export default function App() {
             <div className="w-[28px] h-[28px] rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-slate-200 shrink-0">TO</div>
             {!isCollapsed && <div>Tobiloba<br/>Main project</div>}
           </div>
-          {!isCollapsed && (
-            <div className="flex items-center gap-2 px-1 text-[11px] text-[var(--mu)]">
-              <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
-              <span>·</span>
-              <a href="/terms" className="hover:text-white transition-colors">Terms</a>
-            </div>
-          )}
         </div>
       </aside>
 
@@ -86,12 +78,21 @@ export default function App() {
               {isOnline ? 'Online' : 'Offline'}
             </div>
             
-            <div className="flex items-center gap-2">
-              <span>Paid spend <b className="text-[var(--tx)] font-medium">${spend != null ? spend.toFixed(2) : '0.00'}</b> of $50 cap</span>
-              <div className="h-[5px] w-[90px] rounded-sm bg-[var(--gl2)] overflow-hidden mt-[1px]">
-                <div className="h-full w-[37%] bg-blue-500" />
-              </div>
+            {/* Live SSD Disk Space / Temp Cache Counter */}
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md border border-[var(--ln)] bg-[var(--gl)] text-xs text-[var(--mu)]">
+              <HardDrive size={14} className="text-blue-400 shrink-0" />
+              <span>Temp Folder: <b className="text-[var(--tx)] font-mono">{cache?.temp_mb ?? '0.0'} MB</b></span>
+              <button
+                onClick={() => clearCacheMutation.mutate()}
+                disabled={clearCacheMutation.isPending || !(cache?.temp_mb > 0)}
+                title="Clear temporary frames and cache"
+                className="ml-1 text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors disabled:opacity-40"
+              >
+                <Trash2 size={12} />
+                <span>{clearCacheMutation.isPending ? 'Clearing...' : 'Clear Cache'}</span>
+              </button>
             </div>
+
             <div className="w-[28px] h-[28px] rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-slate-200 shrink-0 ml-1">TO</div>
           </div>
         </header>
@@ -114,8 +115,6 @@ export default function App() {
             <Route path="/vault" element={<Vault />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
           </Routes>
         </main>
       </div>
