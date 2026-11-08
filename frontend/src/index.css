@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+@theme {
+  --color-bg: var(--bg);
+  --color-tx: var(--tx);
+  --color-mu: var(--mu);
+  --color-ac: var(--ac);
+  --color-ac2: var(--ac2);
+  --color-ok: var(--ok);
+  --color-wa: var(--wa);
+  --color-er: var(--er);
+  --color-gl: var(--gl);
+  --color-gl2: var(--gl2);
+  --color-ln: var(--ln);
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

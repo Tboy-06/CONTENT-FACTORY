@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CONTENT-FACTORY{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .stage-badge { @apply px-2 py-1 text-xs font-medium rounded-full; }
+        .stage-idea { @apply bg-gray-100 text-gray-800; }
+        .stage-research { @apply bg-blue-100 text-blue-800; }
+        .stage-script { @apply bg-purple-100 text-purple-800; }
+        .stage-qc1 { @apply bg-yellow-100 text-yellow-800; }
+        .stage-style { @apply bg-pink-100 text-pink-800; }
+        .stage-art { @apply bg-indigo-100 text-indigo-800; }
+        .stage-video { @apply bg-red-100 text-red-800; }
+        .stage-qc2 { @apply bg-orange-100 text-orange-800; }
+        .stage-post { @apply bg-green-100 text-green-800; }
+        .stage-analyze { @apply bg-teal-100 text-teal-800; }
+        .stage-completed { @apply bg-emerald-100 text-emerald-800; }
+        .stage-failed { @apply bg-red-100 text-red-800; }
+        .status-badge { @apply px-2 py-1 text-xs font-medium rounded-full; }
+        .status-pending { @apply bg-gray-100 text-gray-800; }
+        .status-running { @apply bg-blue-100 text-blue-800; }
+        .status-paused { @apply bg-yellow-100 text-yellow-800; }
+        .status-completed { @apply bg-green-100 text-green-800; }
+        .status-failed { @apply bg-red-100 text-red-800; }
+        .status-cancelled { @apply bg-gray-100 text-gray-800; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <i class="fas fa-film text-2xl text-indigo-600"></i>
+                        <span class="text-xl font-bold text-gray-900">CONTENT-FACTORY</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="/analytics" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Analytics</a>
+                    <a href="/style-guides" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Style Guides</a>
+                    <span class="text-sm text-gray-500">Budget: ${{ settings.monthly_budget_usd }}/mo</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-4 text-center text-sm text-gray-500">
+            CONTENT-FACTORY — AI Content Automation Pipeline
+        </div>
+    </footer>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function approveJob(jobId) {
+            const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'POST' });
+            if (res.ok) location.reload();
+        }
+
+        async function rejectJob(jobId) {
+            const reason = prompt('Rejection reason:');
+            if (!reason) return;
+            const res = await fetch(`/api/jobs/${jobId}/reject`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+            if (res.ok) location.reload();
+        }
+    </script>
+</body>
+</html>

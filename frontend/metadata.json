@@ -1,0 +1,1 @@
+{"name":"CONTENT-FACTORY","description":"Multi-Agent AI Content Automation Pipeline orchestrating 9 agents across 10 stages with Telegram HITL approval, Gemini intelligence, Vault storage, and analytics.","requestFramePermissions":[],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

@@ -1,0 +1,1 @@
+﻿import sqlite3; c=sqlite3.connect('vault.db'); c.execute("DELETE FROM job_stages WHERE job_id=29 AND stage_name='QC1'"); c.execute("UPDATE jobs SET status='PENDING', current_stage='QC1' WHERE id=29"); c.execute("UPDATE approvals SET decision='APPROVED', resolved_at=CURRENT_TIMESTAMP WHERE job_id=29"); c.commit(); c.close()

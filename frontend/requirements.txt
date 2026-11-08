@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+sqlalchemy[asyncio]
+aiosqlite
+asyncpg
+pydantic-settings
+apscheduler
+python-telegram-bot[job-queue]==21.0
+google-generativeai
+edge-tts
+ffmpeg-python
+jinja2
+tenacity
+requests
+httpx
+pytest
+pytest-asyncio

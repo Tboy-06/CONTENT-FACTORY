@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Content Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0b0e17;--gl:rgba(255,255,255,.045);--gl2:rgba(255,255,255,.08);--ln:rgba(255,255,255,.1);--tx:#f1f4fc;--mu:#97a0b8;--ac:#4f7cff;--ac2:#8b5cff;--ok:#3ecf8e;--wa:#f5b84a;--er:#ff6b7a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(800px 460px at 10% -10%,rgba(79,124,255,.2),transparent 60%),radial-gradient(700px 460px at 100% 0,rgba(139,92,255,.14),transparent 60%),var(--bg);background-attachment:fixed;color:var(--tx);font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden}
+.app{display:grid;grid-template-columns:220px 1fr;height:100%;transition:grid-template-columns .25s}
+.app.c{grid-template-columns:68px 1fr}
+.g{background:var(--gl);border:1px solid var(--ln);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:14px}
+aside{padding:14px 10px;border-right:1px solid var(--ln);background:rgba(11,14,23,.7);display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;cursor:pointer;margin-bottom:14px;white-space:nowrap}
+.brand:hover{background:var(--gl)}
+.logo{width:32px;height:32px;flex:none;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;box-shadow:0 6px 18px rgba(79,124,255,.4)}
+.brand b{font-weight:600;font-size:14px;line-height:1.2}
+.nav{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;color:var(--mu);cursor:pointer;white-space:nowrap;border:1px solid transparent;transition:.15s}
+.nav:hover{color:var(--tx);background:var(--gl)}
+.nav.on{color:#fff;background:linear-gradient(90deg,rgba(79,124,255,.25),rgba(139,92,255,.1));border-color:rgba(79,124,255,.4)}
+.c .lbl,.c .brand div:last-child,.c .ws div{display:none}
+.ws{margin-top:auto;display:flex;gap:10px;align-items:center;padding:8px;font-size:12px;color:var(--mu);white-space:nowrap}
+.av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f5b84a,#ff6b7a);display:grid;place-items:center;font-size:11px;font-weight:600;color:#1a1020;flex:none}
+.wrap{display:flex;flex-direction:column;min-width:0;height:100%}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;border-bottom:1px solid var(--ln)}
+.srch{flex:1;max-width:340px;padding:8px 12px;border-radius:10px;background:var(--gl);border:1px solid var(--ln);color:var(--mu);font-size:13px}
+.spend{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--mu)}
+.spend b{color:var(--tx);font-weight:500}
+.mini{height:5px;width:90px;border-radius:5px;background:var(--gl2);overflow:hidden;display:block;margin-top:3px}
+.mini i{display:block;height:100%;width:37%;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+main{flex:1;overflow:auto;padding:22px 24px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.02em}
+h2{font-size:15px;font-weight:600}
+.sub{color:var(--mu);font-size:13px}
+.btn{border:0;cursor:pointer;font:inherit;font-weight:500;color:#fff;padding:9px 16px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 22px rgba(79,124,255,.32);transition:.15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.gh{background:var(--gl);border:1px solid var(--ln);box-shadow:none;color:var(--tx)}
+.dn{background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.4);box-shadow:none;color:var(--er)}
+.screen{display:none}.screen.on{display:block}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.t-w{background:rgba(245,184,74,.15);color:var(--wa)}.t-o{background:rgba(62,207,142,.15);color:var(--ok)}.t-a{background:rgba(79,124,255,.18);color:#aebfff}.t-r{background:rgba(255,107,122,.15);color:var(--er)}
+.th{position:relative;overflow:hidden;border-radius:10px;background:#111827}
+.th svg{display:block;width:100%;height:100%}
+.th em{position:absolute;right:6px;bottom:5px;font-style:normal;font-size:11px;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:5px}
+.qk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.qc{padding:10px;cursor:pointer;transition:.15s}
+.qc:hover,.hub:hover,.vc:hover{border-color:rgba(79,124,255,.55);transform:translateY(-2px)}
+.qc .th{height:64px;margin-bottom:8px}
+.qc b{font-weight:500;font-size:13px}.qc p{font-size:12px;color:var(--mu);line-height:1.3}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.card{padding:16px}
+.big{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.rv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.rv .th{height:80px}.rv p{font-size:12px;margin-top:6px}
+.li{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--ln);font-size:13px}
+.li .th{width:54px;height:36px;flex:none}
+.hubg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.hub{overflow:hidden;cursor:pointer;transition:.15s}
+.hub .th{height:130px;border-radius:0}
+.hub div.t{padding:12px 14px}.hub b{font-weight:500}
+.cop{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;height:calc(100vh - 170px);min-height:480px}
+.chat{display:flex;flex-direction:column;gap:10px;padding:16px;min-height:0}
+.msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.m{max-width:85%;padding:10px 13px;border-radius:12px;background:var(--gl2);font-size:13px}
+.m.u{align-self:flex-end;background:linear-gradient(135deg,rgba(79,124,255,.4),rgba(139,92,255,.32))}
+.inp{display:flex;gap:8px;padding:6px 6px 6px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--gl);align-items:center;color:var(--mu);font-size:13px}
+.inp span{flex:1}
+.cfg{padding:16px;overflow:auto}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--ln);font-size:13px}
+.cr span:first-child{color:var(--mu)}
+.sg{display:flex;gap:4px;padding:3px;border-radius:9px;background:var(--gl2)}
+.sg i{font-style:normal;padding:4px 12px;border-radius:7px;cursor:pointer;font-size:12px}
+.sg i.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+.sel{padding:5px 10px;border-radius:8px;border:1px solid var(--ln);background:var(--gl);font-size:12px;min-width:120px;text-align:right}
+.board{display:grid;grid-template-columns:repeat(5,minmax(190px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+.col h3{font-size:12px;font-weight:500;color:var(--mu);display:flex;justify-content:space-between;margin:0 4px 8px}
+.pc{padding:8px;margin-bottom:10px;transition:.15s}
+.pill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;border:1px solid var(--ln);background:var(--gl);cursor:pointer;font-size:12px;color:var(--tx)}.pill i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}.offline .pill i{background:var(--wa);box-shadow:0 0 8px var(--wa)}.pill:hover{border-color:var(--ac)}
+.ban{display:none;padding:9px 24px;background:rgba(245,184,74,.1);border-bottom:1px solid rgba(245,184,74,.35);color:var(--wa);font-size:13px}.offline .ban{display:block}
+.offonly{display:none}.offline .offonly{display:revert!important}.offline .ononly{display:none!important}
+.sg i.dis{opacity:.35;cursor:not-allowed;text-decoration:line-through}.t-g{background:var(--gl2);color:var(--mu)}
+.mx{width:100%;font-size:12px}.mx td,.mx th{padding:6px 6px;border-top:1px solid var(--ln);text-align:left;font-weight:400}.mx th{color:var(--mu);border-top:0}
+.qcol{background:rgba(245,184,74,.06);border:1px solid rgba(245,184,74,.4);border-radius:14px;padding:8px}.qcol h3{color:var(--wa)}
+.pc .th{height:74px;margin-bottom:6px}
+.pc b{font-weight:500;font-size:13px}.pc p{font-size:11px;color:var(--mu)}
+.pb{height:4px;border-radius:4px;background:var(--gl2);margin-top:6px;overflow:hidden}
+.pb i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.qcard{border-color:rgba(245,184,74,.55);box-shadow:0 0 28px rgba(245,184,74,.14);cursor:pointer}
+.tabs{display:flex;gap:4px;margin-bottom:14px}
+.tabs i{font-style:normal;padding:6px 14px;border-radius:9px;color:var(--mu);cursor:pointer;border:1px solid transparent}
+.tabs i.on{color:#fff;background:var(--gl2);border-color:var(--ln)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th.h{padding:10px 12px;text-align:left;border-top:1px solid var(--ln)}
+th.h{color:var(--mu);font-weight:400;font-size:12px;border-top:0}
+.qg{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.pv{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden}
+.pv .th{height:100%;border-radius:0}
+.pl{position:absolute;inset:0;margin:auto;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center}
+.sc{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+.sc .th{height:48px;border:2px solid transparent;cursor:pointer}
+.sc .th.on{border-color:var(--ac)}
+.pane{display:none;font-size:13px}.pane.on{display:block}
+.pane p{margin:4px 0 10px}
+.pane b{font-weight:500}
+.cost{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;margin:12px 0}
+.warn{padding:10px 12px;border-radius:10px;background:rgba(245,184,74,.1);border:1px solid rgba(245,184,74,.4);color:var(--wa);font-size:12px;margin-bottom:12px}
+.acts{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.vg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.vc{padding:8px;transition:.15s}
+.vc .th{height:112px;margin-bottom:8px}
+.vc b{font-weight:500;font-size:13px}.vc p{font-size:12px;color:var(--mu);margin-bottom:6px}
+.ag{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.sw{width:34px;height:20px;border-radius:99px;background:var(--gl2);position:relative;cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.sw.on{background:var(--ac)}.sw.on::after{left:16px}
+.key{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--ln);font-size:13px}
+.key .k{flex:1}.key small{color:var(--mu);display:block}
+.ring{width:56px;height:56px;border-radius:50%;background:conic-gradient(var(--ac) 0 12%,var(--gl2) 0);display:grid;place-items:center;font-size:12px;position:relative}
+.ring::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#0d111d}
+.ring span{position:relative;z-index:1}
+@media(max-width:900px){.app,.app.c{grid-template-columns:64px 1fr}.lbl,.brand div:last-child,.ws div{display:none}main{padding:14px}.two,.cop,.qg{grid-template-columns:1fr;height:auto}.bar{padding:10px 14px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<aside>
+  <div class="brand" id="tg" title="Collapse sidebar"><div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"/></svg></div><div><b>AI Content<br>Factory</b></div></div>
+  <div id="nv"></div>
+  <div class="ws"><span class="av">TO</span><div>Tobiloba<br>Main project</div></div>
+</aside>
+<div class="wrap">
+  <div class="bar"><div class="srch">Search videos, scripts, jobs</div><div class="spend"><div class="pill" id="cn" title="Click to simulate losing your connection"><i></i><span class="ononly">Online</span><span class="offonly">Offline</span></div><div>Paid spend <b>$18.40</b> of $50 cap<span class="mini"><i></i></span></div><span class="av">TO</span></div></div>
+  <div class="ban">You're offline. Premium engines are paused. New jobs use local engines, and publishing waits until you're back online.</div>
+  <main>
+
+  <section class="screen on" id="dash">
+    <div class="head"><div><h1>Good afternoon, Tobiloba</h1><div class="sub">Your video production studio. Create, automate, and grow.</div></div><button class="btn" data-go="create">Create something</button></div>
+    <div class="sub" style="margin-bottom:8px">Quick create</div>
+    <div class="qk" id="qk"></div>
+    <div class="row">
+      <div class="g card"><div class="sub">Active jobs</div><div class="big">3</div><div class="sub">3 running, 5 total</div></div>
+      <div class="g card" style="border-color:rgba(245,184,74,.5);cursor:pointer" data-go="qc"><div class="sub">Approval needed</div><div class="big" style="color:var(--wa)">1</div><div class="sub">Storyboard waiting. Review now</div></div>
+      <div class="g card"><div class="sub">Spend this month</div><div class="big">$18.40</div><div class="sub">9 paid renders, 15 free</div></div>
+      <div class="g card" style="display:flex;align-items:center;gap:14px"><div class="ring"><span>12%</span></div><div><div class="sub">Storage used</div><b style="font-weight:500">12.4 GB</b><div class="sub">of 100 GB</div></div></div>
+    </div>
+    <div class="two">
+      <div class="g card"><h2>Recent videos</h2><div class="rv" id="rv"></div></div>
+      <div class="g card"><h2>Scheduled</h2><div id="sch"></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="create">
+    <div class="head"><div><h1>Create a new video</h1><div class="sub">Choose a creation method to get started.</div></div></div>
+    <div class="hubg" id="hub"></div>
+  </section>
+
+  <section class="screen" id="cop">
+    <div class="head"><div><h1>AI Copilot</h1><div class="sub">Describe what you want to create, and I'll handle the rest.</div></div><button class="btn gh" data-go="create">Back to methods</button></div>
+    <div class="cop">
+      <div class="g chat"><div class="msgs">
+        <div class="m u">Create a 60 second motivational video about building better habits. Make it cinematic and suitable for YouTube Shorts.</div>
+        <div class="m">Got it. I'll create a motivational video about building better habits. Here are the suggested settings: 9:16 for YouTube Shorts, 60 seconds, YouTube and TikTok, Premium engine.</div>
+        <div class="m">Niche check: GO, 78 of 100. Competition is high, but the CPM is strong.</div></div>
+        <div class="inp"><span>Type your message</span><button class="btn">Send</button></div></div>
+      <div class="g cfg"><h2 style="margin-bottom:6px">Job configuration</h2><div class="sg" style="margin:8px 0;width:max-content"><i class="on" data-ba="b">Basic</i><i data-ba="a">Advanced</i></div>
+        <div class="cr"><span>Format</span><span class="sel">9:16 Vertical</span></div>
+        <div class="cr"><span>Duration</span><span class="sel">60 seconds</span></div>
+        <div class="cr"><span>Platform</span><span><span class="tag t-r">YouTube</span> <span class="tag t-a">TikTok</span></span></div>
+        <div class="cr"><span>AI engine</span><div class="sg" id="eg"><i data-e="f">Free</i><i class="on" data-e="p">Premium</i></div></div>
+        <div class="sub" style="font-size:12px;padding:6px 0"><span class="ononly">Online. Free uses local and free-tier engines. Premium uses paid APIs.</span><span class="offonly">Offline. Premium is paused. Free runs on local engines only.</span></div>
+        <div id="adv" style="display:none"><div style="padding:8px 0;border-bottom:1px solid var(--ln)"><div class="sub" style="margin-bottom:6px">Stage engines (set per stage in the final build)</div><table class="mx"><tr><th></th><th>Offline</th><th>Free online</th><th>Premium</th></tr><tr><td>Research</td><td>Cached</td><td>Web</td><td>Web</td></tr><tr><td>Script</td><td>Local model</td><td>Gemini free</td><td>GPT-4o</td></tr><tr><td>Visuals</td><td>Local stock</td><td>Pexels</td><td>DALL-E 3</td></tr><tr><td>Voice</td><td>Local TTS</td><td>Free TTS</td><td>Premium TTS</td></tr><tr><td>Render</td><td>FFmpeg</td><td>FFmpeg</td><td>Cloud</td></tr></table></div><div class="cr"><span>Voice</span><span class="sel">Alloy (Natural)</span></div>
+        <div class="cr"><span>Visual style</span><span class="sel">Cinematic</span></div>
+        <div class="cr"><span>Reference mode</span><span class="sel">None</span></div>
+        <div class="cr"><span>Quality</span><span class="sel">1080p HD</span></div>
+        <div class="cr"><span>Spend cap for this job</span><span class="sel">$2.00</span></div></div>
+        <div class="cost g"><span class="sub">Estimated cost</span><b id="ec" style="font-weight:600">~$0.75</b></div>
+        <button class="btn" style="width:100%" data-go="pipe">Generate plan</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="pipe">
+    <div class="head"><div><h1>Pipeline</h1><div class="sub">Every job, live.</div></div><button class="btn" data-go="create">New job</button></div>
+    <div class="tabs"><i class="on" data-tab="bd">Board</i><i data-tab="hs">History</i></div>
+    <div id="bd" class="tp"><div class="board" id="bdg"></div></div>
+    <div id="hs" class="tp" style="display:none"><div class="g"><table><tr><th class="h">Job</th><th class="h">State</th><th class="h">Duration</th><th class="h">Cost</th></tr>
+      <tr><td>Build Better Habits</td><td><span class="tag t-w">QC1</span></td><td>1m 24s</td><td>$0.75</td></tr>
+      <tr><td>5 Money Habits</td><td><span class="tag t-a">Running</span></td><td>45s</td><td>$0.60</td></tr>
+      <tr><td>Mindset Shift</td><td><span class="tag t-o">Completed</span></td><td>2m 10s</td><td>$0.85</td></tr>
+      <tr><td>Healthy Eating</td><td><span class="tag t-r">Failed</span></td><td>1m 02s</td><td>$0.20</td></tr>
+      <tr><td>Productivity Hacks</td><td><span class="tag t-o">Completed</span></td><td>3m 03s</td><td>$1.20</td></tr></table></div></div>
+  </section>
+
+  <section class="screen" id="qc">
+    <div class="head"><div><h1>Storyboard approval <span class="tag t-w" style="vertical-align:middle;margin-left:6px" id="qs">QC1 stage · Manual review</span></h1><div class="sub">Build Better Habits. Nothing renders until you approve.</div></div></div>
+    <div class="qg">
+      <div class="g card"><div class="pv"><div class="th" data-t="mountain"></div><div class="pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div></div>
+        <div class="sc" id="scn"></div><div class="sub" style="margin-top:8px">Scene thumbnails. Click one to inspect it.</div></div>
+      <div class="g card"><div class="tabs"><i class="on" data-pane="p1">Script</i><i data-pane="p2">Scenes</i><i data-pane="p3">Visuals</i></div>
+        <div class="pane on" id="p1"><b>Title: Build Better Habits</b>
+          <p><b>Hook (0:00 to 0:08)</b><br><span class="sub">Your future self will thank you for what you do today.</span></p>
+          <p><b>Body (0:08 to 0:54)</b><br><span class="sub">Scene 1: Morning routine. Scene 2: Focus and productivity. Scene 3: Small changes, big results.</span></p>
+          <p><b>CTA (0:54 to 1:00)</b><br><span class="sub">Start today. Your future self is waiting.</span></p>
+          <p><b>Narration</b> <span class="sub">AI voice (Alloy)</span></p></div>
+        <div class="pane" id="p2"><p>1. Sunrise, window light · 8s</p><p>2. Morning routine · 12s</p><p>3. Focus at the desk · 12s</p><p>4. City commute · 10s</p><p>5. Small changes, big results · 12s</p><p>6. End card · 6s</p></div>
+        <div class="pane" id="p3"><p><b>Visual prompts</b><br><span class="sub">Cinematic, natural lighting, modern lifestyle, shallow depth of field.</span></p><p><b>Scene 4</b> <span class="tag t-w">Premium asset</span><br><span class="sub">Aerial city at dawn needs a premium clip.</span></p></div>
+        <div class="cost g"><div><div class="sub">Estimated cost</div><div class="sub" style="font-size:11px" id="qb">Narration $0.12, b-roll $0.38, render $0.25</div></div><b id="qcost" style="font-size:20px;font-weight:600">~$0.75</b></div>
+        <div class="warn ononly">1 scene may require premium assets. This could raise the cost by about $0.30.</div><div class="warn offonly">1 scene needs a premium asset, which is not available offline. A local stock clip will be used. Reconnect to swap it.</div>
+        <div class="acts"><button class="btn dn" data-go="pipe">Reject</button><button class="btn gh">Edit</button><button class="btn" id="ap">Approve and continue</button></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="vault">
+    <div class="head"><div><h1>Vault</h1><div class="sub">Every render, with what it cost.</div></div></div>
+    <div class="vg" id="vg"></div>
+  </section>
+
+  <section class="screen" id="agents">
+    <div class="head"><div><h1>Agents Studio</h1><div class="sub">The agents that run each stage of the pipeline.</div></div></div>
+    <div class="ag" id="ags"></div>
+  </section>
+
+  <section class="screen" id="set">
+    <div class="head"><div><h1>Settings</h1><div class="sub">Keys stay encrypted on this machine.</div></div></div>
+    <div class="two">
+      <div class="g card"><h2>Core API credentials</h2>
+        <div class="key"><span class="av" style="background:var(--gl2);color:#fff">O</span><div class="k">OpenAI<small>sk-••••••••••••3f9a</small></div><span class="tag t-o">Connected</span></div>
+        <div class="key"><span class="av" style="background:var(--gl2);color:#fff">G</span><div class="k">Gemini<small>AIza••••••••••••k2Qx</small></div><span class="tag t-o">Connected</span></div>
+        <div class="key"><span class="av" style="background:var(--gl2);color:#fff">T</span><div class="k">Telegram<small>••••••••:AA••••••••</small></div><span class="tag t-o">Connected</span></div></div>
+      <div class="g card"><h2>Optional integrations</h2>
+        <div class="key"><div class="k">YouTube<small>Publishing</small></div><span class="sw on"></span></div>
+        <div class="key"><div class="k">Pexels<small>Stock footage</small></div><span class="sw on"></span></div>
+        <div class="key"><div class="k">Unsplash<small>Stock images</small></div><span class="sw"></span></div>
+        <div class="key"><div class="k">Monthly spend cap<small>Paid jobs pause at the cap. Free jobs never count.</small></div><span class="sel">$50.00</span></div></div>
+    </div>
+    <div class="g card" style="margin-top:16px"><h2>Connection and engines</h2><div class="key"><div class="k">Offline mode<small>Force local engines even when you have internet</small></div><span class="sw" id="fo"></span></div><div class="key"><div class="k">Queue publishing while offline<small>Posts go out when you reconnect</small></div><span class="sw on"></span></div><div class="key"><div class="k">Connection<small>Checked every 30 seconds</small></div><span class="tag t-o ononly">Online</span><span class="tag t-w offonly">Offline</span></div></div>
+  </section>
+
+  </main>
+</div>
+</div>
+<script>
+var $=function(s){return document.querySelector(s)},A=function(s){return document.querySelectorAll(s)},n=0;
+function sv(k){n++;var i='g'+n,S={
+mountain:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e3a8a"/><stop offset="1" stop-color="#f59e5b"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><circle cx="118" cy="30" r="9" fill="#ffe3a8"/><path d="M0 90V58l30-26 26 24 22-18 34 30 48-20v42z" fill="#27324f"/><path d="M0 90V70l40-16 40 14 40-12 40 14v20z" fill="#141b2e"/>',
+night:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1030"/><stop offset="1" stop-color="#2b3a8f"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><circle cx="116" cy="26" r="10" fill="#e8ecff"/><circle cx="30" cy="18" r="1.2" fill="#fff"/><circle cx="60" cy="30" r="1" fill="#fff"/><circle cx="84" cy="14" r="1.2" fill="#fff"/><path d="M0 90V66q40-18 80-4t80-6v34z" fill="#0b1226"/>',
+ocean:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#0b3b6b"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><path d="M0 52q20-8 40 0t40 0 40 0 40 0v38H0z" fill="#0f5a96" opacity=".8"/><path d="M0 68q20-8 40 0t40 0 40 0 40 0v22H0z" fill="#0a3d6c"/>',
+forest:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4a05a"/><stop offset="1" stop-color="#1c3a2a"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><path d="M10 90l14-46 14 46zM40 90l16-58 16 58zM76 90l12-40 12 40zM104 90l16-62 16 62zM136 90l10-34 12 34z" fill="#0f2418"/>',
+city:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1b5e"/><stop offset="1" stop-color="#ff8a5b"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><path d="M0 90V52h14V36h16v22h12V44h18v18h14V30h18v32h14V48h16v42z" fill="#151228"/>',
+warm:'<defs><linearGradient id="'+i+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5b84a"/><stop offset="1" stop-color="#b8431f"/></linearGradient></defs><rect width="160" height="90" fill="url(#'+i+')"/><circle cx="80" cy="48" r="26" fill="#fff4dc" opacity=".85"/><circle cx="80" cy="48" r="16" fill="#d9531e"/>'};
+return '<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">'+S[k]+'</svg>'}
+var K=['mountain','night','ocean','forest','city','warm'];
+function T(h,k,x){return '<div class="th" style="'+(h?'height:'+h+'px;':'')+'">'+sv(k)+(x?'<em>'+x+'</em>':'')+'</div>'}
+var NV=[['dash','Dashboard','M3 11l9-8 9 8v9H3z'],['create','Create','M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z'],['pipe','Pipeline','M4 4h5v16H4zM11 4h5v10h-5zM18 4h3v6h-3z'],['vault','Vault','M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],['agents','Agents','M5 8h14v11H5zM12 8V4M9 13h.01M15 13h.01'],['set','Settings','M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12']];
+$('#nv').innerHTML=NV.map(function(x){return '<div class="nav'+(x[0]==='dash'?' on':'')+'" data-go="'+x[0]+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="'+x[2]+'"/></svg><span class="lbl">'+x[1]+'</span></div>'}).join('');
+var QK=[['From idea','Turn your idea into a video','mountain'],['Clone a video','Reuse a reference video\'s structure','night'],['Create shorts','YouTube Shorts, TikTok, Reels','city'],['Create UGC','Creator-style product videos','warm'],['From URL','Turn a blog post into a video','ocean']];
+$('#qk').innerHTML=QK.map(function(x){return '<div class="g qc" data-go="cop">'+T(64,x[2])+'<b>'+x[0]+'</b><p>'+x[1]+'</p></div>'}).join('');
+$('#hub').innerHTML=QK.concat([['Clip a long video','Cut your own footage into shorts','forest']]).map(function(x){return '<div class="g hub" data-go="cop">'+T(130,x[2])+'<div class="t"><b>'+x[0]+'</b><div class="sub">'+x[1]+'</div></div></div>'}).join('');
+$('#rv').innerHTML=[['The Darkest Forest','forest','0:54'],['5 Habits for Success','mountain','1:12'],['Mindset Shift','night','0:48']].map(function(x){return '<div>'+T(80,x[1],x[2])+'<p>'+x[0]+'</p></div>'}).join('');
+$('#sch').innerHTML=[['The Power of Focus','Tomorrow, 10:30 AM','city'],['5 Money Habits','Apr 27, 2:00 PM','warm'],['Healthy Living','Apr 28, 9:00 AM','ocean']].map(function(x){return '<div class="li">'+T(0,x[2])+'<div><b style="font-weight:500">'+x[0]+'</b><div class="sub" style="font-size:12px">'+x[1]+'</div></div></div>'}).join('');
+function pc(t,m,k,p,q){var E=[['Premium','t-a'],['Free','t-o'],['Local','t-g']][t.length%3];return '<div class="g pc'+(q?' qcard':'')+'"'+(q?' data-go="qc"':'')+'>'+T(0,k)+'<b>'+t+'</b><p>'+m+' <span class="tag '+E[1]+'">'+E[0]+'</span></p>'+(q?'<span class="tag t-w">QC1 review</span>':'<div class="pb"><i style="width:'+p+'%"></i></div>')+'</div>'}
+var B=[['Queued',[['The Science of Sleep','1m · 9:16','night',8],['5 Money Habits','1m · 9:16','warm',5]]],['Researching',[['Healthy Eating','2m · 9:16','forest',45],['Productivity Hacks','1m · 9:16','city',30]]],['Writing',[['Success Mindset','1m · 9:16','mountain',70],['Life Lessons','1m · 9:16','ocean',62]]],['Storyboard',[['History Facts','2m · 9:16','city',80],['Travel Destinations','1m · 9:16','ocean',85]]],['QC1 approval',[['Build Better Habits','1m · 9:16','mountain',0,1],['Finance Tips','1m · 9:16','warm',0,1]]]];
+$('#bdg').innerHTML=B.map(function(c){return '<div class="col'+(c[0]==='QC1 approval'?' qcol':'')+'"><h3>'+c[0]+'<span>'+c[1].length+'</span></h3>'+c[1].map(function(x){return pc(x[0],x[1],x[2],x[3],x[4])}).join('')+'</div>'}).join('');
+$('#bdg .col').insertAdjacentHTML('beforeend','<div class="g pc offonly"><b>Publish: Index funds 101</b><p>Waiting for a connection</p><span class="tag t-w">Queued until online</span></div>');
+$('#scn').innerHTML=['mountain','forest','city','ocean','night','warm'].map(function(k,i){return '<div class="th'+(i===0?' on':'')+'" style="height:48px">'+sv(k)+'</div>'}).join('');
+var VD=[['The Darkest Forest','forest','0:54','Completed'],['5 Habits for Success','mountain','1:12','Completed'],['Mindset Shift','night','0:48','Completed'],['The Ocean Facts','ocean','0:58','Completed'],['Travel Escapes','city','1:05','Completed'],['Productivity Hacks','warm','0:52','Completed'],['Healthy Eating','forest','0:44','Failed'],['Money Habits','ocean','1:20','Completed']];
+$('#vg').innerHTML=VD.map(function(x,i){return '<div class="g vc">'+T(0,x[1],x[2]).replace('class="th" style=""','class="th" style="height:112px"')+'<b>'+x[0]+'</b><p>'+(i%2?'Free, local engines':'$'+(0.55+i*0.07).toFixed(2)+' to make')+'</p><span class="tag '+(x[3]==='Failed'?'t-r':'t-o')+'">'+x[3]+'</span></div>'}).join('');
+$('#ags').innerHTML=[['Researcher','Finds topics and data','Gemini Pro'],['Niche scorer','Scores niche viability','GPT-4o'],['Scriptwriter','Writes hooks and CTAs','GPT-4o'],['Art director','Writes image prompts','DALL-E 3'],['Storyboard director','Builds the storyboard','DALL-E 3'],['Video editor','Edits and renders','FFmpeg (local)']].map(function(x){return '<div class="g card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>'+x[0]+'</h2><span class="tag t-o">Active</span></div><div class="sub" style="margin:6px 0 10px">'+x[1]+'</div><div class="cr"><span>Model</span><span class="sel">'+x[2]+' &#9662;</span></div><button class="btn gh" style="margin-top:12px;padding:6px 12px">Configure</button></div>'}).join('');
+function go(id){A('.screen').forEach(function(s){s.classList.toggle('on',s.id===id)});var m={cop:'create',qc:'pipe'}[id]||id;A('.nav').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-go')===m)});$('main').scrollTop=0}
+document.addEventListener('click',function(e){var g=e.target.closest('[data-go]');if(g){go(g.getAttribute('data-go'));return}
+var t=e.target.closest('[data-tab]');if(t){A('[data-tab]').forEach(function(x){x.classList.toggle('on',x===t)});$('#bd').style.display=t.getAttribute('data-tab')==='bd'?'block':'none';$('#hs').style.display=t.getAttribute('data-tab')==='hs'?'block':'none'}
+var p=e.target.closest('[data-pane]');if(p){A('[data-pane]').forEach(function(x){x.classList.toggle('on',x===p)});A('.pane').forEach(function(x){x.classList.toggle('on',x.id===p.getAttribute('data-pane'))})}
+var ba=e.target.closest('[data-ba]');if(ba){$('#adv').style.display=ba.getAttribute('data-ba')==='a'?'block':'none'}
+var s=e.target.closest('.sw');if(s){s.classList.toggle('on');if(s.id==='fo')setOff(s.classList.contains('on'))}
+var sg=e.target.closest('.sg i');if(sg){sg.parentNode.querySelectorAll('i').forEach(function(x){x.classList.remove('on')});sg.classList.add('on')}
+var en=e.target.closest('#eg i');if(en){if(!en.classList.contains('dis'))tier=en.getAttribute('data-e');eng()}
+var th=e.target.closest('.sc .th');if(th){A('.sc .th').forEach(function(x){x.classList.remove('on')});th.classList.add('on');$('.pv .th').innerHTML=th.innerHTML}});
+var tier='p';
+function eng(){var off=document.body.classList.contains('offline');if(off&&tier==='p')tier='f';A('#eg i').forEach(function(x){var k=x.getAttribute('data-e');x.classList.toggle('on',k===tier);x.classList.toggle('dis',off&&k==='p')});var free=tier==='f';$('#ec').textContent=free?'$0.00':'~$0.75';$('#qcost').textContent=free?'$0.00':'~$0.75';$('#qb').textContent=free?'Local and free-tier engines, no paid calls':'Narration $0.12, b-roll $0.38, render $0.25'}
+function setOff(v){document.body.classList.toggle('offline',v);$('#fo').classList.toggle('on',v);eng()}
+$('#cn').addEventListener('click',function(){setOff(!document.body.classList.contains('offline'))});
+$('#tg').addEventListener('click',function(){$('#app').classList.toggle('c')});
+A('[data-t]').forEach(function(el){el.innerHTML=sv(el.getAttribute('data-t'))});
+$('#ap').addEventListener('click',function(){$('#qs').className='tag t-o';$('#qs').textContent='Approved · Rendering';this.textContent='Rendering started'});
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Job {{ job.id }} - CONTENT-FACTORY{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/" class="text-indigo-600 hover:underline mb-2 inline-block"><i class="fas fa-arrow-left mr-1"></i>Back to Dashboard</a>
+    <h1 class="text-3xl font-bold text-gray-900">Job #{{ job.id }} — {{ job.niche }}</h1>
+    <div class="flex items-center space-x-4 mt-2">
+        <span class="stage-badge stage-{{ job.current_stage.lower() }}">{{ job.current_stage }}</span>
+        <span class="status-badge status-{{ job.status.value.lower() }}">{{ job.status.value }}</span>
+        <span class="text-sm text-gray-500">Created: {{ job.created_at.strftime('%Y-%m-%d %H:%M') if job.created_at else 'N/A' }}</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Pipeline Stages</h2>
+            </div>
+            <div class="p-6">
+                <div class="relative">
+                    <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    {% for stage in ['IDEA', 'RESEARCH', 'SCRIPT', 'QC1', 'STYLE', 'ART', 'VIDEO', 'QC2', 'POST', 'ANALYZE'] %}
+                    {% set is_current = job.current_stage == stage %}
+                    {% set is_completed = ['IDEA', 'RESEARCH', 'SCRIPT', 'QC1', 'STYLE', 'ART', 'VIDEO', 'QC2', 'POST', 'ANALYZE'].index(stage) < ['IDEA', 'RESEARCH', 'SCRIPT', 'QC1', 'STYLE', 'ART', 'VIDEO', 'QC2', 'POST', 'ANALYZE'].index(job.current_stage) %}
+                    <div class="relative pl-16 pb-8 {% if not loop.last %}{% endif %}">
+                        <div class="absolute left-0 top-1 w-3 h-3 rounded-full border-2 {% if is_completed %}bg-green-500 border-green-500{% elif is_current %}bg-indigo-500 border-indigo-500{% else %}bg-white border-gray-300{% endif %}"></div>
+                        <div class="ml-4">
+                            <span class="stage-badge stage-{{ stage.lower() }}">{{ stage }}</span>
+                            {% if is_current %}<span class="ml-2 text-sm text-indigo-600 font-medium">Current</span>{% endif %}
+                            {% if is_completed %}<span class="ml-2 text-sm text-green-600 font-medium">Done</span>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Assets</h2>
+            </div>
+            <div class="p-6">
+                {% if assets %}
+                <div class="space-y-4">
+                    {% for asset in assets %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-gray-100 rounded-lg">
+                                    {% if asset.asset_type == 'script' %}<i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                                    {% elif asset.asset_type == 'video' %}<i class="fas fa-video text-red-600 text-xl"></i>
+                                    {% elif asset.asset_type == 'image' %}<i class="fas fa-image text-purple-600 text-xl"></i>
+                                    {% elif asset.asset_type == 'research' %}<i class="fas fa-search text-blue-600 text-xl"></i>
+                                    {% elif asset.asset_type == 'style' %}<i class="fas fa-palette text-pink-600 text-xl"></i>
+                                    {% elif asset.asset_type == 'shotlist' %}<i class="fas fa-list text-orange-600 text-xl"></i>
+                                    {% else %}<i class="fas fa-file text-gray-600 text-xl"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 capitalize">{{ asset.asset_type }}</p>
+                                    <p class="text-sm text-gray-500">{{ asset.stage }} • {{ asset.created_at.strftime('%m/%d %H:%M') if asset.created_at else '' }}</p>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                {% if asset.metadata_json %}
+                                <button onclick="showMeta({{ asset.metadata_json|tojson }})" class="text-indigo-600 hover:underline">View Meta</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No assets yet</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Configuration</h2>
+            </div>
+            <div class="p-6">
+                <pre class="bg-gray-50 p-4 rounded text-sm overflow-auto">{{ job.config_json|tojson(indent=2) }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Analytics</h3>
+            {% if analytics %}
+            <div class="space-y-3">
+                {% for a in analytics %}
+                <div class="border-b border-gray-100 pb-3 last:border-0">
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <span class="text-gray-500">Views</span><span class="font-medium">{{ a.views or 0 }}</span>
+                        <span class="text-gray-500">Likes</span><span class="font-medium">{{ a.likes or 0 }}</span>
+                        <span class="text-gray-500">Comments</span><span class="font-medium">{{ a.comments or 0 }}</span>
+                        <span class="text-gray-500">Shares</span><span class="font-medium">{{ a.shares or 0 }}</span>
+                        <span class="text-gray-500">Avg Watch</span><span class="font-medium">{{ "%.1f"|format(a.avg_watch_time or 0) }}s</span>
+                        <span class="text-gray-500">CTR</span><span class="font-medium">{{ "%.2f"|format((a.ctr or 0)*100) }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No analytics data yet</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+            <div class="space-y-2">
+                {% if job.status.value in ['PENDING', 'RUNNING'] and job.current_stage in ['SCRIPT', 'QC1', 'QC2'] %}
+                <button onclick="approveJob({{ job.id }})" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-check mr-2"></i>Approve Stage
+                </button>
+                <button onclick="rejectJob({{ job.id }})" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition">
+                    <i class="fas fa-times mr-2"></i>Reject Stage
+                </button>
+                {% endif %}
+                {% if job.current_stage == 'AWAITING_PREMIUM' %}
+                <button class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">
+                    <i class="fas fa-upload mr-2"></i>Upload Premium Video
+                </button>
+                {% endif %}
+                {% if job.current_stage == 'POST' %}
+                <button onclick="postJob({{ job.id }})" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-share mr-2"></i>Post to Platforms
+                </button>
+                {% endif %}
+                <a href="/job/{{ job.id }}/logs" class="block w-full text-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <i class="fas fa-history mr-2"></i>View Logs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="metaModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Asset Metadata</h3>
+            <button onclick="document.getElementById('metaModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <pre id="metaContent" class="bg-gray-50 p-4 rounded text-sm overflow-auto"></pre>
+    </div>
+</div>
+
+<script>
+function showMeta(meta) {
+    document.getElementById('metaContent').textContent = JSON.stringify(meta, null, 2);
+    document.getElementById('metaModal').classList.remove('hidden');
+}
+
+document.getElementById('metaModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('metaModal')) {
+        document.getElementById('metaModal').classList.add('hidden');
+    }
+});
+
+async function postJob(jobId) {
+    const res = await fetch(`/api/jobs/${jobId}/post`, { method: 'POST' });
+    if (res.ok) {
+        alert('Posting initiated!');
+        location.reload();
+    } else {
+        alert('Failed to initiate posting');
+    }
+}
+</script>
+{% endblock %}

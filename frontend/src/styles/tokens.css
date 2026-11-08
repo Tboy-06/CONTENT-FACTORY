@@ -1,0 +1,42 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0e17;
+  --gl: rgba(255, 255, 255, 0.045);
+  --gl2: rgba(255, 255, 255, 0.08);
+  --ln: rgba(255, 255, 255, 0.1);
+  --tx: #f1f4fc;
+  --mu: #97a0b8;
+  --ac: #3b82f6;
+  --ac2: #0284c7;
+  --ok: #10b981;
+  --wa: #f59e0b;
+  --er: #ef4444;
+}
+
+body {
+  background: radial-gradient(800px 460px at 10% -10%, rgba(59,130,246,.12), transparent 60%),
+              radial-gradient(700px 460px at 100% 0, rgba(2,132,199,.08), transparent 60%),
+              var(--bg);
+  background-attachment: fixed;
+  color: var(--tx);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Glass effect utilities */
+.glass-panel {
+  background: var(--gl);
+  border: 1px solid var(--ln);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--ac), var(--ac2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
