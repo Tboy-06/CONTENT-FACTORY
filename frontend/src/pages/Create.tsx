@@ -1,30 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Loader2 } from 'lucide-react';
-import { Button, Card, EmptyState } from '../components/ui';
+import { Zap, Loader2, Sparkles } from 'lucide-react';
+import { Button, Card } from '../components/ui';
 import { useCreateInstantJob } from '../api/client';
 
-const creationModes = [
-  { id: 'idea', title: 'From idea', desc: 'Turn your idea into a video', bg: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'clone', title: 'Clone a video', desc: 'Reuse a reference video\'s structure', bg: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'shorts', title: 'Create shorts', desc: 'YouTube Shorts, TikTok, Reels', bg: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'ugc', title: 'Create UGC', desc: 'Creator-style product videos', bg: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'url', title: 'From URL', desc: 'Turn a blog post into a video', bg: 'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' },
-  { id: 'clip', title: 'Clip a long video', desc: 'Cut your own footage into shorts', bg: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }
+const styles = [
+  { id: 'dark_doc', label: 'Dark Documentary' },
+  { id: 'vintage_35', label: 'Vintage 35mm' },
+  { id: 'cyberpunk', label: 'Cyberpunk' },
+  { id: 'minimalist', label: 'Minimalist' }
 ];
 
 const voices = [
-  { id: 'en-US-AriaNeural', label: 'Aria (Female, Clear)' },
   { id: 'en-US-ChristopherNeural', label: 'Christopher (Male, Storytelling)' },
+  { id: 'en-US-AndrewNeural', label: 'Andrew (Male, Serious)' },
   { id: 'en-US-GuyNeural', label: 'Guy (Male, Conversational)' },
-  { id: 'en-US-JennyNeural', label: 'Jenny (Female, Energetic)' }
+  { id: 'en-US-AriaNeural', label: 'Aria (Female, Clear)' }
 ];
 
 export default function Create() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [instantTopic, setInstantTopic] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('en-US-AriaNeural');
+  const [selectedVoice, setSelectedVoice] = useState('en-US-ChristopherNeural');
+  const [selectedStyle, setSelectedStyle] = useState('dark_doc');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState('');
 
@@ -38,7 +37,7 @@ export default function Create() {
   const handleInstantGenerate = async () => {
     if (!instantTopic.trim() || isGenerating) return;
     setIsGenerating(true);
-    setGenerationStep('1/4: Generating script & scene breakdown...');
+    setGenerationStep('1/4: Writing Script...');
 
     try {
       const res = await instantMutation.mutateAsync({
@@ -46,11 +45,13 @@ export default function Create() {
         voice: selectedVoice
       });
 
-      setGenerationStep('2/4: Generating voiceover with Edge-TTS...');
-      setTimeout(() => setGenerationStep('3/4: Assembling 9:16 vertical MP4...'), 3000);
+      setGenerationStep('2/4: Generating Voice & Subs...');
+      setTimeout(() => setGenerationStep('3/4: Fetching Visuals...'), 3000);
       setTimeout(() => {
-        setGenerationStep('4/4: Ready for Quality Review!');
-        navigate(`/qc1/${res.id}`);
+        setGenerationStep('4/4: FFmpeg Rendering...');
+        setTimeout(() => {
+          navigate(`/qc1/${res.id}`);
+        }, 3000);
       }, 7000);
     } catch (e) {
       console.error(e);
@@ -64,7 +65,7 @@ export default function Create() {
       <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight">Create a New Video</h1>
-          <div className="text-[var(--mu)] text-[13px]">Enter a topic for instant generation or choose an advanced method.</div>
+          <div className="text-[var(--mu)] text-[13px]">Enter a topic to launch the 4-step documentary engine.</div>
         </div>
       </div>
 
@@ -76,42 +77,62 @@ export default function Create() {
               <Zap size={18} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white">Instant 1-Click Video (Zero Cost)</h2>
-              <p className="text-xs text-[var(--mu)]">Direct 4-step pipeline: Script + Edge-TTS Voice + Subtitles + 9:16 Render straight to QC1</p>
+              <h2 className="text-base font-semibold text-white">Documentary Studio</h2>
+              <p className="text-xs text-[var(--mu)]">Turn your idea into a video in 3 minutes.</p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-1">
-          <input
-            type="text"
-            placeholder='Enter topic, e.g. "3 psychological tricks people use on you" or "Why the Roman Empire fell"'
-            value={instantTopic}
-            onChange={(e) => setInstantTopic(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleInstantGenerate()}
-            disabled={isGenerating}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--gl)] border border-[var(--ln)] text-[var(--tx)] text-sm outline-none focus:border-blue-500 transition-colors"
-          />
+        <div className="flex flex-col gap-3 pt-1">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative flex">
+              <input
+                type="text"
+                placeholder='Enter topic, e.g. "How the CIA used cats as spies"'
+                value={instantTopic}
+                onChange={(e) => setInstantTopic(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleInstantGenerate()}
+                disabled={isGenerating}
+                className="flex-1 px-4 py-2.5 rounded-l-lg bg-[var(--gl)] border border-[var(--ln)] text-[var(--tx)] text-sm outline-none focus:border-blue-500 transition-colors"
+              />
+              <Button variant="ghost" className="rounded-l-none rounded-r-lg bg-[var(--gl2)] hover:bg-[var(--gl)] !border-l-0 text-amber-400" title="Brainstorm 3 Viral Hooks">
+                <Sparkles size={16} />
+              </Button>
+            </div>
+          </div>
 
-          <select
-            value={selectedVoice}
-            onChange={(e) => setSelectedVoice(e.target.value)}
-            disabled={isGenerating}
-            className="px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--ln)] text-xs text-[var(--tx)] outline-none focus:border-blue-500"
-          >
-            {voices.map((v) => (
-              <option key={v.id} value={v.id}>{v.label}</option>
-            ))}
-          </select>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <select
+              value={selectedStyle}
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              disabled={isGenerating}
+              className="flex-1 px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--ln)] text-xs text-[var(--tx)] outline-none focus:border-blue-500"
+            >
+              {styles.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
 
-          <Button
-            onClick={handleInstantGenerate}
-            disabled={!instantTopic.trim() || isGenerating}
-            className="flex items-center gap-2 whitespace-nowrap !px-5"
-          >
-            {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-            {isGenerating ? 'Building Video...' : 'Generate Video'}
-          </Button>
+            <select
+              value={selectedVoice}
+              onChange={(e) => setSelectedVoice(e.target.value)}
+              disabled={isGenerating}
+              className="flex-1 px-3 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--ln)] text-xs text-[var(--tx)] outline-none focus:border-blue-500"
+            >
+              {voices.map((v) => (
+                <option key={v.id} value={v.id}>{v.label}</option>
+              ))}
+            </select>
+
+            <Button
+              onClick={handleInstantGenerate}
+              disabled={!instantTopic.trim() || isGenerating}
+              className="flex items-center gap-2 whitespace-nowrap !px-8 h-[42px]"
+            >
+              {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+              {isGenerating ? 'Building Video...' : 'Generate Short'}
+            </Button>
+          </div>
         </div>
 
         {isGenerating && (
