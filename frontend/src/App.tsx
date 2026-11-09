@@ -4,15 +4,12 @@ import { LayoutDashboard, PlusCircle, AlignEndHorizontal, Vault as VaultIcon, Bo
 import { useConnectivity } from './lib/connectivity';
 import { useSpend } from './api/client';
 import Create from './pages/Create';
-import Copilot from './pages/Copilot';
 import Pipeline from './pages/Pipeline';
 import QC1 from './pages/QC1';
 import Vault from './pages/Vault';
 import Settings from './pages/Settings';
 import Dashboard from './pages/Dashboard';
 import Agents from './pages/Agents';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
 
 const NavItem = ({ to, icon: Icon, label, isCollapsed }: any) => {
   const navigate = useNavigate();
@@ -66,9 +63,9 @@ export default function App() {
           </div>
           {!isCollapsed && (
             <div className="flex items-center gap-2 px-1 text-[11px] text-[var(--mu)]">
-              <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
-              <span>·</span>
-              <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+
+
+
             </div>
           )}
         </div>
@@ -87,7 +84,7 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              <span>Paid spend <b className="text-[var(--tx)] font-medium">${spend != null ? spend.toFixed(2) : '0.00'}</b> of $50 cap</span>
+              <span>Disk Space <b className="text-[var(--tx)] font-medium">10 GB</b> Free</span>
               <div className="h-[5px] w-[90px] rounded-sm bg-[var(--gl2)] overflow-hidden mt-[1px]">
                 <div className="h-full w-[37%] bg-blue-500" />
               </div>
@@ -108,14 +105,11 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/create" element={<Create />} />
-            <Route path="/copilot/:mode" element={<Copilot />} />
             <Route path="/pipeline" element={<Pipeline />} />
             <Route path="/qc1/:id" element={<QC1 />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
           </Routes>
         </main>
       </div>

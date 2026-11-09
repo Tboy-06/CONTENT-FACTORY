@@ -111,7 +111,7 @@ export default function Pipeline() {
             </thead>
             <tbody>
               {jobs.map((job: any) => {
-                const isError = job.status === 'ERROR';
+                const isError = job.status === 'FAILED';
                 const isDone = job.status === 'COMPLETED';
                 const isQC = job.status === 'AWAITING_APPROVAL';
                 return (

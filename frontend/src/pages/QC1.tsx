@@ -4,8 +4,6 @@ import { useJobs, useApproveJob, useRejectJob } from '../api/client';
 import { Thumbnail } from '../components/Thumbnails';
 import { Button, Badge, Tabs } from '../components/ui';
 import { useConnectivity } from '../lib/connectivity';
-import { Film } from 'lucide-react';
-import VideoStudioModal from '../components/VideoStudioModal';
 
 export default function QC1() {
   const { id } = useParams();
@@ -13,9 +11,8 @@ export default function QC1() {
   const isOnline = useConnectivity();
   const { data: jobs = [] } = useJobs();
   
-  const [activeTab, setActiveTab] = useState('Script');
+  const [activeTab, setActiveTab] = useState('Scenes');
   const [activeThumb, setActiveThumb] = useState('mountain');
-  const [isStudioOpen, setIsStudioOpen] = useState(false);
   
   const approveMutation = useApproveJob();
   const rejectMutation = useRejectJob();
@@ -89,29 +86,10 @@ export default function QC1() {
 
         {/* Right Side: Script & Config */}
         <div className="glass-panel p-4 flex flex-col min-h-0">
-          <Tabs tabs={['Script', 'Scenes', 'Visuals']} activeTab={activeTab} onChange={setActiveTab} />
+          <Tabs tabs={['Scenes']} activeTab={activeTab} onChange={setActiveTab} />
           
           <div className="flex-1 overflow-auto text-[13px] mb-4">
-            {activeTab === 'Script' && (
-              <div className="space-y-4">
-                <b>Title: {job.niche}</b>
-                <div>
-                  <b>Hook (0:00 to 0:08)</b><br/>
-                  <span className="text-[var(--mu)]">Your future self will thank you for what you do today.</span>
-                </div>
-                <div>
-                  <b>Body (0:08 to 0:54)</b><br/>
-                  <span className="text-[var(--mu)]">Scene 1: Morning routine. Scene 2: Focus and productivity. Scene 3: Small changes, big results.</span>
-                </div>
-                <div>
-                  <b>CTA (0:54 to 1:00)</b><br/>
-                  <span className="text-[var(--mu)]">Start today. Your future self is waiting.</span>
-                </div>
-                <div>
-                  <b>Narration</b> <span className="text-[var(--mu)]">AI voice ({job.config?.voice || 'Alloy'})</span>
-                </div>
-              </div>
-            )}
+
             {activeTab === 'Scenes' && (
               <div className="space-y-2 text-[var(--mu)]">
                 <p>1. Sunrise, window light · 8s</p>
@@ -122,18 +100,7 @@ export default function QC1() {
                 <p>6. End card · 6s</p>
               </div>
             )}
-            {activeTab === 'Visuals' && (
-              <div className="space-y-4">
-                <div>
-                  <b>Visual prompts</b><br/>
-                  <span className="text-[var(--mu)]">{job.config?.visualStyle || 'Cinematic'}, natural lighting, modern lifestyle.</span>
-                </div>
-                <div>
-                  <b>Scene 4</b> <Badge variant="warning">Premium asset</Badge><br/>
-                  <span className="text-[var(--mu)]">Aerial city at dawn needs a premium clip.</span>
-                </div>
-              </div>
-            )}
+
           </div>
           
           <div className="glass-panel p-3 bg-transparent flex justify-between items-center mb-3">
@@ -161,9 +128,6 @@ export default function QC1() {
 
           <div className="flex gap-2 justify-end flex-wrap mt-auto">
             <Button variant="ghost" className="!bg-[rgba(255,107,122,0.1)] !text-[var(--er)] !border-[rgba(255,107,122,0.4)]" onClick={handleReject} disabled={rejectMutation.isPending || isApproved}>Reject</Button>
-            <Button variant="ghost" className="!border-[var(--ac)] text-[var(--ac)] hover:bg-[var(--ac)]/10 flex items-center gap-1.5" onClick={() => setIsStudioOpen(true)}>
-              <Film size={15} /> Edit in Studio (OpenCut / Nuzky)
-            </Button>
             <Button onClick={handleApprove} disabled={approveMutation.isPending || isApproved}>
               {isApproved ? 'Rendering started' : 'Approve and continue'}
             </Button>
@@ -171,11 +135,6 @@ export default function QC1() {
         </div>
       </div>
 
-      <VideoStudioModal 
-        isOpen={isStudioOpen} 
-        onClose={() => setIsStudioOpen(false)} 
-        job={job} 
-      />
     </div>
   );
 }

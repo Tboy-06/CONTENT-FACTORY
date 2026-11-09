@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     # LLM & Vision (Google AI Studio FREE tier)
     # ------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google AI Studio API key")
-    gemini_model: str = Field(default="gemini-3.6-flash", description="Default LLM model")
-    gemini_pro_model: str = Field(default="gemini-3.7-flash", description="Pro model for complex tasks")
-    gemini_vision_model: str = Field(default="gemini-3.7-flash", description="Vision model for video analysis")
+    gemini_model: str = Field(default="gemini-2.5-flash", description="Default LLM model")
+    gemini_pro_model: str = Field(default="gemini-2.5-pro", description="Pro model for complex tasks")
+    gemini_vision_model: str = Field(default="gemini-2.5-pro", description="Vision model for video analysis")
 
     # ------------------------------------------------------------------
     # Images
@@ -33,9 +33,9 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Video & Editors (FFmpeg, Nuzky, OpenCut)
     # ------------------------------------------------------------------
-    video_engine: str = Field(default="nuzky", description="nuzky | ffmpeg | veo (manual)")
+    video_engine: str = Field(default="ffmpeg", description="ffmpeg | ffmpeg | veo (manual)")
     ffmpeg_path: str = Field(default="ffmpeg", description="FFmpeg binary path")
-    nuzky_cli_path: str = Field(default="nuzky-cli", description="Nuzky CLI binary path")
+    ffmpeg_cli_path: str = Field(default="ffmpeg-cli", description="Nuzky CLI binary path")
     opencut_url: str = Field(default="https://opencut.app", description="OpenCut web editor URL or local instance")
 
     # ------------------------------------------------------------------

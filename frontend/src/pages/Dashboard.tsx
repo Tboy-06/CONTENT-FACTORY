@@ -47,17 +47,10 @@ export default function Dashboard() {
         
         <div className="glass-panel flex justify-between items-center p-5">
           <div>
-            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Spend this month</div>
-            <b className="text-3xl">${spend != null ? spend.toFixed(2) : '0.00'}</b>
+            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Temp Folder</div>
+            <b className="text-3xl">420 MB</b>
           </div>
-          <div className="text-[var(--mu)] text-[13px] bg-[var(--gl2)] px-2.5 py-1 rounded-lg">of $50 cap</div>
-        </div>
-        
-        <div className="glass-panel flex justify-between items-center p-5">
-          <div>
-            <div className="text-[var(--mu)] text-[13px] font-medium mb-1">Storage</div>
-            <b className="text-3xl">12 GB</b>
-          </div>
+          <Button variant="ghost" className="text-xs py-1 h-auto text-[var(--mu)] bg-[var(--gl2)] px-2.5 rounded-lg hover:bg-[var(--ac)] hover:text-white transition-colors">Clear Cache</Button>
         </div>
       </div>
 

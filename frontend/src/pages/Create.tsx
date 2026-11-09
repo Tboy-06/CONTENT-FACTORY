@@ -122,39 +122,6 @@ export default function Create() {
         )}
       </Card>
 
-      {/* Alternative Advanced Modes Header */}
-      <div className="pt-2">
-        <h2 className="text-sm font-semibold text-slate-300 mb-1">Advanced Multi-Agent Workflows</h2>
-        <p className="text-xs text-[var(--mu)] mb-3">Optional deep exploration pipelines with research scraping and character bibles.</p>
-
-        {isLoading ? (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="glass-panel overflow-hidden animate-pulse h-[200px]" />
-            ))}
-          </div>
-        ) : creationModes.length === 0 ? (
-          <EmptyState title="No creation modes" description="There are no creation methods available right now." />
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-            {creationModes.map((mode) => (
-              <div 
-                key={mode.id}
-                onClick={() => navigate(`/copilot/${mode.id}`)}
-                className="glass-panel overflow-hidden cursor-pointer group hover:border-blue-500/50 hover:shadow-lg transition-all flex flex-col h-[260px] !p-0"
-              >
-                <div className="h-[130px] w-full bg-cover bg-center relative" style={{backgroundImage: `url('${mode.bg}')`}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] to-transparent" />
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="text-[15px] font-semibold mb-1 group-hover:text-blue-400 transition-colors">{mode.title}</h3>
-                  <p className="text-[12px] text-[var(--mu)] leading-relaxed flex-1">{mode.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
