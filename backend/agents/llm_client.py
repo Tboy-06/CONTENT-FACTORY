@@ -106,9 +106,9 @@ class GeminiClient:
 
         candidate_models = [
             model or self.model_name,
-            "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
-            "gemini-3.6-flash"
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-pro",
         ]
         response = None
         last_error = None

@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     # LLM & Vision (Google AI Studio FREE tier)
     # ------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google AI Studio API key")
-    gemini_model: str = Field(default="gemini-3.5-flash-lite", description="Default LLM model")
-    gemini_pro_model: str = Field(default="gemini-3.5-flash-lite", description="Pro model for complex tasks")
-    gemini_vision_model: str = Field(default="gemini-3.5-flash-lite", description="Vision model for video analysis")
+    gemini_model: str = Field(default="gemini-2.5-flash", description="Default LLM model")
+    gemini_pro_model: str = Field(default="gemini-2.5-flash", description="Pro model for complex tasks")
+    gemini_vision_model: str = Field(default="gemini-2.5-flash", description="Vision model for video analysis")
 
     # ------------------------------------------------------------------
     # Images

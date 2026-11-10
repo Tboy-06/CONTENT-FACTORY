@@ -212,10 +212,10 @@ async def ask_brain(
                 full_prompt += "\nOutput strictly a valid JSON object or array."
 
             candidate_models = [
-                cfg.gemini_model or "gemini-3.5-flash-lite",
-                "gemini-3.5-flash-lite",
-                "gemini-3.1-flash-lite",
-                "gemini-3.6-flash",
+                cfg.gemini_model or "gemini-2.5-flash",
+                "gemini-2.5-flash",
+                "gemini-2.5-flash-lite",
+                "gemini-2.5-pro",
             ]
             # Deduplicate preserving order
             seen_models = set()

@@ -98,8 +98,8 @@ async def list_models() -> JSONResponse:
     return JSONResponse({
         "object": "list",
         "data": [
-            {"id": "gemini-3.5-flash-lite", "object": "model", "owned_by": "google"},
-            {"id": "gemini-3.6-flash", "object": "model", "owned_by": "google"},
+            {"id": "gemini-2.5-flash", "object": "model", "owned_by": "google"},
+            {"id": "gemini-2.5-flash-lite", "object": "model", "owned_by": "google"},
             {"id": "spark-x2.5-4b", "object": "model", "owned_by": "local"}
         ]
     })
