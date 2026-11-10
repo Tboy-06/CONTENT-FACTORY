@@ -20,6 +20,8 @@ class InstantJobRequest(BaseModel):
     topic: str
     voice: Optional[str] = "en-US-AriaNeural"
     style_preset: Optional[str] = "Dark Documentary"
+    aspect_ratio: Optional[str] = "9:16"
+    duration: Optional[str] = "45s"
 
 class BrainstormRequest(BaseModel):
     topic: str
@@ -142,9 +144,14 @@ async def get_spend():
 @router.post('/instant')
 async def create_instant_job(req: InstantJobRequest):
     logger.info(f"Received instant video creation request: {req.topic} (style: {req.style_preset}, voice: {req.voice})")
+    aspect_ratio = req.aspect_ratio or "9:16"
+    duration = req.duration or "45s"
+    platforms = ["YouTube Channel", "Vimeo"] if aspect_ratio == "16:9" else ["TikTok", "Instagram Reels", "YouTube Shorts"]
+
     config = {
-        "format": "9:16",
-        "platforms": ["TikTok", "Instagram Reels", "YouTube Shorts"],
+        "format": aspect_ratio,
+        "duration": duration,
+        "platforms": platforms,
         "premium": False,
         "mode": "Instant 1-Click",
         "voice": req.voice or "en-US-AriaNeural",
@@ -153,12 +160,14 @@ async def create_instant_job(req: InstantJobRequest):
     job = await repository.create_job(niche=req.topic, config=config, priority=1)
     await repository.update_job_status(job.id, JobStatus.RUNNING, "SCRIPT")
     
-    # Launch instant 4-step pipeline in background
+    # Launch instant documentary pipeline in background
     asyncio.create_task(run_instant_pipeline(
         job.id,
         req.topic,
         req.voice or "en-US-AriaNeural",
-        req.style_preset or "Dark Documentary"
+        req.style_preset or "Dark Documentary",
+        aspect_ratio,
+        duration
     ))
     
     return {

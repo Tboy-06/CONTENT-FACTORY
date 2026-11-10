@@ -17,6 +17,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from backend.engine.brain import ask_brain
+from backend.engine.vault_graph import query_director_vault, log_script_to_vault
 
 logger = logging.getLogger("engine.planner")
 
@@ -264,14 +265,24 @@ def generate_fallback_manifest(topic: str, job_id: int) -> Dict[str, Any]:
     }
 
 
-async def plan_documentary(topic: str, job_id: int) -> Dict[str, Any]:
+async def plan_documentary(
+    topic: str,
+    job_id: int,
+    aspect_ratio: str = "9:16",
+    duration_target: float = 45.0
+) -> Dict[str, Any]:
     """
     Coordinates with brain.py to create the full documentary manifest.
+    Supports both 9:16 vertical shorts and 16:9 horizontal YouTube channel documentaries.
+    Consults the Obsidian director vault for proven hooks and style rules.
     Falls back gracefully if Ollama / cloud models are unreachable.
     """
-    logger.info(f"[Planner] Generating documentary beat plan for: '{topic}' (Job #{job_id})")
+    format_label = "16:9 horizontal YouTube documentary" if aspect_ratio == "16:9" else "9:16 vertical documentary short"
+    logger.info(f"[Planner] Generating {format_label} beat plan for: '{topic}' (Job #{job_id})")
 
-    prompt = f"Plan a 45-second high-retention vertical documentary short on the topic: '{topic}'."
+    # Retrieve connected directing principles from Obsidian Second Brain
+    vault_context = query_director_vault(topic)
+    prompt = f"Plan a {int(duration_target)}-second high-retention {format_label} on the topic: '{topic}'.{vault_context}"
 
     try:
         raw_json_str = await ask_brain(
@@ -288,13 +299,38 @@ async def plan_documentary(topic: str, job_id: int) -> Dict[str, Any]:
                 parsed["job_id"] = job_id
                 parsed["topic"] = topic
                 parsed["style"] = "editor-v1"
-                parsed["duration_target"] = 45.0
+                parsed["aspect_ratio"] = aspect_ratio
+                parsed["duration_target"] = duration_target
+                
+                # Tag all beats with aspect_ratio
+                all_beats = []
+                for s in parsed.get("sentences", []):
+                    for b in s.get("beats", []):
+                        b["aspect_ratio"] = aspect_ratio
+                        all_beats.append(b)
+
+                hook_txt = parsed["sentences"][0].get("text", "")
+                log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", all_beats)
+                
                 return parsed
     except Exception as e:
         logger.info(f"[Planner] Brain offline/unavailable ({e}). Engaging documentary generator.")
 
     # Generate reliable fallback manifest
     manifest = generate_fallback_manifest(topic, job_id)
+    manifest["aspect_ratio"] = aspect_ratio
+    manifest["duration_target"] = duration_target
+    
+    # Tag all beats with aspect_ratio
+    fb_beats = []
+    for s in manifest.get("sentences", []):
+        for b in s.get("beats", []):
+            b["aspect_ratio"] = aspect_ratio
+            fb_beats.append(b)
+
+    hook_txt = manifest["sentences"][0].get("text", "") if manifest.get("sentences") else ""
+    log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", fb_beats)
+    
     return manifest
 
 

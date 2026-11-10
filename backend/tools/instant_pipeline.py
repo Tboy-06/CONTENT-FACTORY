@@ -186,16 +186,23 @@ async def render_video_from_scenes(job_id: int, scenes: List[Dict[str, Any]], au
     return True
 
 
-async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-AriaNeural", style_preset: str = "Dark Documentary") -> Dict[str, Any]:
+async def run_instant_pipeline(
+    job_id: int,
+    topic: str,
+    voice: str = "en-US-AriaNeural",
+    style_preset: str = "Dark Documentary",
+    aspect_ratio: str = "9:16",
+    duration: str = "45s"
+) -> Dict[str, Any]:
     """
     Unified Documentary Engine Pipeline:
-    1. Plan 8-sentence documentary beat sheet with 16 rapid visual cuts (planner.py)
+    1. Plan documentary beat sheet with rapid visual cuts (planner.py, supports 9:16 Shorts & 16:9 Long-Form)
     2. Edge-TTS narration + word-level timestamps + karaoke .ASS subtitle generation (audio_subs.py)
-    3. Render 16 rapid beats with Ken Burns zoom, archival treatments, and transition SFX (assembler.py)
+    3. Render rapid beats with Ken Burns zoom, archival treatments, and transition SFX (assembler.py)
     4. 2-Pass FFmpeg master assembly with ducked BGM, SFX audio mixing, and subtitle burn
     5. Save OpenCut timeline & register SQLite Vault assets -> Route to QC1
     """
-    logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}'")
+    logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}' ({aspect_ratio}, {duration})")
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     output_dir = os.path.join(repo_root, "output")
     job_dir = os.path.join(repo_root, "jobs", str(job_id))
@@ -204,13 +211,27 @@ async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-Aria
     os.makedirs(temp_dir, exist_ok=True)
     os.makedirs(job_dir, exist_ok=True)
 
+    # Parse target duration float
+    try:
+        dur_clean = re.sub(r"[^0-9.]", "", duration)
+        duration_target = float(dur_clean) if dur_clean else 45.0
+        if "m" in duration.lower():
+            duration_target *= 60.0
+    except Exception:
+        duration_target = 45.0
+
     try:
         # -------------------------------------------------------------
         # STEP 1: DOCUMENTARY SCRIPT & BEAT PLANNING
         # -------------------------------------------------------------
         await repository.create_stage(job_id, "SCRIPT")
         await repository.update_job_status(job_id, JobStatus.RUNNING, "SCRIPT")
-        manifest = await generate_documentary_plan(topic, job_id)
+        manifest = await generate_documentary_plan(
+            topic=topic,
+            job_id=job_id,
+            aspect_ratio=aspect_ratio,
+            duration_target=duration_target
+        )
 
         # -------------------------------------------------------------
         # STEP 2: AUDIO SYNTHESIS & KARAOKE SUBTITLES

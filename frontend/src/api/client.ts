@@ -92,8 +92,26 @@ export function useCreateJob() {
 
 export function useCreateInstantJob() {
   return useMutation({
-    mutationFn: async ({ topic, voice, style_preset }: { topic: string, voice?: string, style_preset?: string }) => {
-      const data = await api.post('/api/jobs/instant', { topic, voice, style_preset });
+    mutationFn: async ({
+      topic,
+      voice,
+      style_preset,
+      aspect_ratio,
+      duration
+    }: {
+      topic: string;
+      voice?: string;
+      style_preset?: string;
+      aspect_ratio?: string;
+      duration?: string;
+    }) => {
+      const data = await api.post('/api/jobs/instant', {
+        topic,
+        voice,
+        style_preset,
+        aspect_ratio,
+        duration
+      });
       return data;
     }
   });

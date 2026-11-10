@@ -23,12 +23,12 @@ from backend.engine.motion_cards import render_motion_card
 logger = logging.getLogger("engine.assembler")
 
 
-def _fetch_archival_image(prompt: str, target_path: str, timeout: float = 6.0) -> bool:
-    """Fetches high-quality 9:16 vertical image from Pollinations Flux with fast timeout."""
+def _fetch_archival_image(prompt: str, target_path: str, width: int = 720, height: int = 1280, timeout: float = 6.0) -> bool:
+    """Fetches high-quality image from Pollinations Flux with fast timeout."""
     try:
         clean_prompt = prompt.strip()[:180]
         encoded = urllib.parse.quote(f"{clean_prompt}, documentary archival 35mm film still")
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width=720&height=1280&model=flux&nologo=true&seed=42"
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&model=flux&nologo=true&seed=42"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with urllib.request.urlopen(req, timeout=timeout) as resp, open(target_path, "wb") as f:
             f.write(resp.read())
@@ -44,9 +44,19 @@ async def render_beat_pass1(
     job_dir: str,
     fps: int = 30
 ) -> str:
-    """Pass 1: Renders a single beat to beat_XX.mp4 with 9:16 framing, zoom, and transition SFX."""
+    """Pass 1: Renders a single beat to beat_XX.mp4 with 9:16 vertical or 16:9 horizontal framing, zoom, and transition SFX."""
     beat_id = beat["id"]
     duration = float(beat.get("duration", 1.5))
+    aspect_ratio = beat.get("aspect_ratio", "9:16")
+
+    # Dimensions: 16:9 (1920x1080) for YouTube channel vs 9:16 (1080x1920) for Shorts
+    if aspect_ratio == "16:9":
+        out_w, out_h = 1920, 1080
+        fetch_w, fetch_h = 1280, 720
+    else:
+        out_w, out_h = 1080, 1920
+        fetch_w, fetch_h = 720, 1280
+
     beats_dir = os.path.join(job_dir, "beats")
     os.makedirs(beats_dir, exist_ok=True)
 
@@ -60,7 +70,9 @@ async def render_beat_pass1(
             template=beat.get("template", "red_slam_word"),
             headline=beat.get("headline", "CONFIDENTIAL"),
             highlight=beat.get("highlight", "EVIDENCE"),
-            output_path=plate_path
+            output_path=plate_path,
+            width=out_w,
+            height=out_h
         )
     else:
         # Treated archival image plate
@@ -68,7 +80,7 @@ async def render_beat_pass1(
         prompt = beat.get("prompt", "declassified intelligence document archival photo")
 
         # Try online image fetch
-        fetched = await asyncio.to_thread(_fetch_archival_image, prompt, raw_img_path)
+        fetched = await asyncio.to_thread(_fetch_archival_image, prompt, raw_img_path, fetch_w, fetch_h)
         if fetched and os.path.exists(raw_img_path):
             apply_color_grade(raw_img_path, plate_path, grade=grade)
         else:
@@ -77,13 +89,15 @@ async def render_beat_pass1(
                 template="quote_box",
                 headline="ARCHIVAL EVIDENCE",
                 highlight=prompt[:45],
-                output_path=plate_path
+                output_path=plate_path,
+                width=out_w,
+                height=out_h
             )
             apply_color_grade(plate_path, plate_path, grade=grade)
 
     # 2. Build Cosine Zoompan Filter
     total_frames = max(30, int(duration * fps))
-    zoom_filter = f"zoompan=z='min(zoom+0.0012,1.20)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps={fps},trim=duration={duration}"
+    zoom_filter = f"zoompan=z='min(zoom+0.0012,1.20)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps},trim=duration={duration}"
 
     # 3. Locate transition SFX
     sfx_name = beat.get("sfx", "whoosh.wav")

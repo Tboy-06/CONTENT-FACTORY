@@ -30,6 +30,8 @@ export default function Create() {
   const [topic, setTopic] = useState('');
   const [stylePreset, setStylePreset] = useState('Dark Documentary');
   const [voice, setVoice] = useState('en-US-AriaNeural');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
+  const [duration, setDuration] = useState('45s');
   const [anchorFile, setAnchorFile] = useState<File | null>(null);
   const [anchorPreview, setAnchorPreview] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -74,7 +76,9 @@ export default function Create() {
       const res = await instantMutation.mutateAsync({
         topic: finalTopic,
         voice,
-        style_preset: stylePreset
+        style_preset: stylePreset,
+        aspect_ratio: aspectRatio,
+        duration
       });
 
       const jobId = res.id;
@@ -236,12 +240,46 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 4. Custom Visual Anchor (Optional Style Reference) */}
+          {/* 4. Aspect Ratio & Format */}
           <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              4. Format & Ratio
+            </label>
+            <select
+              value={aspectRatio}
+              onChange={(e) => setAspectRatio(e.target.value)}
+              disabled={isGenerating}
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="9:16">9:16 Vertical (Shorts, Reels, TikTok)</option>
+              <option value="16:9">16:9 Horizontal (YouTube Channel, Video Essay)</option>
+            </select>
+          </div>
+
+          {/* 5. Target Duration */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              5. Target Duration
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              disabled={isGenerating}
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="45s">45 Seconds (High-Tempo Short)</option>
+              <option value="60s">60 Seconds (Full Short)</option>
+              <option value="3m">3 Minutes (Standard Documentary Essay)</option>
+              <option value="5m">5 Minutes (Deep Investigation)</option>
+            </select>
+          </div>
+
+          {/* 6. Custom Visual Anchor (Optional Style Reference) */}
+          <div className="col-span-full space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                 <ImageIcon size={13} className="text-blue-400" />
-                <span>4. Visual Anchor / Reference Image (Optional)</span>
+                <span>6. Visual Anchor / Reference Image (Optional)</span>
               </label>
               {anchorFile && (
                 <span className="text-[10px] text-emerald-400 font-mono">Anchor attached</span>
