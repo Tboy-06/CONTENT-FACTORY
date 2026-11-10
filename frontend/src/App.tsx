@@ -36,10 +36,10 @@ export default function App() {
   const clearCacheMutation = useClearCache();
 
   return (
-    <div className={`grid min-h-screen w-full transition-all duration-200 ${isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[220px_1fr]'}`}>
+    <div className={`grid h-screen w-full overflow-hidden transition-all duration-200 ${isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[220px_1fr]'}`}>
       
-      {/* Sidebar - Sticky and scrollable if viewport is short */}
-      <aside className="border-r border-[var(--ln)] bg-[rgba(11,14,23,0.85)] p-[14px_10px] flex flex-col gap-1 overflow-y-auto sticky top-0 h-screen z-20">
+      {/* Sidebar - Pinned viewport height with independent scroll if needed */}
+      <aside className="border-r border-[var(--ln)] bg-[rgba(11,14,23,0.85)] p-[14px_10px] flex flex-col gap-1 overflow-y-auto h-full z-20">
         <div 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           className="flex items-center gap-2.5 p-[6px_8px] rounded-lg cursor-pointer mb-3 hover:bg-[var(--gl)]"
@@ -66,11 +66,15 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex flex-col min-w-0 min-h-screen relative">
-        {/* Top bar - Sticky with blur */}
-        <header className="sticky top-0 flex items-center justify-between gap-3 p-[12px_24px] border-b border-[var(--ln)] bg-[rgba(11,14,23,0.9)] backdrop-blur-md z-20 shrink-0">
-          <input type="text" placeholder="Search videos, scripts, jobs" className="flex-1 max-w-[340px] px-3 py-2 rounded-lg bg-[var(--gl)] border border-[var(--ln)] text-[var(--mu)] text-[13px] outline-none focus:border-[var(--ac)] transition-colors" />
+      {/* Main Content Area - Full height with top header & smooth vertical scrolling body */}
+      <div className="flex flex-col min-w-0 h-full overflow-hidden relative">
+        {/* Top bar - Fixed header */}
+        <header className="flex items-center justify-between gap-3 p-[12px_24px] border-b border-[var(--ln)] bg-[rgba(11,14,23,0.9)] backdrop-blur-md z-20 shrink-0">
+          <div className="text-xs text-[var(--mu)] font-medium flex items-center gap-2">
+            <span className="text-white font-semibold">Content Factory</span>
+            <span className="text-slate-600">/</span>
+            <span>Studio Engine</span>
+          </div>
           
           <div className="flex items-center gap-3 text-xs text-[var(--mu)]">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--ln)] bg-[var(--gl)] cursor-pointer hover:border-[var(--ac)] text-[var(--tx)]">
@@ -81,19 +85,17 @@ export default function App() {
             {/* Live SSD Disk Space / Temp Cache Counter */}
             <div className="flex items-center gap-2 px-2.5 py-1 rounded-md border border-[var(--ln)] bg-[var(--gl)] text-xs text-[var(--mu)]">
               <HardDrive size={14} className="text-blue-400 shrink-0" />
-              <span>Temp Folder: <b className="text-[var(--tx)] font-mono">{cache?.temp_mb ?? '0.0'} MB</b></span>
+              <span>Temp Cache: <b className="text-[var(--tx)] font-mono">{cache?.temp_mb ?? '0.0'} MB</b></span>
               <button
                 onClick={() => clearCacheMutation.mutate()}
                 disabled={clearCacheMutation.isPending || !(cache?.temp_mb > 0)}
                 title="Clear temporary frames and cache"
-                className="ml-1 text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors disabled:opacity-40"
+                className="ml-1 text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
               >
                 <Trash2 size={12} />
                 <span>{clearCacheMutation.isPending ? 'Clearing...' : 'Clear Cache'}</span>
               </button>
             </div>
-
-            <div className="w-[28px] h-[28px] rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-slate-200 shrink-0 ml-1">TO</div>
           </div>
         </header>
 
@@ -104,11 +106,12 @@ export default function App() {
           </div>
         )}
 
-        {/* Routes: naturally scrollable */}
-        <main className="flex-1 p-[22px_24px] relative bg-transparent">
+        {/* Routes: smooth vertical scrolling container */}
+        <main className="flex-1 overflow-y-auto p-[22px_24px] relative bg-transparent">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/create" element={<Create />} />
+            <Route path="/copilot" element={<Copilot />} />
             <Route path="/copilot/:mode" element={<Copilot />} />
             <Route path="/pipeline" element={<Pipeline />} />
             <Route path="/qc1/:id" element={<QC1 />} />

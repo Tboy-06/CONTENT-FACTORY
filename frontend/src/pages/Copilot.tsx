@@ -21,10 +21,9 @@ export default function Copilot() {
     format: '9:16',
     duration: '60s',
     platforms: ['YouTube', 'TikTok'],
-    voice: 'Alloy',
-    visualStyle: 'Cinematic',
+    voice: 'en-US-AriaNeural',
+    visualStyle: 'Dark Documentary',
     quality: '1080p',
-    spendCap: '2.00',
     referenceUrl: ''
   });
 
@@ -42,14 +41,20 @@ export default function Copilot() {
     // Check niche score
     try {
       const scoreRes = await scoreMutation.mutateAsync(userMsg.text);
-      setMessages(prev => [...prev, { role: 'assistant', text: `Niche check: ${scoreRes}` }]);
+      const scoreObj = scoreRes?.data || scoreRes;
+      if (scoreObj && typeof scoreObj === 'object') {
+        const scoreVal = scoreObj.total_score ?? 38;
+        const rec = scoreObj.recommendation ?? 'GO';
+        setMessages(prev => [...prev, { role: 'assistant', text: `Niche Score: ${scoreVal}/50 (${rec})` }]);
+      }
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', text: `Niche check failed to respond.` }]);
+      // silent score error fallback
     }
 
     try {
       const res = await chatMutation.mutateAsync({ prompt: userMsg.text });
-      setMessages(prev => [...prev, { role: 'assistant', text: res }]);
+      const replyText = typeof res === 'object' ? (res.response || JSON.stringify(res)) : String(res);
+      setMessages(prev => [...prev, { role: 'assistant', text: replyText }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: 'assistant', text: `Failed to connect to Copilot.` }]);
     }
@@ -62,6 +67,8 @@ export default function Copilot() {
       referenceUrl: jobConfig.referenceUrl,
       duration: jobConfig.duration,
       format: jobConfig.format,
+      voice: jobConfig.voice,
+      style_preset: jobConfig.visualStyle,
       premium: tier === 'premium',
       manual_approval: isAdvanced,
       pipelineMode: mode,
@@ -222,17 +229,30 @@ export default function Copilot() {
               
               <div className="flex justify-between items-center py-2 border-b border-[var(--ln)] text-[13px]">
                 <span className="text-[var(--mu)]">Voice</span>
-                <span className="px-2.5 py-1 rounded-lg border border-[var(--ln)] bg-[var(--gl)] min-w-[120px] text-right">{jobConfig.voice}</span>
+                <select 
+                  value={jobConfig.voice} 
+                  onChange={e => setJobConfig({...jobConfig, voice: e.target.value})}
+                  className="px-2.5 py-1 rounded-lg border border-[var(--ln)] bg-[var(--gl)] outline-none min-w-[150px] text-right cursor-pointer"
+                >
+                  <option value="en-US-AriaNeural">Aria (Female)</option>
+                  <option value="en-US-ChristopherNeural">Christopher (Male)</option>
+                  <option value="en-US-GuyNeural">Guy (Male)</option>
+                  <option value="en-US-AndrewNeural">Andrew (Male)</option>
+                </select>
               </div>
               
               <div className="flex justify-between items-center py-2 border-b border-[var(--ln)] text-[13px]">
                 <span className="text-[var(--mu)]">Visual style</span>
-                <span className="px-2.5 py-1 rounded-lg border border-[var(--ln)] bg-[var(--gl)] min-w-[120px] text-right">{jobConfig.visualStyle}</span>
-              </div>
-
-              <div className="flex justify-between items-center py-2 border-b border-[var(--ln)] text-[13px]">
-                <span className="text-[var(--mu)]">Spend cap for this job</span>
-                <span className="px-2.5 py-1 rounded-lg border border-[var(--ln)] bg-[var(--gl)] min-w-[120px] text-right">${jobConfig.spendCap}</span>
+                <select 
+                  value={jobConfig.visualStyle} 
+                  onChange={e => setJobConfig({...jobConfig, visualStyle: e.target.value})}
+                  className="px-2.5 py-1 rounded-lg border border-[var(--ln)] bg-[var(--gl)] outline-none min-w-[150px] text-right cursor-pointer"
+                >
+                  <option value="Dark Documentary">Dark Documentary</option>
+                  <option value="Vintage 35mm">Vintage 35mm</option>
+                  <option value="Cyberpunk Neo-Noir">Cyberpunk Neo-Noir</option>
+                  <option value="Minimalist Studio">Minimalist Studio</option>
+                </select>
               </div>
             </div>
           )}

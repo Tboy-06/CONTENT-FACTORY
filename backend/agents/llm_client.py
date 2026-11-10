@@ -80,6 +80,18 @@ class GeminiClient:
         response_mime_type: str = "text/plain",
         response_schema: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        # If no Gemini API key is set, route automatically to free Brain router without retry delays
+        if not self.api_key:
+            from backend.engine.brain import ask_brain
+            format_json = (response_mime_type == "application/json")
+            text = await ask_brain(prompt, system_prompt=system_prompt, format_json=format_json)
+            return {
+                "text": text,
+                "tokens_in": len(prompt.split()),
+                "tokens_out": len(text.split()),
+                "raw": None,
+            }
+
         self._ensure_configured()
 
         full_prompt = prompt
@@ -92,7 +104,28 @@ class GeminiClient:
             response_schema=response_schema,
         )
 
-        response = await self._generate_with_retry(full_prompt, model_obj, gen_config)
+        candidate_models = [
+            model or self.model_name,
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.6-flash"
+        ]
+        response = None
+        last_error = None
+        for m_name in candidate_models:
+            try:
+                m_obj = self._get_model(m_name, system_instruction=system_prompt)
+                response = await self._generate_with_retry(full_prompt, m_obj, gen_config)
+                if response:
+                    break
+            except Exception as e:
+                last_error = e
+                continue
+
+        if response is None:
+            if last_error:
+                raise last_error
+            raise RuntimeError("All Gemini models failed to generate response")
 
         tokens_in = 0
         tokens_out = 0
@@ -131,7 +164,11 @@ class GeminiClient:
         )
 
         try:
-            parsed = json.loads(result["text"])
+            import re
+            raw_text = result["text"].strip()
+            match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+            text_to_parse = match.group(0) if match else raw_text
+            parsed = json.loads(text_to_parse)
             return {
                 "success": True,
                 "data": parsed,

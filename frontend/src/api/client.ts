@@ -23,6 +23,30 @@ export const api = {
     });
     if (!res.ok) throw new Error(`POST ${url} failed`);
     return res.json();
+  },
+  put: async (url: string, body?: any) => {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) throw new Error(`PUT ${url} failed`);
+    return res.json();
+  },
+  delete: async (url: string) => {
+    const res = await fetch(url, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error(`DELETE ${url} failed`);
+    return res.json();
+  },
+  upload: async (url: string, formData: FormData) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error(`UPLOAD ${url} failed`);
+    return res.json();
   }
 };
 
@@ -134,6 +158,19 @@ export function useRegenerateAudio() {
   });
 }
 
+export function useUploadAnchor() {
+  return useMutation({
+    mutationFn: async ({ jobId, file }: { jobId: string | number, file: File }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return await api.upload(`/api/jobs/${jobId}/upload-anchor`, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
 export function usePublishJob() {
   return useMutation({
     mutationFn: async ({ jobId, platforms }: { jobId: string | number, platforms: string[] }) => {
@@ -151,6 +188,31 @@ export function useDeleteJobTemp() {
       return await api.post(`/api/jobs/${jobId}/delete-temp`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-cache'] });
+    }
+  });
+}
+
+export function useDeleteJob() {
+  return useMutation({
+    mutationFn: async (jobId: string | number) => {
+      return await api.delete(`/api/jobs/${jobId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['system-cache'] });
+    }
+  });
+}
+
+export function useClearAllJobs() {
+  return useMutation({
+    mutationFn: async (status?: string) => {
+      const qs = status ? `?status=${status}` : '';
+      return await api.delete(`/api/jobs${qs}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['system-cache'] });
     }
   });

@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import logging
@@ -41,6 +41,8 @@ class JobCreateRequest(BaseModel):
     referenceUrl: Optional[str] = None
     duration: str = "60s"
     format: str = "9:16"
+    voice: Optional[str] = "en-US-AriaNeural"
+    style_preset: Optional[str] = "Dark Documentary"
     premium: bool = False
     manual_approval: bool = False
     pipelineMode: str = "Generate from Scratch"
@@ -173,15 +175,39 @@ async def create_job(req: JobCreateRequest):
     
     config = {
         "format": req.format,
+        "duration": req.duration,
         "platforms": req.platforms,
         "premium": req.premium,
         "mode": req.pipelineMode,
-        "referenceUrl": req.referenceUrl
+        "referenceUrl": req.referenceUrl,
+        "voice": req.voice,
+        "style_preset": req.style_preset
     }
     
     job = await repository.create_job(niche=req.niche, config=config, priority=0)
     await repository.update_job_status(job.id, JobStatus.RUNNING, "IDEA")
     
+    # Continuous execution: Run pipeline stages directly instead of 5-minute scheduler idle delays
+    async def _run_continuous_stages(job_id: int):
+        stages = ["IDEA", "RESEARCH", "SCRIPT", "ART", "VIDEO", "QC1"]
+        for stg in stages:
+            try:
+                current_db = await repository.get_job(job_id)
+                if not current_db or current_db.status != JobStatus.RUNNING:
+                    break
+                if current_db.current_stage == "QC1":
+                    await repository.create_approval(job_id, "QC1")
+                    break
+                agent_job = _db_job_to_agent_job(current_db)
+                await process_job_stage(agent_job)
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                logger.error(f"[continuous_pipeline] Stage {stg} failed for job #{job_id}: {e}")
+                await repository.update_job_status(job_id, JobStatus.FAILED, stg)
+                break
+
+    asyncio.create_task(_run_continuous_stages(job.id))
+
     return {
         "id": job.id, 
         "niche": job.niche, 
@@ -272,12 +298,25 @@ async def upload_premium(job_id: int):
 async def get_jobs_status():
     jobs = await repository.get_jobs(limit=20)
     status_dict = {}
+    stage_weights = {
+        "IDEA": "15%",
+        "RESEARCH": "30%",
+        "SCRIPT": "45%",
+        "ART": "60%",
+        "PLATES": "70%",
+        "AUDIO": "80%",
+        "VIDEO": "90%",
+        "FFMPEG": "95%",
+        "QC1": "100%",
+        "QC2": "100%",
+        "PUBLISHED": "100%"
+    }
     for j in jobs:
         status_dict[str(j.id)] = {
             "niche": j.niche,
             "status": j.status.value if j.status else "pending",
             "stage": j.current_stage,
-            "progress": "50%"
+            "progress": stage_weights.get(j.current_stage or "", "20%")
         }
     return {"status": "success", "jobs": status_dict}
 
@@ -290,17 +329,17 @@ async def brainstorm_hooks(req: BrainstormRequest):
         f"Here is why your approach to {topic} is quietly failing you right now."
     ]
     try:
-        from backend.tools.llm import call_llm
-        prompt = f"Generate exactly 3 short, punchy, high-retention viral hook sentences (under 14 words each) for a 30s vertical video about: '{topic}'. Return as a JSON array of 3 strings."
-        llm_res = await asyncio.wait_for(call_llm(prompt), timeout=3.5)
+        from backend.engine.brain import ask_brain
         import json, re
+        prompt = f"Generate exactly 3 short, punchy, high-retention viral hook sentences (under 14 words each) for a 30s vertical video about: '{topic}'. Return as a JSON array of 3 strings."
+        llm_res = await asyncio.wait_for(ask_brain(prompt, format_json=True), timeout=15.0)
         match = re.search(r'\[.*?\]', llm_res, re.DOTALL)
         if match:
-            parsed = json.loads(match.group(0))
+            parsed = json.loads(match.group(0), strict=False)
             if isinstance(parsed, list) and len(parsed) >= 3:
                 hooks = [str(h).strip(' "\'') for h in parsed[:3]]
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"[brainstorm_hooks] Falling back to structured hooks: {e}")
     return {"status": "success", "topic": topic, "hooks": hooks}
 
 @router.get('/system/cache')
@@ -469,6 +508,35 @@ async def publish_job(job_id: int, req: PublishRequest):
         "message": f"Approved and scheduled to {', '.join(req.platforms)}"
     }
 
+@router.post('/{job_id}/upload-anchor')
+async def upload_job_anchor(job_id: int, file: UploadFile = File(...)):
+    job = await repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job_dir = os.path.abspath(f"jobs/{job_id}")
+    os.makedirs(job_dir, exist_ok=True)
+    file_ext = os.path.splitext(file.filename)[1].lower() or ".png"
+    anchor_filename = f"anchor_reference{file_ext}"
+    anchor_path = os.path.join(job_dir, anchor_filename)
+    
+    content = await file.read()
+    with open(anchor_path, "wb") as f:
+        f.write(content)
+        
+    config = dict(job.config or {})
+    config["anchor_image_path"] = anchor_path
+    config["anchor_url"] = f"/jobs/{job_id}/{anchor_filename}"
+    await repository.update_job_config(job_id, config)
+    
+    return {
+        "status": "success",
+        "job_id": job_id,
+        "anchor_path": anchor_path,
+        "anchor_url": config["anchor_url"],
+        "message": "Custom visual anchor uploaded successfully"
+    }
+
 @router.post('/{job_id}/delete-temp')
 async def delete_job_temp(job_id: int):
     cleaned = 0
@@ -481,3 +549,15 @@ async def delete_job_temp(job_id: int):
                 except OSError:
                     pass
     return {"status": "success", "cleaned_files": cleaned, "message": f"Cleaned {cleaned} temporary scene files"}
+
+@router.delete('/{job_id}')
+async def delete_job(job_id: int):
+    success = await repository.delete_job(job_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"status": "success", "message": f"Job #{job_id} deleted"}
+
+@router.delete('')
+async def clear_all_jobs(status: Optional[str] = None):
+    deleted_count = await repository.delete_all_jobs(status_filter=status)
+    return {"status": "success", "deleted_count": deleted_count, "message": f"Cleared {deleted_count} jobs"}

@@ -32,6 +32,7 @@ class JobStatus(str, enum.Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    AWAITING_PREMIUM = "awaiting_premium"
 
 
 class StageStatus(str, enum.Enum):

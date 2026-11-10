@@ -84,12 +84,25 @@ app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 
 os.makedirs("output", exist_ok=True)
 os.makedirs("temp", exist_ok=True)
+os.makedirs("jobs", exist_ok=True)
 app.mount("/output", StaticFiles(directory="output"), name="output")
 app.mount("/temp", StaticFiles(directory="temp"), name="temp")
+app.mount("/jobs", StaticFiles(directory="jobs"), name="jobs")
 
 @app.get("/health")
 async def health_check() -> JSONResponse:
     return JSONResponse({"status": "ok", "service": "content-factory"})
+
+@app.get("/v1/models")
+async def list_models() -> JSONResponse:
+    return JSONResponse({
+        "object": "list",
+        "data": [
+            {"id": "gemini-3.5-flash-lite", "object": "model", "owned_by": "google"},
+            {"id": "gemini-3.6-flash", "object": "model", "owned_by": "google"},
+            {"id": "spark-x2.5-4b", "object": "model", "owned_by": "local"}
+        ]
+    })
 
 @app.get("/api/health")
 async def api_health_check() -> JSONResponse:

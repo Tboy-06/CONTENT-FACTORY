@@ -18,6 +18,8 @@ vault.db
 # Generated Media & Temp
 output/
 temp/
+jobs/
+.claude/
 *.mp4
 *.mp3
 *.wav

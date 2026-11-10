@@ -44,7 +44,7 @@ class ScriptwriterAgent(BaseAgent):
         ]
         super().__init__(agent_id="scriptwriter", tools=tools)
 
-    async def _create_llm_client(self):
+    def _create_llm_client(self):
         return gemini
 
     async def _run_impl(self, job: Job, context: Dict[str, Any]) -> AgentResult:

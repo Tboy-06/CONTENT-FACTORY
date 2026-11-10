@@ -9,7 +9,6 @@ const PORT = 3000;
 
 async function startServer() {
   const app = express();
-  app.use(express.json());
 
   // Vite middleware setup (this handles the proxying for /api to FastAPI on 8000)
   if (process.env.NODE_ENV !== "production") {

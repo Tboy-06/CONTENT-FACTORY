@@ -12,6 +12,9 @@ from backend.vault import repository
 from backend.vault.models import JobStatus, ApprovalDecision
 from backend.tools.nuzky_engine import build_nuzky_project, save_nuzky_project, build_opencut_timeline
 from backend.tools.llm import generate_script
+from backend.engine.planner import generate_documentary_plan
+from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
+from backend.engine.assembler import render_beat_pass1, assemble_final_pass2
 
 logger = logging.getLogger(__name__)
 
@@ -185,183 +188,136 @@ async def render_video_from_scenes(job_id: int, scenes: List[Dict[str, Any]], au
 
 async def run_instant_pipeline(job_id: int, topic: str, voice: str = "en-US-AriaNeural", style_preset: str = "Dark Documentary") -> Dict[str, Any]:
     """
-    Lean, dynamic 4-step execution engine:
-    1. Real dynamic script generation (Ollama / Fallback)
-    2. Speech synthesis via Edge-TTS (Free) + exact duration probing
-    3. High-resolution 1080x1920 scene plates with dynamic typography
-    4. FFmpeg multi-clip assembly with Ken Burns zoompan -> Jump directly to QC1
+    Unified Documentary Engine Pipeline:
+    1. Plan 8-sentence documentary beat sheet with 16 rapid visual cuts (planner.py)
+    2. Edge-TTS narration + word-level timestamps + karaoke .ASS subtitle generation (audio_subs.py)
+    3. Render 16 rapid beats with Ken Burns zoom, archival treatments, and transition SFX (assembler.py)
+    4. 2-Pass FFmpeg master assembly with ducked BGM, SFX audio mixing, and subtitle burn
+    5. Save OpenCut timeline & register SQLite Vault assets -> Route to QC1
     """
-    logger.info(f"[Instant Pipeline] Starting dynamic generation for Job {job_id} on: '{topic}'")
-    output_dir = "output"
+    logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}'")
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    output_dir = os.path.join(repo_root, "output")
+    job_dir = os.path.join(repo_root, "jobs", str(job_id))
+    temp_dir = os.path.join(repo_root, "temp")
     os.makedirs(output_dir, exist_ok=True)
-    os.makedirs("temp", exist_ok=True)
+    os.makedirs(temp_dir, exist_ok=True)
+    os.makedirs(job_dir, exist_ok=True)
 
-    # -------------------------------------------------------------
-    # STEP 1: DYNAMIC SCRIPT GENERATION
-    # -------------------------------------------------------------
-    await repository.create_stage(job_id, "SCRIPT")
-    await repository.update_job_status(job_id, JobStatus.RUNNING, "SCRIPT")
+    try:
+        # -------------------------------------------------------------
+        # STEP 1: DOCUMENTARY SCRIPT & BEAT PLANNING
+        # -------------------------------------------------------------
+        await repository.create_stage(job_id, "SCRIPT")
+        await repository.update_job_status(job_id, JobStatus.RUNNING, "SCRIPT")
+        manifest = await generate_documentary_plan(topic, job_id)
 
-    raw_script = await generate_script(topic)
-    title = raw_script.get("title") or topic
-    hook = raw_script.get("hook") or f"Here is the truth about {topic}."
-    body = raw_script.get("body") or f"Understanding {topic} changes everything. Most people never realize this critical insight."
-    cta = raw_script.get("cta") or "Save this video and follow for more."
+        # -------------------------------------------------------------
+        # STEP 2: AUDIO SYNTHESIS & KARAOKE SUBTITLES
+        # -------------------------------------------------------------
+        await repository.create_stage(job_id, "AUDIO")
+        await repository.update_job_status(job_id, JobStatus.RUNNING, "AUDIO")
+        manifest = await synthesize_documentary_audio_and_subs(manifest, job_dir, voice=voice)
 
-    # Split body into natural sentences
-    body_sentences = [s.strip() for s in re.split(r'[.!?]+', body) if len(s.strip()) > 8]
-    if len(body_sentences) >= 2:
-        part1 = body_sentences[0] + "."
-        part2 = " ".join(body_sentences[1:]) + "."
-    else:
-        part1 = body
-        part2 = "Apply this principle daily to stay ahead."
+        voice_path = manifest.get("voice_master_path", f"{job_dir}/voice_master.mp3")
+        total_audio_duration = float(manifest.get("actual_duration") or 45.0)
 
-    # Build structured scenes
-    raw_scenes = [
-        {"badge": "HOOK", "title": "The Hook", "text": hook},
-        {"badge": "INSIGHT", "title": "Core Problem", "text": part1},
-        {"badge": "BREAKTHROUGH", "title": "The Breakdown", "text": part2},
-        {"badge": "ACTION", "title": "Call To Action", "text": cta},
-    ]
-
-    full_narration = " ".join(s["text"] for s in raw_scenes)
-    audio_path = f"{output_dir}/audio_{job_id}.mp3"
-    subtitles_path = f"{output_dir}/subtitles_{job_id}.srt"
-
-    # -------------------------------------------------------------
-    # STEP 2: AUDIO SYNTHESIS & EXACT DURATION PROBING
-    # -------------------------------------------------------------
-    logger.info(f"[Instant Pipeline] Generating speech with voice {voice}...")
-    communicate = edge_tts.Communicate(full_narration, voice)
-    submaker = edge_tts.SubMaker()
-
-    with open(audio_path, "wb") as file:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                file.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                submaker.feed(chunk)
-
-    with open(subtitles_path, "w", encoding="utf-8") as f:
-        f.write(submaker.get_srt())
-
-    # Probe real audio duration
-    total_audio_duration = get_audio_duration(audio_path)
-    logger.info(f"[Instant Pipeline] Audio synthesized: {total_audio_duration:.2f}s total duration.")
-
-    # Calculate proportional scene durations based on word counts
-    total_words = sum(len(s["text"].split()) for s in raw_scenes) or 1
-    scenes = []
-    current_time = 0.0
-
-    for i, sc in enumerate(raw_scenes):
-        w_count = len(sc["text"].split())
-        calc_dur = round((w_count / total_words) * total_audio_duration, 2)
-        calc_dur = max(calc_dur, 2.5)  # Minimum 2.5s per scene
-        scenes.append({
-            "id": i,
-            "badge": sc["badge"],
-            "title": sc["title"],
-            "text": sc["text"],
-            "start": round(current_time, 2),
-            "duration": calc_dur,
+        await repository.add_asset(job_id, "AUDIO", voice_path, {
+            "voice": voice,
+            "duration": total_audio_duration,
+            "captions_ass": manifest.get("captions_ass_path")
         })
-        current_time += calc_dur
 
-    # Scale total durations to match exact audio length
-    scale_factor = total_audio_duration / max(current_time, 1.0)
-    for s in scenes:
-        s["duration"] = round(s["duration"] * scale_factor, 2)
+        # -------------------------------------------------------------
+        # STEP 3: RENDER 16 RAPID VISUAL BEATS (PASS 1)
+        # -------------------------------------------------------------
+        await repository.create_stage(job_id, "PLATES")
+        await repository.update_job_status(job_id, JobStatus.RUNNING, "PLATES")
+        scenes = []
+        for s_idx, s in enumerate(manifest.get("sentences", [])):
+            s_text = s.get("text", "")
+            for b_idx, b in enumerate(s.get("beats", [])):
+                rendered_path = await render_beat_pass1(b, job_dir)
+                plate_png = os.path.join(job_dir, "beats", f"{b['id']}_plate.png")
+                preview_img = plate_png if os.path.exists(plate_png) else rendered_path
+                scenes.append({
+                    "scene_index": len(scenes),
+                    "badge": b.get("headline") or f"BEAT {len(scenes) + 1}",
+                    "title": b.get("headline") or f"Beat {len(scenes) + 1}",
+                    "text": s_text if b_idx == 0 else "",
+                    "prompt": b.get("prompt") or b.get("highlight", ""),
+                    "image_path": preview_img.replace("\\", "/"),
+                    "duration": float(b.get("duration", 1.5))
+                })
 
-    await repository.add_asset(job_id, "AUDIO", audio_path, {
-        "voice": voice,
-        "narration": full_narration,
-        "duration": total_audio_duration
-    })
+        # -------------------------------------------------------------
+        # STEP 4: TIMELINES & 2-PASS MASTER ASSEMBLY (FFMPEG)
+        # -------------------------------------------------------------
+        await repository.create_stage(job_id, "FFMPEG")
+        await repository.update_job_status(job_id, JobStatus.RUNNING, "FFMPEG")
 
-    # -------------------------------------------------------------
-    # STEP 3: HIGH-RESOLUTION SCENE PLATES (Pillow)
-    # -------------------------------------------------------------
-    image_paths: List[str] = []
-    preset = STYLE_PRESETS.get(style_preset, STYLE_PRESETS["Dark Documentary"])
+        final_video_path = f"{output_dir}/instant_{job_id}.mp4"
+        assembled = await assemble_final_pass2(manifest, job_dir, final_video_path)
+        if not assembled or not os.path.exists(final_video_path):
+            logger.warning(f"[Instant Pipeline] Fallback render engaging for Job {job_id}")
+            await render_video_from_scenes(job_id, scenes, voice_path, final_video_path)
 
-    for i, sc in enumerate(scenes):
-        img_path = f"temp/instant_{job_id}_{i}.jpg"
-        prompt = f"{sc['text']}, {preset['prompt_vibe']}"
-        sc["prompt"] = prompt
-        render_scene_card(
-            output_path=img_path,
-            topic=title,
-            badge=sc["badge"],
-            scene_index=i,
-            total_scenes=len(scenes),
-            text=sc["text"],
-            style_preset=style_preset,
-            image_prompt=prompt
+        # Build OpenCut timeline for web editor scrubbing
+        opencut_timeline = build_opencut_timeline(
+            job_id=job_id,
+            shot_list=scenes,
+            audio_path=voice_path,
         )
-        image_paths.append(img_path)
-        sc["image_path"] = img_path
+        opencut_path = f"{output_dir}/opencut_{job_id}.json"
+        with open(opencut_path, "w", encoding="utf-8") as f:
+            json.dump(opencut_timeline, f, indent=2)
+        await repository.add_asset(job_id, "opencut_timeline", opencut_path, opencut_timeline)
 
-    # -------------------------------------------------------------
-    # STEP 4: TIMELINES & ASSEMBLE 9:16 MP4
-    # -------------------------------------------------------------
-    nuzky_proj = build_nuzky_project(
-        job_id=job_id,
-        name=f"Instant_{job_id}_{title[:20]}",
-        shot_list=scenes,
-        audio_path=audio_path,
-        aspect_ratio="9:16",
-    )
-    nuzky_project_path = f"{output_dir}/project_{job_id}.nuzky"
-    save_nuzky_project(nuzky_proj, nuzky_project_path)
-    await repository.add_asset(job_id, "nuzky_project", nuzky_project_path, nuzky_proj)
+        # Save master video asset with rich QC1 metadata
+        hook_sentence = manifest["sentences"][0]["text"] if manifest.get("sentences") else f"The truth about {topic}"
+        full_narration = " ".join(s.get("text", "") for s in manifest.get("sentences", []))
 
-    opencut_timeline = build_opencut_timeline(
-        job_id=job_id,
-        shot_list=scenes,
-        audio_path=audio_path,
-    )
-    opencut_path = f"{output_dir}/opencut_{job_id}.json"
-    with open(opencut_path, "w", encoding="utf-8") as f:
-        json.dump(opencut_timeline, f, indent=2)
-    await repository.add_asset(job_id, "opencut_timeline", opencut_path, opencut_timeline)
+        await repository.add_asset(job_id, "VIDEO", final_video_path, {
+            "aspect_ratio": "9:16",
+            "title": topic,
+            "duration": total_audio_duration,
+            "video_url": f"/output/instant_{job_id}.mp4",
+            "scenes": scenes,
+            "style_preset": style_preset,
+            "script": {
+                "hook": hook_sentence,
+                "body": full_narration,
+                "cta": "Follow for more declassified files."
+            },
+            "voice": voice,
+            "opencut_timeline": opencut_path,
+            "manifest_path": os.path.join(job_dir, "manifest.json"),
+        })
 
-    # Render vertical 9:16 MP4 via FFmpeg with proportional scene durations
-    final_video_path = f"{output_dir}/video_{job_id}_9x16.mp4"
-    logger.info(f"[Instant Pipeline] Rendering final MP4: {final_video_path}")
+        # Advance stage to QC1 with pending approval
+        await repository.create_stage(job_id, "QC1")
+        await repository.update_job_status(job_id, JobStatus.RUNNING, "QC1")
+        await repository.create_approval(job_id, "QC1")
 
-    await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
-
-    # Save video asset with full dynamic metadata
-    await repository.add_asset(job_id, "video", final_video_path, {
-        "aspect_ratio": "9:16",
-        "title": title,
-        "duration": total_audio_duration,
-        "video_url": f"/output/video_{job_id}_9x16.mp4",
-        "scenes": scenes,
-        "style_preset": style_preset,
-        "script": {
-            "hook": hook,
-            "body": f"{part1} {part2}",
-            "cta": cta
-        },
-        "voice": voice,
-        "nuzky_project": nuzky_project_path,
-        "opencut_timeline": opencut_path,
-    })
-
-    # Set job state to QC1 and create pending approval
-    await repository.create_stage(job_id, "QC1")
-    await repository.update_job_status(job_id, JobStatus.RUNNING, "QC1")
-    await repository.create_approval(job_id, "QC1")
-
-    logger.info(f"[Instant Pipeline] Completed successfully for Job {job_id}. Ready at QC1.")
-    return {
-        "success": True,
-        "job_id": job_id,
-        "title": title,
-        "duration": total_audio_duration,
-        "video_path": final_video_path,
-        "stage": "QC1"
-    }
+        logger.info(f"[Instant Pipeline] Completed successfully for Job {job_id}. Ready at QC1.")
+        return {
+            "success": True,
+            "job_id": job_id,
+            "title": topic,
+            "duration": total_audio_duration,
+            "video_path": final_video_path,
+            "stage": "QC1"
+        }
+    except Exception as e:
+        logger.error(f"[Instant Pipeline] CRASHED on Job {job_id}: {e}", exc_info=True)
+        await repository.update_job_status(job_id, JobStatus.FAILED, "ERROR")
+        try:
+            await repository.log_event(job_id, "ERROR", f"Instant pipeline error: {str(e)[:200]}")
+        except Exception:
+            pass
+        return {
+            "success": False,
+            "job_id": job_id,
+            "error": str(e),
+            "stage": "FAILED"
+        }

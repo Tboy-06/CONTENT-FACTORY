@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Sparkles, Loader2, Film, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Zap, Sparkles, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
-import { useCreateInstantJob, useBrainstormHooks, useJobs, api } from '../api/client';
+import { useCreateInstantJob, useBrainstormHooks, useJobs, useDeleteJob, useClearAllJobs, useUploadAnchor, api } from '../api/client';
 
 const stylePresets = [
   { id: 'Dark Documentary', label: 'Dark Documentary', desc: 'Moody lighting, anamorphic lens, 35mm grain' },
@@ -30,13 +30,19 @@ export default function Create() {
   const [topic, setTopic] = useState('');
   const [stylePreset, setStylePreset] = useState('Dark Documentary');
   const [voice, setVoice] = useState('en-US-AriaNeural');
+  const [anchorFile, setAnchorFile] = useState<File | null>(null);
+  const [anchorPreview, setAnchorPreview] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [suggestedHooks, setSuggestedHooks] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { data: recentJobs = [] } = useJobs();
   const instantMutation = useCreateInstantJob();
   const brainstormMutation = useBrainstormHooks();
+  const deleteJobMutation = useDeleteJob();
+  const clearAllMutation = useClearAllJobs();
+  const uploadAnchorMutation = useUploadAnchor();
 
   const handleBrainstorm = async () => {
     const query = topic.trim() || 'Stoic Mindset';
@@ -53,7 +59,16 @@ export default function Create() {
     if (!finalTopic || isGenerating) return;
 
     setIsGenerating(true);
+    setErrorMsg(null);
     setActiveStepIndex(0);
+
+    const stageMap: Record<string, number> = {
+      'SCRIPT': 0,
+      'AUDIO': 1,
+      'PLATES': 2,
+      'FFMPEG': 3,
+      'QC1': 4
+    };
 
     try {
       const res = await instantMutation.mutateAsync({
@@ -64,44 +79,56 @@ export default function Create() {
 
       const jobId = res.id;
 
-      // Realistic 4-step progress animation while polling
-      const stepTimer1 = setTimeout(() => setActiveStepIndex(1), 1800);
-      const stepTimer2 = setTimeout(() => setActiveStepIndex(2), 3800);
-      const stepTimer3 = setTimeout(() => setActiveStepIndex(3), 5800);
+      if (anchorFile) {
+        try {
+          await uploadAnchorMutation.mutateAsync({ jobId, file: anchorFile });
+        } catch (uploadErr) {
+          console.warn('Could not attach visual anchor:', uploadErr);
+        }
+      }
 
-      // Active polling
       const startTime = Date.now();
+
+      // Poll real job stage from backend
       const interval = setInterval(async () => {
         try {
           const jobs = await api.get('/api/jobs');
           const currentJob = jobs.find((j: any) => j.id === jobId);
 
           if (currentJob) {
-            if (currentJob.current_stage === 'QC1' || currentJob.status === 'RUNNING' && currentJob.stages?.some((s: any) => s.stage === 'QC1')) {
+            // Update active stage based on real backend progress
+            if (currentJob.current_stage && currentJob.current_stage in stageMap) {
+              setActiveStepIndex(stageMap[currentJob.current_stage]);
+            }
+
+            const hasVideo = currentJob.assets?.some((a: any) => a.type === 'VIDEO' || a.type === 'video');
+
+            if (currentJob.current_stage === 'QC1' && hasVideo) {
               clearInterval(interval);
-              clearTimeout(stepTimer1);
-              clearTimeout(stepTimer2);
-              clearTimeout(stepTimer3);
               setActiveStepIndex(4);
               setTimeout(() => navigate(`/qc1/${jobId}`), 400);
             } else if (currentJob.status === 'FAILED') {
               clearInterval(interval);
               setIsGenerating(false);
+              setErrorMsg(currentJob.current_stage ? `Pipeline failed at stage: ${currentJob.current_stage}` : 'Generation encountered an error. Please try again.');
             }
           }
         } catch {
           // ignore transient errors
         }
 
-        if (Date.now() - startTime > 45000) {
+        // Safety timeout of 180s (prevent eternal loop)
+        if (Date.now() - startTime > 180000) {
           clearInterval(interval);
-          navigate(`/qc1/${jobId}`);
+          setIsGenerating(false);
+          setErrorMsg('Generation timed out. Check terminal logs.');
         }
-      }, 1200);
+      }, 1000);
 
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setIsGenerating(false);
+      setErrorMsg(e?.message || 'Failed to start video generation.');
     }
   };
 
@@ -209,9 +236,62 @@ export default function Create() {
             </select>
           </div>
 
+          {/* 4. Custom Visual Anchor (Optional Style Reference) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <ImageIcon size={13} className="text-blue-400" />
+                <span>4. Visual Anchor / Reference Image (Optional)</span>
+              </label>
+              {anchorFile && (
+                <span className="text-[10px] text-emerald-400 font-mono">Anchor attached</span>
+              )}
+            </div>
+            
+            {anchorPreview ? (
+              <div className="relative rounded-xl border border-blue-500/40 bg-slate-950/80 p-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img src={anchorPreview} alt="Anchor preview" className="w-12 h-12 rounded-lg object-cover border border-slate-700" />
+                  <div>
+                    <div className="text-xs font-medium text-white truncate max-w-[200px]">{anchorFile?.name}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">{(anchorFile?.size ? (anchorFile.size / 1024).toFixed(0) : 0)} KB • Style Reference</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAnchorFile(null);
+                    setAnchorPreview(null);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  title="Remove visual anchor"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ) : (
+              <label className="cursor-pointer border border-dashed border-slate-700 hover:border-blue-500/60 rounded-xl p-3 bg-slate-950/50 hover:bg-slate-900/50 transition-all flex items-center justify-center gap-2.5 text-slate-400 hover:text-slate-200">
+                <Upload size={14} className="text-blue-400" />
+                <span className="text-xs">Upload style reference image (.png, .jpg) to anchor scene plates</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setAnchorFile(f);
+                      setAnchorPreview(URL.createObjectURL(f));
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
+
         </div>
 
-        {/* 4. Action Button: Generate Short */}
+        {/* 5. Action Button: Generate Short */}
         <div className="pt-2">
           <Button
             onClick={() => handleGenerate()}
@@ -262,6 +342,17 @@ export default function Create() {
           </div>
         )}
 
+        {/* Error Alert if Generation Failed */}
+        {errorMsg && (
+          <div className="p-3 bg-red-950/70 border border-red-500/40 rounded-xl flex items-center justify-between text-xs text-red-300">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-red-400 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+            <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-white ml-2 text-sm">&times;</button>
+          </div>
+        )}
+
       </Card>
 
       {/* Recent Video Projects Quick Access */}
@@ -269,20 +360,35 @@ export default function Create() {
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-300">Recent Videos Ready for Review</h2>
-            <span className="text-xs text-[var(--mu)]">{recentJobs.length} Projects Total</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[var(--mu)]">{recentJobs.length} Projects Total</span>
+              <button
+                onClick={() => {
+                  if (confirm("Clear all recent jobs?")) {
+                    clearAllMutation.mutate();
+                  }
+                }}
+                disabled={clearAllMutation.isPending}
+                className="text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors"
+                title="Clear all job history"
+              >
+                <Trash2 size={12} />
+                <span>Clear All</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {recentJobs.slice(0, 6).map((j: any) => {
-              const videoAsset = j.assets?.find((a: any) => a.type === 'VIDEO');
+            {recentJobs.slice(0, 9).map((j: any) => {
+              const videoAsset = j.assets?.find((a: any) => a.type === 'VIDEO' || a.type === 'video');
               const hasVideo = !!videoAsset;
               return (
                 <div
                   key={j.id}
                   onClick={() => navigate(`/qc1/${j.id}`)}
-                  className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/60 cursor-pointer transition-all flex items-center justify-between group"
+                  className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/60 cursor-pointer transition-all flex items-center justify-between group relative"
                 >
-                  <div className="flex items-center gap-3 truncate">
+                  <div className="flex items-center gap-3 truncate pr-2">
                     <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
                       <Film size={16} />
                     </div>
@@ -291,15 +397,27 @@ export default function Create() {
                         {j.niche}
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        Job #{j.id} · {j.current_stage || j.status}
+                        Job #{j.id} | {j.current_stage || j.status}
                       </div>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${
-                    hasVideo ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-amber-400 border-amber-500/30 bg-amber-950/40'
-                  }`}>
-                    {hasVideo ? '9:16 MP4' : 'Pending'}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${
+                      hasVideo ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-amber-400 border-amber-500/30 bg-amber-950/40'
+                    }`}>
+                      {hasVideo ? '9:16 MP4' : (j.status === 'FAILED' ? 'Failed' : 'Pending')}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteJobMutation.mutate(j.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition-all rounded hover:bg-slate-800"
+                      title="Delete this project"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               );
             })}

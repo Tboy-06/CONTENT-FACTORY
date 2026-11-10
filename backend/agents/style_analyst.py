@@ -67,10 +67,35 @@ class StyleAnalystAgent(BaseAgent):
 
     async def _run_impl(self, job: Job, context: Dict[str, Any]) -> AgentResult:
         config = job.config
-        style_reference = config.get("style_reference")
+        style_reference = config.get("style_reference") or config.get("referenceUrl")
 
         if not style_reference:
-            return AgentResult(success=False, error="No style_reference in job config")
+            # Build style guide dynamically from style_preset or aesthetic default
+            preset_name = config.get("style_preset", "Dark Documentary")
+            analysis = {
+                "visual_style": {
+                    "preset": preset_name,
+                    "lighting": "moody chiaroscuro, high contrast",
+                    "color_palette": ["#0b0e17", "#f59e0b", "#06b6d4"],
+                    "camera_style": "slow anamorphic push-in with 35mm grain",
+                    "pacing": "high-tension rapid visual cuts"
+                },
+                "character_design": {
+                    "style": "cinematic realistic",
+                    "proportions": "normal",
+                    "key_features": ["dramatic silhouette", "textured archival presence"]
+                },
+                "pacing": {"cuts_per_minute": 24, "avg_shot_duration": 1.5},
+                "scene_structure": {"beats_per_sentence": 2}
+            }
+            from backend.vault.repository import create_style_guide
+            style_guide = await create_style_guide(
+                name=f"style_{job.id}",
+                source_video_url=None,
+                extracted=analysis,
+            )
+            await add_asset(job_id=job.id, asset_type="style_guide", path=f"style/style_guide_{job.id}.json", metadata={"style_guide_id": style_guide.id, "analysis": analysis})
+            return AgentResult(success=True, output={"style_guide_id": style_guide.id, "preset": preset_name})
 
         await log_event("INFO", self.agent_id, f"Analyzing style reference: {style_reference}", {"job_id": job.id})
 

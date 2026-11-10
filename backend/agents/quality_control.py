@@ -247,9 +247,11 @@ class QualityControlAgent(BaseAgent):
             for restricted in policy.get("restricted", []):
                 if restricted.lower() in script_text:
                     warnings.append(f"{platform}: restricted topic '{restricted}'")
-            for disclosure in policy.get("disclosure_required", []):
-                if disclosure not in script_text:
-                    warnings.append(f"{platform}: missing disclosure '{disclosure}'")
+            # Only check for sponsored/affiliate disclosures if the content is flagged as promotional
+            if script.get("is_sponsored") or script.get("has_affiliate"):
+                for disclosure in policy.get("disclosure_required", []):
+                    if disclosure not in script_text:
+                        warnings.append(f"{platform}: missing disclosure '{disclosure}'")
 
         verdict = "FAIL" if violations else ("UNCERTAIN" if warnings else "PASS")
 

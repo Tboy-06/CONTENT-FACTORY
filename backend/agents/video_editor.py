@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import subprocess
 import tempfile
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from backend.agents import BaseAgent, AgentResult, Tool, Job
 from backend.agents.llm_client import get_gemini_client
@@ -278,18 +281,37 @@ class VideoEditorAgent(BaseAgent):
                 os.makedirs(os.path.dirname(vid_path) or ".", exist_ok=True)
                 if not os.path.exists(vid_path):
                     cmd = ["yt-dlp", "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4", "-o", vid_path, url]
-                    subprocess.run(cmd, capture_output=True)
+                    try:
+                        await asyncio.to_thread(subprocess.run, cmd, capture_output=True, timeout=60)
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch reference video {url}: {e}")
                 image_paths.append(vid_path)
             else:
                 placeholder_path = f"temp/shot_{job_id}_{i}.jpg"
                 os.makedirs(os.path.dirname(placeholder_path) or ".", exist_ok=True)
-                color = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFBE0B", "#A0E7E5", "#B4F8C8"][i % 6]
-                cmd = [
-                    "ffmpeg", "-y", "-v", "error",
-                    "-f", "lavfi", "-i", f"color=c={color}:s=1080x1920:d={shot.get('duration', 4)}",
-                    "-vframes", "1", placeholder_path
-                ]
-                subprocess.run(cmd, capture_output=True)
+                try:
+                    from backend.tools.instant_pipeline import render_scene_card
+                    cue = shot.get("visual_cue") or shot.get("description") or f"Scene {i+1}"
+                    text = shot.get("text") or cue
+                    render_scene_card(
+                        output_path=placeholder_path,
+                        topic="Documentary",
+                        badge=f"BEAT {i+1}",
+                        scene_index=i,
+                        total_scenes=len(shot_list),
+                        text=text,
+                        style_preset="Dark Documentary",
+                        image_prompt=cue
+                    )
+                except Exception as e:
+                    logger.warning(f"Card render fallback for shot {i}: {e}")
+                    color = ["#1a1f2c", "#0f172a", "#1e1b4b", "#18181b", "#09090b"][i % 5]
+                    cmd = [
+                        "ffmpeg", "-y", "-v", "error",
+                        "-f", "lavfi", "-i", f"color=c={color}:s=1080x1920:d={shot.get('duration', 4)}",
+                        "-vframes", "1", placeholder_path
+                    ]
+                    await asyncio.to_thread(subprocess.run, cmd, capture_output=True, timeout=30)
                 image_paths.append(placeholder_path)
         return image_paths
 
@@ -297,7 +319,7 @@ class VideoEditorAgent(BaseAgent):
         try:
             import edge_tts
             communicate = edge_tts.Communicate(text, voice)
-            await communicate.save(output_path)
+            await asyncio.wait_for(communicate.save(output_path), timeout=30.0)
             return {"success": True, "path": output_path}
         except Exception as e:
             return {"success": False, "error": str(e)}

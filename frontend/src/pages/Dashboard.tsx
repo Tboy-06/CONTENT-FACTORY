@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useJobs, useCacheStatus, useClearCache } from '../api/client';
+import { useJobs, useCacheStatus, useClearCache, useDeleteJob } from '../api/client';
 import { Button } from '../components/ui';
 import { Trash2 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ export default function Dashboard() {
   const { data: jobs = [] } = useJobs();
   const { data: cache } = useCacheStatus();
   const clearCacheMutation = useClearCache();
+  const deleteJobMutation = useDeleteJob();
 
   const activeJobs = jobs.filter((j: any) => j.status === 'RUNNING' || j.status === 'PENDING' || j.status === 'QUEUED');
   const qcJobs = jobs.filter((j: any) => j.status === 'AWAITING_APPROVAL' || j.current_stage === 'QC1');
@@ -83,12 +84,39 @@ export default function Dashboard() {
       ) : (
         <div className="flex flex-col gap-2">
           {recentJobs.map((job: any) => (
-            <div key={job.id} className="glass-panel p-3 flex justify-between items-center cursor-pointer hover:bg-[var(--gl2)] transition-colors" onClick={() => navigate('/vault')}>
+            <div 
+              key={job.id} 
+              className="glass-panel p-3 flex justify-between items-center cursor-pointer hover:bg-[var(--gl2)] transition-colors" 
+              onClick={() => navigate(`/qc1/${job.id}`)}
+            >
               <div>
                 <b className="font-medium text-[14px]">{job.niche}</b>
                 <div className="text-[12px] text-[var(--mu)]">Finished {new Date(job.updated_at || Date.now()).toLocaleDateString()}</div>
               </div>
-              <Button variant="ghost" className="text-xs py-1 h-auto">View in Vault</Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  className="text-xs py-1 h-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/qc1/${job.id}`);
+                  }}
+                >
+                  Open in Studio
+                </Button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete video #${job.id} (${job.niche})?`)) {
+                      deleteJobMutation.mutate(job.id);
+                    }
+                  }}
+                  className="p-1.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                  title="Delete Job"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

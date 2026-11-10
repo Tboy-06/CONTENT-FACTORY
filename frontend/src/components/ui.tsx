@@ -1,26 +1,31 @@
 import React from 'react';
 
-export const Card = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <div className={`glass-panel p-4 ${className}`}>{children}</div>
+export const Card = ({ children, className = '', ...props }: any) => (
+  <div className={`glass-panel p-4 ${className}`} {...props}>{children}</div>
 );
 
 export const Button = ({ children, variant = 'primary', className = '', ...props }: any) => {
-  const base = "rounded-lg font-medium px-4 py-2 transition-all duration-150 border";
-  const variants = {
+  const base = "rounded-lg font-medium px-4 py-2 transition-all duration-150 border disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
+  const variants: Record<string, string> = {
     primary: "bg-blue-600 hover:bg-blue-500 text-white border-blue-500/50 shadow-sm",
+    secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white",
+    danger: "bg-red-600/80 hover:bg-red-500 text-white border-red-500/40",
     ghost: "bg-[var(--gl)] text-[var(--tx)] border-[var(--ln)] hover:bg-[var(--gl2)]"
   };
-  return <button className={`${base} ${variants[variant as keyof typeof variants]} ${className}`} {...props}>{children}</button>;
+  const chosen = variants[variant] || variants.primary;
+  return <button className={`${base} ${chosen} ${className}`} {...props}>{children}</button>;
 };
 
 export const Badge = ({ children, variant = 'info', className = '' }: any) => {
-  const variants = {
+  const variants: Record<string, string> = {
     info: "bg-blue-500/15 text-blue-300 border border-blue-500/30",
     success: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
     warning: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
-    danger: "bg-red-500/15 text-red-400 border border-red-500/30"
+    danger: "bg-red-500/15 text-red-400 border border-red-500/30",
+    neutral: "bg-slate-800 text-slate-300 border border-slate-700"
   };
-  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap ${variants[variant as keyof typeof variants]} ${className}`}>{children}</span>;
+  const chosen = variants[variant] || variants.info;
+  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap ${chosen} ${className}`}>{children}</span>;
 };
 
 export const Tabs = ({ tabs, activeTab, onChange }: any) => (

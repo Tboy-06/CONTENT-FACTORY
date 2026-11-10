@@ -170,6 +170,13 @@ async def process_job_stage(job: AgentJob) -> None:
                 await update_job_status(job.id, JobStatus.FAILED, "SCRIPT")
 
         elif stage == "QC1":
+            # If video is already rendered and waiting for user review, do not bounce or interfere
+            from backend.vault.repository import get_job_assets
+            existing_assets = await get_job_assets(job.id)
+            if any((a.asset_type or "").upper() == "VIDEO" for a in existing_assets):
+                logger.info(f"Job {job.id} already has rendered video at QC1; awaiting user review.")
+                return
+
             result = await quality_control_agent.run(job, context={"stage": "QC1"})
             if result.success and result.output.get("verdict") == "PASS":
                 await create_stage(job.id, "STYLE")

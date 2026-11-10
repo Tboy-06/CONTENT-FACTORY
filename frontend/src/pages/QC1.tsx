@@ -12,14 +12,18 @@ import {
   Sparkles, 
   ShieldCheck, 
   Loader2, 
-  AlertCircle 
+  AlertCircle,
+  Download,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { 
   useJobs, 
   useRerollVisual, 
   useRegenerateAudio, 
   usePublishJob, 
-  useDeleteJobTemp 
+  useDeleteJobTemp,
+  useUploadAnchor
 } from '../api/client';
 import { Button, Badge, Card } from '../components/ui';
 import SafeZoneOverlay from '../components/SafeZoneOverlay';
@@ -46,6 +50,8 @@ export default function QC1() {
   const audioMutation = useRegenerateAudio();
   const publishMutation = usePublishJob();
   const deleteTempMutation = useDeleteJobTemp();
+  const uploadAnchorMutation = useUploadAnchor();
+  const [anchorUploadMsg, setAnchorUploadMsg] = useState<string | null>(null);
 
   const job = useMemo(() => jobs.find((j: any) => String(j.id) === id), [jobs, id]);
 
@@ -54,12 +60,12 @@ export default function QC1() {
   const videoUrl = jobMeta.video_url || (videoAsset?.path ? `/output/${videoAsset.path.split(/[\\/]/).pop()}` : null);
   const rawScenes = jobMeta.scenes || [];
 
-  // Sync scenes into editable state
+  // Sync scenes into editable state whenever job or video changes
   useEffect(() => {
-    if (rawScenes.length > 0 && editedScenes.length === 0) {
+    if (rawScenes.length > 0) {
       setEditedScenes(rawScenes);
     }
-  }, [rawScenes]);
+  }, [id, videoUrl]);
 
   if (!job) {
     return (
@@ -187,6 +193,18 @@ export default function QC1() {
         </div>
 
         <div className="flex items-center gap-2">
+          {videoUrl && (
+            <a
+              href={videoUrl}
+              download={`${job.niche.replace(/[^a-zA-Z0-9_-]/g, '_')}_9x16.mp4`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
+              title="Download 9:16 vertical MP4 video"
+            >
+              <Download size={14} />
+              <span>Download MP4</span>
+            </a>
+          )}
+
           <Button
             variant="secondary"
             onClick={() => setIsStudioOpen(true)}
@@ -278,16 +296,55 @@ export default function QC1() {
               </p>
             </div>
 
-            <Button
-              variant="secondary"
-              onClick={() => handleRegenerateAudio()}
-              disabled={audioMutation.isPending}
-              className="flex items-center gap-1.5 text-xs !py-1.5 !px-3 border-slate-700"
-            >
-              {audioMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Mic size={13} className="text-emerald-400" />}
-              <span>{audioMutation.isPending ? 'Syncing...' : 'Regenerate Voiceover'}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <label className="cursor-pointer flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                {uploadAnchorMutation.isPending ? <Loader2 size={13} className="animate-spin text-blue-400" /> : <Upload size={13} className="text-blue-400" />}
+                <span>{uploadAnchorMutation.isPending ? 'Uploading...' : 'Upload Style Anchor'}</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f && id) {
+                      try {
+                        await uploadAnchorMutation.mutateAsync({ jobId: id, file: f });
+                        setAnchorUploadMsg('Style anchor attached!');
+                        setTimeout(() => setAnchorUploadMsg(null), 3000);
+                      } catch (err) {
+                        setAnchorUploadMsg('Upload failed');
+                      }
+                    }
+                  }}
+                />
+              </label>
+
+              <Button
+                variant="secondary"
+                onClick={() => handleRegenerateAudio()}
+                disabled={audioMutation.isPending}
+                className="flex items-center gap-1.5 text-xs !py-1.5 !px-3 border-slate-700"
+              >
+                {audioMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Mic size={13} className="text-emerald-400" />}
+                <span>{audioMutation.isPending ? 'Syncing...' : 'Regenerate Voiceover'}</span>
+              </Button>
+            </div>
           </div>
+
+          {/* Active Style Anchor Banner */}
+          {(job?.config?.anchor_url || anchorUploadMsg) && (
+            <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-blue-950/30 border border-blue-500/30 text-xs">
+              <div className="flex items-center gap-2.5">
+                {job?.config?.anchor_url && (
+                  <img src={job.config.anchor_url} alt="Style Anchor" className="w-8 h-8 rounded-lg object-cover border border-blue-500/40" />
+                )}
+                <div>
+                  <span className="font-semibold text-blue-300">Style Reference Active: </span>
+                  <span className="text-slate-300">{anchorUploadMsg || 'Reference image attached to guide visuals'}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Storyboard Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

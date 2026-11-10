@@ -14,6 +14,7 @@ from backend.vault.repository import (
     add_asset,
     get_job_assets,
     get_latest_asset,
+    update_asset_metadata,
     create_approval,
     resolve_approval,
     get_pending_approvals,
@@ -42,6 +43,8 @@ from backend.vault.repository import (
     create_skill_manifest,
     get_skill_manifest,
     cleanup_old_jobs,
+    delete_job,
+    delete_all_jobs,
     vacuum_database,
 )
 
@@ -64,6 +67,7 @@ __all__ = [
     "add_asset",
     "get_job_assets",
     "get_latest_asset",
+    "update_asset_metadata",
     "create_approval",
     "resolve_approval",
     "get_pending_approvals",
@@ -92,5 +96,7 @@ __all__ = [
     "create_skill_manifest",
     "get_skill_manifest",
     "cleanup_old_jobs",
+    "delete_job",
+    "delete_all_jobs",
     "vacuum_database",
 ]

@@ -183,15 +183,22 @@ class ArtDirectorAgent(BaseAgent):
         visual_style = extracted.get("visual_style", {})
 
         # Build comprehensive character prompt
+        def _safe_join(val: Any, default: List[str]) -> str:
+            if isinstance(val, (list, tuple)):
+                return ', '.join(str(x) for x in val)
+            if isinstance(val, str):
+                return val
+            return ', '.join(default)
+
         prompt = f"""
-        {char_design.get('style', 'cartoon')} character design for "{character_name}":
-        - Style: {char_design.get('style', 'cartoon')}
+        {char_design.get('style', 'cinematic')} character design for "{character_name}":
+        - Style: {char_design.get('style', 'cinematic')}
         - Proportions: {char_design.get('proportions', 'normal')}
-        - Key features: {', '.join(char_design.get('key_features', ['expressive face', 'distinctive silhouette']))}
-        - Color palette: {', '.join(visual_style.get('color_palette', ['#FF6B6B', '#4ECDC4']))}
-        - Consistency markers: {', '.join(char_design.get('consistency_markers', ['color scheme', 'silhouette']))}
-        - Lighting: {visual_style.get('lighting', 'soft natural')}
-        - Camera style: {visual_style.get('camera_style', 'static')}
+        - Key features: {_safe_join(char_design.get('key_features'), ['expressive face', 'distinctive silhouette'])}
+        - Color palette: {_safe_join(visual_style.get('color_palette'), ['#FF6B6B', '#4ECDC4'])}
+        - Consistency markers: {_safe_join(char_design.get('consistency_markers'), ['color scheme', 'silhouette'])}
+        - Lighting: {visual_style.get('lighting', 'moody chiaroscuro')}
+        - Camera style: {visual_style.get('camera_style', 'slow anamorphic push-in')}
         """
 
         # Save to vault
@@ -324,11 +331,14 @@ class ArtDirectorAgent(BaseAgent):
 
     async def _generate_flow_prompts(self, character_bible: Dict, shot_list: List[Dict], style_guide: Dict) -> Dict[str, Any]:
         char_traits = character_bible.get("visual_traits", {})
+        key_feats = char_traits.get('key_features') or []
+        colors = char_traits.get('color_palette') or []
+        markers = char_traits.get('consistency_markers') or []
         char_prompt_base = f"""
         {char_traits.get('style', 'cartoon')} character, {char_traits.get('proportions', 'normal')} proportions,
-        key features: {', '.join(char_traits.get('key_features', []))},
-        color palette: {', '.join(char_traits.get('color_palette', []))},
-        consistency markers: {', '.join(char_traits.get('consistency_markers', []))}
+        key features: {', '.join(str(x) for x in key_feats)},
+        color palette: {', '.join(str(x) for x in colors)},
+        consistency markers: {', '.join(str(x) for x in markers)}
         """
 
         # Character reference prompts for Flow
@@ -399,10 +409,10 @@ class ArtDirectorAgent(BaseAgent):
 
 ## Style Guide Summary
 - **Visual Style**: {visual.get('style', 'cartoon')}
-- **Color Palette**: {', '.join(visual.get('color_palette', []))}
+- **Color Palette**: {', '.join(str(x) for x in (visual.get('color_palette') or []))}
 - **Lighting**: {visual.get('lighting', 'natural')}
 - **Camera**: {visual.get('camera_style', 'static')}
-- **Composition**: {', '.join(visual.get('composition_rules', ['centered']))}
+- **Composition**: {', '.join(str(x) for x in (visual.get('composition_rules') or ['centered']))}
 - **Transitions**: {visual.get('transition_style', 'cut')}
 - **Text Overlay**: {style_guide.get('analysis', {}).get('scene_structure', {}).get('text_overlay_style', 'minimal')}
 

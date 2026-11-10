@@ -53,7 +53,7 @@ class PosterAgent(BaseAgent):
         self.postiz = PostizClient()
         self.llm = get_gemini_client()
 
-    async def _create_llm_client(self):
+    def _create_llm_client(self):
         return self.llm
 
     async def _run_impl(self, job: AgentJob, context: Dict[str, Any]) -> AgentResult:

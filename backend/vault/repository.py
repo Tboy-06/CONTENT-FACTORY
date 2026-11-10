@@ -21,6 +21,7 @@ from backend.vault.models import (
     JobStatus,
     Log,
     RevenueStream,
+    RetentionCurve,
     SkillManifest,
     StageStatus,
     StyleGuide,
@@ -211,6 +212,14 @@ async def get_latest_asset(job_id: int, asset_type: str) -> Optional[Asset]:
         return result.scalar_one_or_none()
 
 
+async def update_asset_metadata(asset_id: int, metadata: Dict[str, Any]) -> bool:
+    """Updates metadata_json for a specific asset record."""
+    async with get_session() as session:
+        stmt = update(Asset).where(Asset.id == asset_id).values(metadata_json=metadata)
+        result = await session.execute(stmt)
+        return (result.rowcount or 0) > 0
+
+
 # =============================================================================
 # Approvals
 # =============================================================================
@@ -349,6 +358,16 @@ async def create_character_bible(
     style_guide_id: Optional[int] = None,
 ) -> CharacterBible:
     async with get_session() as session:
+        stmt = select(CharacterBible).where(CharacterBible.name == name)
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing:
+            existing.prompt = prompt
+            existing.reference_images_json = reference_images
+            existing.style_guide_id = style_guide_id
+            await session.flush()
+            await session.refresh(existing)
+            return existing
+
         bible = CharacterBible(
             name=name,
             prompt=prompt,
@@ -623,6 +642,64 @@ async def cleanup_old_jobs(days: int = 90) -> int:
         )
         result = await session.execute(stmt)
         return result.rowcount
+
+
+async def delete_job(job_id: int) -> bool:
+    """Deletes a job and all its related assets, stages, approvals, and disk files."""
+    import shutil
+    import os
+    async with get_session() as session:
+        await session.execute(delete(Asset).where(Asset.job_id == job_id))
+        await session.execute(delete(JobStage).where(JobStage.job_id == job_id))
+        await session.execute(delete(Approval).where(Approval.job_id == job_id))
+        await session.execute(delete(Cost).where(Cost.job_id == job_id))
+        await session.execute(delete(RevenueStream).where(RevenueStream.job_id == job_id))
+        await session.execute(delete(RetentionCurve).where(RetentionCurve.job_id == job_id))
+        await session.execute(delete(Analytics).where(Analytics.job_id == job_id))
+        res = await session.execute(delete(Job).where(Job.id == job_id))
+        success = (res.rowcount or 0) > 0
+
+    job_dir = f"jobs/{job_id}"
+    if os.path.exists(job_dir):
+        try:
+            shutil.rmtree(job_dir, ignore_errors=True)
+        except Exception:
+            pass
+    return success
+
+
+async def delete_all_jobs(status_filter: Optional[str] = None) -> int:
+    """Deletes all jobs (or jobs matching status_filter) and associated records."""
+    import shutil
+    import os
+    async with get_session() as session:
+        stmt = select(Job.id)
+        if status_filter:
+            stmt = stmt.where(Job.status == status_filter)
+        res = await session.execute(stmt)
+        job_ids = res.scalars().all()
+
+        if not job_ids:
+            return 0
+
+        await session.execute(delete(Asset).where(Asset.job_id.in_(job_ids)))
+        await session.execute(delete(JobStage).where(JobStage.job_id.in_(job_ids)))
+        await session.execute(delete(Approval).where(Approval.job_id.in_(job_ids)))
+        await session.execute(delete(Cost).where(Cost.job_id.in_(job_ids)))
+        await session.execute(delete(RevenueStream).where(RevenueStream.job_id.in_(job_ids)))
+        await session.execute(delete(RetentionCurve).where(RetentionCurve.job_id.in_(job_ids)))
+        await session.execute(delete(Analytics).where(Analytics.job_id.in_(job_ids)))
+        deleted_res = await session.execute(delete(Job).where(Job.id.in_(job_ids)))
+        count = deleted_res.rowcount or 0
+
+    for jid in job_ids:
+        job_dir = f"jobs/{jid}"
+        if os.path.exists(job_dir):
+            try:
+                shutil.rmtree(job_dir, ignore_errors=True)
+            except Exception:
+                pass
+    return count
 
 
 async def vacuum_database() -> None:

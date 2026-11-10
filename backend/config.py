@@ -7,9 +7,16 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = BASE_DIR / ".env"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_PATH) if ENV_PATH.exists() else ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -19,9 +26,9 @@ class Settings(BaseSettings):
     # LLM & Vision (Google AI Studio FREE tier)
     # ------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google AI Studio API key")
-    gemini_model: str = Field(default="gemini-3.6-flash", description="Default LLM model")
-    gemini_pro_model: str = Field(default="gemini-3.7-flash", description="Pro model for complex tasks")
-    gemini_vision_model: str = Field(default="gemini-3.7-flash", description="Vision model for video analysis")
+    gemini_model: str = Field(default="gemini-3.5-flash-lite", description="Default LLM model")
+    gemini_pro_model: str = Field(default="gemini-3.5-flash-lite", description="Pro model for complex tasks")
+    gemini_vision_model: str = Field(default="gemini-3.5-flash-lite", description="Vision model for video analysis")
 
     # ------------------------------------------------------------------
     # Images
@@ -75,7 +82,7 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Database
     # ------------------------------------------------------------------
-    database_url: str = Field(default="sqlite:///./vault.db", description="SQLite URL")
+    database_url: str = Field(default=f"sqlite:///{ (BASE_DIR / 'vault.db').as_posix() }", description="SQLite URL")
     postgres_url: str = Field(default="", description="PostgreSQL URL (optional)")
     use_postgres: bool = Field(default=False, description="Use Postgres instead of SQLite")
 
