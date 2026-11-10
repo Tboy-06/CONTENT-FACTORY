@@ -104,12 +104,16 @@ def build_ass_subtitles(
     all_words: List[Dict[str, Any]],
     output_ass_path: str,
     play_res_x: int = 1080,
-    play_res_y: int = 1920
+    play_res_y: int = 1920,
+    margin_v: int = 380,
+    font_size: int = 68
 ) -> str:
     """
     Builds a high-retention word-by-word karaoke ASS subtitle file.
+    Supports dynamic vertical margins & resolution scaling for 16:9 and 9:16.
     Uses bold centered typography with pop-in color animation.
     """
+    highlight_size = font_size + 4
     header = f"""[Script Info]
 Title: ContentFactory Documentary Captions
 ScriptType: v4.00+
@@ -121,8 +125,8 @@ PlayResY: {play_res_y}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,6,3,2,60,60,380,1
-Style: Highlight,Arial,72,&H0000FFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,105,105,0,0,1,7,4,2,60,60,380,1
+Style: Default,Arial,{font_size},&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,5,3,2,60,60,{margin_v},1
+Style: Highlight,Arial,{highlight_size},&H0000FFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,105,105,0,0,1,6,4,2,60,60,{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -218,9 +222,13 @@ async def process_manifest_audio(
     ]
     await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    # Generate .ASS subtitles
+    # Generate .ASS subtitles (scaled for aspect ratio)
+    aspect_ratio = manifest.get("aspect_ratio", "9:16")
     ass_path = os.path.join(job_dir, "captions.ass")
-    build_ass_subtitles(all_words, ass_path)
+    if aspect_ratio == "16:9":
+        build_ass_subtitles(all_words, ass_path, play_res_x=1920, play_res_y=1080, margin_v=80, font_size=48)
+    else:
+        build_ass_subtitles(all_words, ass_path, play_res_x=1080, play_res_y=1920, margin_v=380, font_size=68)
 
     manifest["total_duration"] = global_time
     manifest["voice_master_path"] = master_voice_path

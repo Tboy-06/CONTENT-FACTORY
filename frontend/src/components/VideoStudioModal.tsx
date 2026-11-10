@@ -111,46 +111,76 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
         {/* Studio Content */}
         <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 bg-[#0b0e17]">
           
-          {/* Vertical 9:16 Phone Mockup */}
+          {/* Responsive Preview Mockup (16:9 or 9:16) */}
           <div className="flex flex-col items-center shrink-0 sticky top-0">
-            <div className="relative w-[280px] h-[498px] rounded-[32px] p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
-              {/* Dynamic Island / Speaker Notch */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-40 border border-white/10" />
+            {(() => {
+              const isWidescreen = job?.config?.format === '16:9' || (job?.config as any)?.aspect_ratio === '16:9';
+              return (
+                <>
+                  {isWidescreen ? (
+                    /* 16:9 Cinema Container */
+                    <div className="relative w-full max-w-[460px] aspect-video rounded-2xl p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                      <div className="relative w-full h-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+                        {videoUrl ? (
+                          <video 
+                            controls 
+                            playsInline
+                            autoPlay
+                            loop
+                            src={videoUrl} 
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-center p-6 text-[var(--mu)] text-xs">
+                            Rendering 16:9 video sequence...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* 9:16 Phone Container */
+                    <div className="relative w-[280px] h-[498px] rounded-[32px] p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                      {/* Dynamic Island / Speaker Notch */}
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-40 border border-white/10" />
 
-              <div className="relative w-full h-full rounded-[24px] overflow-hidden bg-black flex items-center justify-center">
-                {videoUrl ? (
-                  <video 
-                    controls 
-                    playsInline
-                    autoPlay
-                    loop
-                    src={videoUrl} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center p-6 text-[var(--mu)] text-xs">
-                    Rendering video sequence...
+                      <div className="relative w-full h-full rounded-[24px] overflow-hidden bg-black flex items-center justify-center">
+                        {videoUrl ? (
+                          <video 
+                            controls 
+                            playsInline
+                            autoPlay
+                            loop
+                            src={videoUrl} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center p-6 text-[var(--mu)] text-xs">
+                            Rendering video sequence...
+                          </div>
+                        )}
+
+                        {/* Platform Safe Zone Overlay */}
+                        <SafeZoneOverlay 
+                          visible={showSafeZone}
+                          caption={hookText}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between w-full mt-3 text-xs text-[var(--mu)] px-2 font-mono">
+                    <span className="flex items-center gap-1">
+                      <Shield size={13} className="text-cyan-400" />
+                      {isWidescreen ? '1920 x 1080 Widescreen' : '1080 x 1920'}
+                    </span>
+                    <span className="flex items-center gap-1 text-slate-300">
+                      <Clock size={13} className="text-blue-400" />
+                      {totalCalculatedDur.toFixed(1)}s Total
+                    </span>
                   </div>
-                )}
-
-                {/* Platform Safe Zone Overlay */}
-                <SafeZoneOverlay 
-                  visible={showSafeZone}
-                  caption={hookText}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between w-full mt-3 text-xs text-[var(--mu)] px-2 font-mono">
-              <span className="flex items-center gap-1">
-                <Shield size={13} className="text-cyan-400" />
-                1080 x 1920
-              </span>
-              <span className="flex items-center gap-1 text-slate-300">
-                <Clock size={13} className="text-blue-400" />
-                {totalCalculatedDur.toFixed(1)}s Total
-              </span>
-            </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Sequence Shots Breakdown & Direct Controls */}

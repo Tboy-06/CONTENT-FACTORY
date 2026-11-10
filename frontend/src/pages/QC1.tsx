@@ -227,62 +227,93 @@ export default function QC1() {
       {/* Main Grid: Left 9:16 Video Player | Right Storyboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
         
-        {/* Left Column: 9:16 Video Player in Phone Frame */}
+        {/* Left Column: Video Player (Responsive for 16:9 and 9:16) */}
         <div className="flex flex-col items-center space-y-3 sticky top-20">
-          
-          <div className="w-full flex items-center justify-between px-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              9:16 Reel Player
-            </span>
-            <button
-              onClick={() => setShowSafeZone(!showSafeZone)}
-              className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded border transition-colors ${
-                showSafeZone
-                  ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50 hover:bg-cyan-900/80'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-              }`}
-            >
-              {showSafeZone ? <Eye size={12} /> : <EyeOff size={12} />}
-              <span>{showSafeZone ? 'Safe Zone On' : 'Safe Zone Off'}</span>
-            </button>
-          </div>
-
-          {/* 9:16 Phone Container */}
-          <div className="relative w-[320px] h-[568px] rounded-[36px] p-2.5 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
-            {/* Dynamic Island Notch */}
-            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 border border-white/10" />
-
-            <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-black flex items-center justify-center">
-              {videoUrl ? (
-                <video
-                  controls
-                  playsInline
-                  autoPlay
-                  loop
-                  key={videoUrl}
-                  src={videoUrl}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="text-center p-6 text-slate-500 text-xs flex flex-col items-center gap-2">
-                  <Loader2 size={24} className="animate-spin text-blue-500" />
-                  <span>Assembling 9:16 video stream...</span>
+          {(() => {
+            const isWidescreen = job.config?.format === '16:9' || (job.config as any)?.aspect_ratio === '16:9';
+            return (
+              <>
+                <div className="w-full flex items-center justify-between px-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    {isWidescreen ? '16:9 Widescreen Cinema Player' : '9:16 Reel Player'}
+                  </span>
+                  {!isWidescreen && (
+                    <button
+                      onClick={() => setShowSafeZone(!showSafeZone)}
+                      className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded border transition-colors ${
+                        showSafeZone
+                          ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50 hover:bg-cyan-900/80'
+                          : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                      }`}
+                    >
+                      {showSafeZone ? <Eye size={12} /> : <EyeOff size={12} />}
+                      <span>{showSafeZone ? 'Safe Zone On' : 'Safe Zone Off'}</span>
+                    </button>
+                  )}
                 </div>
-              )}
 
-              {/* Toggleable Safe Zone Overlay */}
-              <SafeZoneOverlay
-                visible={showSafeZone}
-                caption={jobMeta.script?.hook || `The breakdown of ${job.niche}`}
-              />
-            </div>
-          </div>
+                {isWidescreen ? (
+                  /* 16:9 Widescreen Cinema Container */
+                  <div className="relative w-full max-w-[560px] aspect-video rounded-2xl p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                    <div className="relative w-full h-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+                      {videoUrl ? (
+                        <video
+                          controls
+                          playsInline
+                          autoPlay
+                          loop
+                          key={videoUrl}
+                          src={videoUrl}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-center p-6 text-slate-500 text-xs flex flex-col items-center gap-2">
+                          <Loader2 size={24} className="animate-spin text-blue-500" />
+                          <span>Assembling 16:9 widescreen video stream...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* 9:16 Phone Container */
+                  <div className="relative w-[320px] h-[568px] rounded-[36px] p-2.5 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
+                    {/* Dynamic Island Notch */}
+                    <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 border border-white/10" />
 
-          <div className="w-full flex items-center justify-between text-[11px] text-slate-500 px-2 font-mono">
-            <span>1080 × 1920 MP4</span>
-            <span>-14 LUFS Audio</span>
-          </div>
+                    <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-black flex items-center justify-center">
+                      {videoUrl ? (
+                        <video
+                          controls
+                          playsInline
+                          autoPlay
+                          loop
+                          key={videoUrl}
+                          src={videoUrl}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-center p-6 text-slate-500 text-xs flex flex-col items-center gap-2">
+                          <Loader2 size={24} className="animate-spin text-blue-500" />
+                          <span>Assembling 9:16 video stream...</span>
+                        </div>
+                      )}
 
+                      {/* Toggleable Safe Zone Overlay */}
+                      <SafeZoneOverlay
+                        visible={showSafeZone}
+                        caption={jobMeta.script?.hook || `The breakdown of ${job.niche}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="w-full flex items-center justify-between text-[11px] text-slate-500 px-2 font-mono">
+                  <span>{isWidescreen ? '1920 × 1080 Widescreen MP4' : '1080 × 1920 MP4'}</span>
+                  <span>-14 LUFS Audio</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Right Column: Storyboard Grid (Shot Cards) */}

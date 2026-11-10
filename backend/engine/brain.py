@@ -55,6 +55,7 @@ async def call_ollama(
     system_prompt: Optional[str] = None,
     model: str = DEFAULT_OLLAMA_MODEL,
     format_json: bool = True,
+    num_predict: int = 2048,
     timeout: float = 60.0
 ) -> Optional[str]:
     """Queries local Ollama instance with think=False to prevent 80s reasoning delays."""
@@ -73,7 +74,7 @@ async def call_ollama(
         "keep_alive": "2m",
         "options": {
             "temperature": 0.4,
-            "num_predict": 1024,
+            "num_predict": num_predict,
             "think": False,
         }
     }
@@ -174,7 +175,8 @@ async def call_cloud_free(
 async def ask_brain(
     prompt: str,
     system_prompt: Optional[str] = None,
-    format_json: bool = True
+    format_json: bool = True,
+    num_predict: int = 2048
 ) -> str:
     """
     Unified brain router:
@@ -188,7 +190,12 @@ async def ask_brain(
 
     # 1. Try local Ollama if running
     if is_ollama_running():
-        res = await call_ollama(prompt, system_prompt=system_prompt, format_json=format_json)
+        res = await call_ollama(
+            prompt,
+            system_prompt=system_prompt,
+            format_json=format_json,
+            num_predict=num_predict
+        )
         if res:
             return res
 

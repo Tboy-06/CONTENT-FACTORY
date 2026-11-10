@@ -62,10 +62,11 @@ Return ONLY a valid JSON object matching this schema:
 """
 
 
-def generate_fallback_manifest(topic: str, job_id: int) -> Dict[str, Any]:
+def generate_fallback_manifest(topic: str, job_id: int, duration_target: float = 45.0) -> Dict[str, Any]:
     """
     Deterministic documentary generator that creates an authentic, topic-tailored
-    manifest based on the user's exact subject.
+    manifest based on the user's exact subject. Supports short-form (45-60s) and
+    long-form (3m-5m+) multi-act documentary narratives.
     """
     topic_clean = topic.strip().title()
 
@@ -256,11 +257,58 @@ def generate_fallback_manifest(topic: str, job_id: int) -> Dict[str, Any]:
         }
     ]
 
+    # If long-form (3m+ or 5m+), expand narrative with Acts 2, 3, and 4
+    if duration_target > 60:
+        extra_acts = [
+            (9, f"Phase two began behind closed doors, where the initial architecture of {topic_clean} was redesigned from scratch.", "stat_counter", "ARCHITECTURAL OVERHAUL", "5X EFFICIENCY MULTIPLIER", "blueprints and architectural drafts", "amber"),
+            (10, f"Engineers and strategists worked in total secrecy, knowing that a single flaw could collapse the entire operation.", "treated_image", None, None, f"secret war room strategists analyzing {topic_clean} data graphs", "hard_bw"),
+            (11, f"The breakthrough came when they discovered an overlooked vulnerability in the conventional method.", "motion_card", "CRITICAL VULNERABILITY", "EXPLOITING THE GAP", None, "teal_split"),
+            (12, f"Within six months, the prototype had demonstrated results that defied all standard predictions.", "stat_counter", "TEST BENCH RESULTS", "99.8% PRECISION RATING", None, "amber"),
+            (13, f"Competitors scrambled to decipher how {topic_clean} was achieving such unprecedented speed.", "3_item_list", "COMPETITIVE MOATS", "SPEED · DEFENSE · MOAT", None, "teal_split"),
+            (14, f"By the time the market understood the shift, the competitive barrier was already insurmountable.", "treated_image", None, None, f"imposing steel fortress vault symbolizing resilience of {topic_clean}", "hard_bw"),
+            (15, f"Then came the turning point: an unexpected crisis that pushed {topic_clean} to its absolute limit.", "red_slam_word", "THE TURNING POINT", "CRITICAL STRESS TEST", None, "amber"),
+            (16, f"When external pressure spiked, older legacy systems failed one by one.", "treated_image", None, None, f"dramatic stormy industrial landscape representing systemic stress on {topic_clean}", "teal_split"),
+            (17, f"Only the refined methodology of {topic_clean} held firm under the intense scrutiny.", "stat_counter", "UPTIME RESILIENCE", "100% OPERATIONAL", None, "amber"),
+            (18, f"This single performance proved that the new paradigm was not just viable—it was inevitable.", "quote_box", "FIELD REPORT", "THE IRREVERSIBLE SHIFT", None, "hard_bw"),
+            (19, f"Institutions worldwide took note, beginning the mass transition that defines our current era.", "treated_image", None, None, f"global satellite telemetry grid illuminating worldwide adoption of {topic_clean}", "teal_split"),
+            (20, f"The debate was officially settled: {topic_clean} had rewritten the rules permanently.", "motion_card", "FINAL VERDICT", "PARADIGM CONQUERED", None, "amber"),
+            (21, f"Looking forward, the lessons forged during the development of {topic_clean} remain more relevant than ever.", "3_item_list", "CORE LESSONS", "ADAPT · ENDURE · SCALE", None, "hard_bw"),
+            (22, f"Those who recognize these historical inflection points early are the ones who capture the greatest upside.", "stat_counter", "EXPONENTIAL UPSIDE", "THE 1% ASYMMETRY", None, "teal_split"),
+            (23, f"The window of opportunity around {topic_clean} is actively moving right before our eyes.", "treated_image", None, None, f"cinematic sunrise over horizon casting golden illumination on {topic_clean} future", "amber"),
+            (24, f"And those who master its principles today will be the ones directing the next decade.", "red_slam_word", "FINAL MASTERY", "DIRECT THE FUTURE", None, "amber"),
+        ]
+
+        beat_counter = 17
+        for sid, text, card_tpl, hl, val, img_prompt, grade in extra_acts:
+            s_beats = []
+            if card_tpl in ("red_slam_word", "stat_counter", "3_item_list", "quote_box"):
+                s_beats.append({
+                    "id": f"beat_{beat_counter:02d}",
+                    "type": "motion_card",
+                    "template": card_tpl,
+                    "headline": hl or "DIRECTOR EVIDENCE",
+                    "highlight": val or topic_clean.upper()[:20],
+                    "duration": 1.5,
+                    "sfx": "thud.wav" if beat_counter % 2 == 0 else "whoosh.wav"
+                })
+                beat_counter += 1
+            if img_prompt or len(s_beats) < 2:
+                s_beats.append({
+                    "id": f"beat_{beat_counter:02d}",
+                    "type": "treated_image",
+                    "prompt": f"cinematic documentary still, {img_prompt or topic_clean}, 35mm grain, chiaroscuro",
+                    "grade": grade or "teal_split",
+                    "duration": 1.6,
+                    "sfx": "click.wav"
+                })
+                beat_counter += 1
+            sentences_data.append({"id": sid, "text": text, "beats": s_beats})
+
     return {
         "job_id": job_id,
         "topic": topic_clean,
         "style": "editor-v1",
-        "duration_target": 45.0,
+        "duration_target": duration_target,
         "sentences": sentences_data
     }
 
@@ -274,14 +322,77 @@ async def plan_documentary(
     """
     Coordinates with brain.py to create the full documentary manifest.
     Supports both 9:16 vertical shorts and 16:9 horizontal YouTube channel documentaries.
+    For long-form videos (>60s), generates across 4 sequential Acts to eliminate LLM token truncation.
     Consults the Obsidian director vault for proven hooks and style rules.
     Falls back gracefully if Ollama / cloud models are unreachable.
     """
     format_label = "16:9 horizontal YouTube documentary" if aspect_ratio == "16:9" else "9:16 vertical documentary short"
-    logger.info(f"[Planner] Generating {format_label} beat plan for: '{topic}' (Job #{job_id})")
+    logger.info(f"[Planner] Generating {format_label} ({duration_target}s) beat plan for: '{topic}' (Job #{job_id})")
 
     # Retrieve connected directing principles from Obsidian Second Brain
     vault_context = query_director_vault(topic)
+
+    # -------------------------------------------------------------
+    # CASE A: LONG-FORM DOCUMENTARY (>60s) - 4 SEQUENTIAL ACTS
+    # -------------------------------------------------------------
+    if duration_target > 60:
+        logger.info(f"[Planner] Activating 4-Act chapter generation for long-form: '{topic}'")
+        acts_plan = [
+            (1, "The Inciting Anomaly & Hook", 6),
+            (2, "The Hidden Background & Catalyst", 6),
+            (3, "The Crisis & Breakthrough Revelation", 6),
+            (4, "The Aftermath & Modern Takeaway", 6)
+        ]
+        all_sentences = []
+        global_sent_id = 1
+        global_beat_id = 1
+
+        try:
+            for act_num, act_title, count in acts_plan:
+                act_prompt = (
+                    f"Plan Act {act_num}: '{act_title}' for a long-form {format_label} on the topic: '{topic}'.\n"
+                    f"Write {count} consecutive spoken sentences. Each sentence must have 2 visual beats (motion_card or treated_image).\n"
+                    f"{vault_context}\n"
+                    f"Output strictly a JSON object with a 'sentences' array."
+                )
+                raw_act_json = await ask_brain(
+                    prompt=act_prompt,
+                    system_prompt=PLANNER_SYSTEM_PROMPT,
+                    format_json=True,
+                    num_predict=1500
+                )
+                m = re.search(r'\{.*\}', raw_act_json, re.DOTALL)
+                if m:
+                    act_data = json.loads(m.group(0))
+                    for s in act_data.get("sentences", []):
+                        s["id"] = global_sent_id
+                        s["act"] = act_num
+                        s["chapter"] = act_title
+                        for b in s.get("beats", []):
+                            b["id"] = f"beat_{global_beat_id:02d}"
+                            b["aspect_ratio"] = aspect_ratio
+                            global_beat_id += 1
+                        all_sentences.append(s)
+                        global_sent_id += 1
+
+            if len(all_sentences) >= 12:
+                all_beats = [b for s in all_sentences for b in s.get("beats", [])]
+                hook_txt = all_sentences[0].get("text", "")
+                log_script_to_vault(job_id, topic, hook_txt, "Long-Form Documentary", all_beats)
+                return {
+                    "job_id": job_id,
+                    "topic": topic,
+                    "style": "editor-v1",
+                    "aspect_ratio": aspect_ratio,
+                    "duration_target": duration_target,
+                    "sentences": all_sentences
+                }
+        except Exception as e:
+            logger.info(f"[Planner] Multi-act brain loop interrupted ({e}), using long-form fallback manifest")
+
+    # -------------------------------------------------------------
+    # CASE B: SHORT-FORM (<=60s) OR FALLBACK
+    # -------------------------------------------------------------
     prompt = f"Plan a {int(duration_target)}-second high-retention {format_label} on the topic: '{topic}'.{vault_context}"
 
     try:
@@ -291,7 +402,6 @@ async def plan_documentary(
             format_json=True
         )
 
-        # Parse and sanitize JSON
         match = re.search(r'\{.*\}', raw_json_str, re.DOTALL)
         if match:
             parsed = json.loads(match.group(0))
@@ -301,7 +411,7 @@ async def plan_documentary(
                 parsed["style"] = "editor-v1"
                 parsed["aspect_ratio"] = aspect_ratio
                 parsed["duration_target"] = duration_target
-                
+
                 # Tag all beats with aspect_ratio
                 all_beats = []
                 for s in parsed.get("sentences", []):
@@ -311,16 +421,16 @@ async def plan_documentary(
 
                 hook_txt = parsed["sentences"][0].get("text", "")
                 log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", all_beats)
-                
+
                 return parsed
     except Exception as e:
         logger.info(f"[Planner] Brain offline/unavailable ({e}). Engaging documentary generator.")
 
     # Generate reliable fallback manifest
-    manifest = generate_fallback_manifest(topic, job_id)
+    manifest = generate_fallback_manifest(topic, job_id, duration_target=duration_target)
     manifest["aspect_ratio"] = aspect_ratio
     manifest["duration_target"] = duration_target
-    
+
     # Tag all beats with aspect_ratio
     fb_beats = []
     for s in manifest.get("sentences", []):
@@ -330,7 +440,7 @@ async def plan_documentary(
 
     hook_txt = manifest["sentences"][0].get("text", "") if manifest.get("sentences") else ""
     log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", fb_beats)
-    
+
     return manifest
 
 
