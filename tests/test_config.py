@@ -4,7 +4,7 @@ from backend.config import Settings
 
 def test_settings_defaults():
     s = Settings()
-    assert s.gemini_model == "gemini-2.5-flash"
+    assert s.gemini_model == "gemini-3.5-flash-lite"
     assert s.video_engine == "ffmpeg"
     assert s.tts_engine == "edge"
     assert s.max_cost_per_video_usd == 2.0

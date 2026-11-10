@@ -22,8 +22,71 @@ class YouTubeAPI:
         order: str = "viewCount",
         published_after: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """
+        Quota-Safe Search:
+        1. Uses yt-dlp flat search (0 quota units) to discover video candidates.
+        2. Enriches with batch /youtube/v3/videos (1 unit per 50 videos) if api_key is present.
+        Reduces quota consumption by 99% compared to /youtube/v3/search!
+        """
+        import asyncio
+        import yt_dlp
+
+        limit = min(max_results * 2, 50)
+
+        def _flat_search():
+            ydl_opts = {
+                'quiet': True,
+                'extract_flat': True,
+                'skip_download': True,
+                'no_warnings': True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(f"ytsearch{limit}:{query}", download=False)
+
+        candidates = []
+        try:
+            res = await asyncio.to_thread(_flat_search)
+            for e in res.get('entries', []):
+                if e and e.get('id'):
+                    candidates.append({
+                        "video_id": e['id'],
+                        "title": e.get('title', ''),
+                        "description": e.get('description', '')[:500] if e.get('description') else '',
+                        "channel_id": e.get('channel_id', ''),
+                        "channel": e.get('uploader', '') or e.get('channel', ''),
+                        "published_at": e.get('upload_date', ''),
+                        "thumbnails": {"default": {"url": e.get('thumbnail', '')}},
+                        "url": f"https://www.youtube.com/watch?v={e['id']}",
+                        "view_count": e.get('view_count') or 0,
+                    })
+        except Exception:
+            candidates = []
+
+        if candidates:
+            # Enrich with official /videos metadata if API key is present (1 quota unit for 50 videos)
+            if self.api_key:
+                vids = [c["video_id"] for c in candidates[:max_results]]
+                try:
+                    details = await self.get_video_details(vids)
+                    details_map = {d["video_id"]: d for d in details}
+                    for c in candidates:
+                        if c["video_id"] in details_map:
+                            d = details_map[c["video_id"]]
+                            c["view_count"] = d.get("view_count", c.get("view_count", 0))
+                            c["like_count"] = d.get("like_count", 0)
+                            c["comment_count"] = d.get("comment_count", 0)
+                            c["duration"] = d.get("duration", "")
+                except Exception:
+                    pass
+
+            # Sort by view count if requested
+            if order == "viewCount":
+                candidates.sort(key=lambda x: x.get("view_count", 0), reverse=True)
+
+            return {"videos": candidates[:max_results], "total_results": len(candidates)}
+
         if not self.api_key:
-            return {"videos": [], "error": "No YouTube API key configured"}
+            return {"videos": [], "error": "No YouTube API key configured and search returned no results"}
 
         params = {
             "part": "snippet",
