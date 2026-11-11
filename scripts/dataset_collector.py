@@ -36,6 +36,7 @@ import sys
 import re
 import json
 import time
+import random
 import argparse
 import urllib.request
 from typing import List, Dict, Any, Optional, Set
@@ -996,10 +997,13 @@ def harvest_video_entry(
             save_harvest_state(state)
 
             print(f"     [SUCCESS] Task [{task}] -> Logged to Vault + dataset.jsonl (0 MB disk bloat)")
-            time.sleep(0.35)
+            delay = round(random.uniform(1.5, 2.0), 2)
+            print(f"     [PACING] Pausing {delay}s between requests to guard YouTube & Gemini limits...")
+            time.sleep(delay)
             return record
     except Exception as e:
         print(f"     [ERROR] Failed harvesting {entry_or_url}: {e}")
+        time.sleep(round(random.uniform(1.5, 2.0), 2))
         return None
 
 
@@ -1007,10 +1011,10 @@ def harvest_video_entry(
 # MASTER HARVEST RUNNER & CLI
 # ==============================================================================
 
-def run_balanced_plan(state: Dict[str, Any], count_per_query: int = 5, visual_cuts: bool = False):
+def run_balanced_plan(state: Dict[str, Any], count_per_task: int = 10, visual_cuts: bool = False):
     """Executes the balanced distribution across all 4 tasks towards the 6,000 target."""
     print("\n==================================================================")
-    print("LAUNCHING BALANCED 6,000-EXAMPLE DATASET HARVESTER PLAN")
+    print(f"LAUNCHING BALANCED DATASET HARVESTER: {count_per_task} VIDEOS PER TASK ({count_per_task * 4} TOTAL)")
     print("Distribution: editing (42%) | hooks (25%) | storytelling (25%) | visual_audio (16%)")
     print(f"Target Dataset: {DATASET_PATH}")
     print(f"Director Vault: {VAULT_DIR}")
@@ -1025,19 +1029,34 @@ def run_balanced_plan(state: Dict[str, Any], count_per_query: int = 5, visual_cu
         print(f"\n>>> PROCESSING TASK: [{task_name.upper()}] (Current: {current_cnt} / Target: {target_cnt}) <<<")
 
         queries = TASK_QUERIES.get(task_name, [])
+        harvested_for_task = 0
+
         for q_idx, q in enumerate(queries, 1):
+            if harvested_for_task >= count_per_task:
+                break
             if state["counts"].get(task_name, 0) >= target_cnt:
                 print(f"     [GOAL REACHED] Task [{task_name}] target met ({state['counts'][task_name]}/{target_cnt}).")
                 break
 
-            items = search_youtube_query(q, count_per_query)
+            needed = count_per_task - harvested_for_task
+            fetch_count = max(needed * 2, 5)
+            items = search_youtube_query(q, fetch_count)
+            time.sleep(round(random.uniform(1.5, 2.0), 2))
+
             for item in items:
-                harvest_video_entry(
+                if harvested_for_task >= count_per_task:
+                    break
+                res = harvest_video_entry(
                     item["url"],
                     task=task_name,
                     sample_visual_cuts=visual_cuts,
                     state=state
                 )
+                if res and not res.get("skipped"):
+                    harvested_for_task += 1
+                    print(f"     [PROGRESS] Harvested {harvested_for_task}/{count_per_task} for task [{task_name}].")
+
+        print(f"\n[TASK COMPLETE] [{task_name.upper()}] batch finished: {harvested_for_task} new examples added.\n")
 
     print("\n[BALANCED PLAN COMPLETE] Updated checkpoint state:")
     for t in tasks_order:
@@ -1051,8 +1070,8 @@ def main():
                         help="Specific production task to harvest")
     parser.add_argument("--run-balanced-plan", action="store_true",
                         help="Run master 6,000 balanced distribution plan across all 4 tasks")
-    parser.add_argument("--count", type=int, default=5,
-                        help="Number of videos per query (default: 5)")
+    parser.add_argument("--count", type=int, default=10,
+                        help="Number of videos per task in balanced plan or per query (default: 10)")
     parser.add_argument("--target-total", type=int, default=6000,
                         help="Total dataset target size (default: 6,000)")
     parser.add_argument("--query", help="Custom search query")
@@ -1106,7 +1125,7 @@ def main():
         return
 
     if args.run_balanced_plan:
-        run_balanced_plan(state, count_per_query=args.count, visual_cuts=args.visual_cuts)
+        run_balanced_plan(state, count_per_task=args.count, visual_cuts=args.visual_cuts)
         return
 
     if args.urls:
