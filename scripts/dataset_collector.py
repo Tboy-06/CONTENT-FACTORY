@@ -328,6 +328,10 @@ def harvest_video_entry(entry_or_url: str, mode: str = "documentary", sample_vis
             duration = float(info.get("duration") or 60.0)
             url = info.get("webpage_url") or entry_or_url
 
+            if title.lower().strip() in get_existing_harvested_titles():
+                print(f"     [SKIP] Already harvested: \"{title[:55]}\". Skipping to preserve bandwidth.")
+                return {"title": title, "skipped": True}
+
             print(f"     > Streaming subtitles & metadata for: \"{title[:55]}\" ({duration/60:.1f} min)...")
             sentences = extract_subtitles_stream(info)
             print(f"     > Extracted {len(sentences)} spoken transcript segments.")
@@ -475,9 +479,31 @@ def search_youtube_query(query: str, count: int = 10) -> List[str]:
     return top_urls
 
 
+def get_existing_harvested_titles() -> set:
+    """Reads dataset.jsonl and returns titles of already harvested videos to skip duplicates."""
+    titles = set()
+    if os.path.exists(DATASET_PATH):
+        try:
+            with open(DATASET_PATH, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        data = json.loads(line)
+                        res_str = data.get("response", "")
+                        try:
+                            parsed = json.loads(res_str)
+                            if "title" in parsed:
+                                titles.add(parsed["title"].lower().strip())
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+    return titles
+
+
 def main():
     parser = argparse.ArgumentParser(description="Zero-Disk Long-Form & Tutorial Director Harvester")
     parser.add_argument("--mode", choices=["documentaries", "tutorials", "scripting", "all"], default="all")
+    parser.add_argument("--batch-50", action="store_true", help="Harvest 50 top-tier videos across 5 curated categories (10 per category)")
     parser.add_argument("--query", help="Custom search query")
     parser.add_argument("--count", type=int, default=5, help="Number of videos per category")
     parser.add_argument("--urls", nargs="+", help="Specific video URLs to harvest")
@@ -485,10 +511,29 @@ def main():
     args = parser.parse_args()
 
     targets = []
+    already_harvested = get_existing_harvested_titles()
+    print(f"[Harvester] Found {len(already_harvested)} previously harvested videos in dataset.jsonl.")
 
     if args.urls:
         for u in args.urls:
             targets.append((u, "tutorial" if "capcut" in u.lower() or "edit" in u.lower() else "documentary"))
+    elif args.batch_50:
+        # Curated 50-video batch (10 per domain)
+        print("\n[BATCH-50] Launching 50-video harvest across 5 viral editing categories:")
+        cat_configs = [
+            ("how to edit like vox in capcut tutorial", "tutorial", 10),
+            ("cinematic video editing hacks capcut premiere", "tutorial", 10),
+            ("how to write documentary script youtube storytelling", "documentary", 10),
+            ("magnates media documentary video essay", "documentary", 10),
+            ("how to edit viral reels in capcut retention pacing", "tutorial", 10),
+        ]
+        seen_urls = set()
+        for q, m, c in cat_configs:
+            urls = search_youtube_query(q, c)
+            for u in urls:
+                if u not in seen_urls:
+                    seen_urls.add(u)
+                    targets.append((u, m))
     elif args.query:
         urls = search_youtube_query(args.query, args.count)
         mode = "tutorial" if "capcut" in args.query.lower() or "edit" in args.query.lower() else "documentary"
