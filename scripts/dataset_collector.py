@@ -13,6 +13,7 @@ import os
 import sys
 import re
 import json
+import time
 import argparse
 import urllib.request
 from typing import List, Dict, Any, Optional
@@ -37,11 +38,44 @@ PRAISE_KEYWORDS = [
 ]
 
 
+def extract_chapters_from_description(description: str) -> List[Dict[str, Any]]:
+    """Extracts timestamped chapters from video descriptions as fallback structure."""
+    chapters = []
+    if not description:
+        return []
+    lines = description.splitlines()
+    for line in lines:
+        m = re.search(r"\b([0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)\b\s*[-–—:]?\s*(.+)", line)
+        if m:
+            ts_str, ch_title = m.group(1), m.group(2).strip()
+            parts = [float(p) for p in ts_str.split(":")]
+            if len(parts) == 2:
+                sec = parts[0] * 60 + parts[1]
+            elif len(parts) == 3:
+                sec = parts[0] * 3600 + parts[1] * 60 + parts[2]
+            else:
+                sec = 0.0
+            chapters.append({"start": sec, "text": ch_title, "duration": 4.0, "end": sec + 4.0})
+    return chapters
+
+
 def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Extracts timestamped transcript lines from subtitles/captions without downloading video."""
-    subs = info.get("subtitles", {}).get("en") or info.get("automatic_captions", {}).get("en")
+    all_subs = {**info.get("automatic_captions", {}), **info.get("subtitles", {})}
+    subs = None
+    for k in ("en", "en-US", "en-GB", "en-CA", "en-orig", "en-IE", "en-NZ"):
+        if k in all_subs:
+            subs = all_subs[k]
+            break
     if not subs:
-        return []
+        for k, v in all_subs.items():
+            if k.startswith("en"):
+                subs = v
+                break
+
+    if not subs:
+        desc = info.get("description", "")
+        return extract_chapters_from_description(desc)
 
     # Prioritize JSON3 format (rich word & sentence timestamps)
     target_fmt = None
@@ -56,7 +90,8 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 break
 
     if not target_fmt or not target_fmt.get("url"):
-        return []
+        desc = info.get("description", "")
+        return extract_chapters_from_description(desc)
 
     try:
         req = urllib.request.Request(target_fmt["url"], headers={"User-Agent": "Mozilla/5.0"})
@@ -90,10 +125,15 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 if clean and not clean.startswith("WEBVTT") and not clean.isdigit():
                     sentences.append({"start": 0.0, "duration": 3.0, "end": 3.0, "text": clean})
 
+        if not sentences:
+            desc = info.get("description", "")
+            return extract_chapters_from_description(desc)
+
         return sentences
     except Exception as e:
         print(f"     [WARN] Subtitle stream download error: {e}")
-        return []
+        desc = info.get("description", "")
+        return extract_chapters_from_description(desc)
 
 
 def extract_top_praise_comments(info: Dict[str, Any], max_comments: int = 40) -> List[Dict[str, str]]:
@@ -253,7 +293,7 @@ def extract_visual_cuts_lowres(url: str, job_id: str) -> List[float]:
         'noplaylist': True,
         'quiet': True,
         'no_warnings': True,
-        'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+        'extractor_args': {'youtube': {'player_client': ['web']}},
         'download_ranges': yt_dlp.utils.download_range_func(None, [(0, 60)]),
     }
 
@@ -302,11 +342,21 @@ def extract_visual_cuts_lowres(url: str, job_id: str) -> List[float]:
     return cuts
 
 
-def harvest_video_entry(entry_or_url: str, mode: str = "documentary", sample_visual_cuts: bool = False) -> Optional[Dict[str, Any]]:
+def harvest_video_entry(
+    entry_or_url: str,
+    mode: str = "documentary",
+    sample_visual_cuts: bool = False,
+    existing_titles: Optional[set] = None
+) -> Optional[Dict[str, Any]]:
     """Streams metadata, transcript, and comments with ZERO temporary video storage."""
+    if existing_titles is None:
+        existing_titles = get_existing_harvested_titles()
+
     ydl_opts = {
         'quiet': True,
+        'no_warnings': True,
         'skip_download': True,
+        'ignore_no_formats_error': True,
         'writeautomaticsub': True,
         'subtitleslangs': ['en'],
         'getcomments': True,
@@ -328,7 +378,7 @@ def harvest_video_entry(entry_or_url: str, mode: str = "documentary", sample_vis
             duration = float(info.get("duration") or 60.0)
             url = info.get("webpage_url") or entry_or_url
 
-            if title.lower().strip() in get_existing_harvested_titles():
+            if title.lower().strip() in existing_titles:
                 print(f"     [SKIP] Already harvested: \"{title[:55]}\". Skipping to preserve bandwidth.")
                 return {"title": title, "skipped": True}
 
@@ -364,7 +414,9 @@ def harvest_video_entry(entry_or_url: str, mode: str = "documentary", sample_vis
             with open(DATASET_PATH, "a", encoding="utf-8") as f:
                 f.write(json.dumps(training_pair) + "\n")
 
+            existing_titles.add(title.lower().strip())
             print(f"     [SUCCESS] Logged to Obsidian Vault + dataset.jsonl (0 MB lingering disk bloat)")
+            time.sleep(0.35)
             return training_pair
     except Exception as e:
         print(f"     [ERROR] Failed harvesting {entry_or_url}: {e}")
@@ -504,6 +556,7 @@ def main():
     parser = argparse.ArgumentParser(description="Zero-Disk Long-Form & Tutorial Director Harvester")
     parser.add_argument("--mode", choices=["documentaries", "tutorials", "scripting", "all"], default="all")
     parser.add_argument("--batch-50", action="store_true", help="Harvest 50 top-tier videos across 5 curated categories (10 per category)")
+    parser.add_argument("--batch-500", action="store_true", help="Harvest 500 top-tier videos across 25 viral editing & documentary categories (20 per category)")
     parser.add_argument("--query", help="Custom search query")
     parser.add_argument("--count", type=int, default=5, help="Number of videos per category")
     parser.add_argument("--urls", nargs="+", help="Specific video URLs to harvest")
@@ -517,6 +570,46 @@ def main():
     if args.urls:
         for u in args.urls:
             targets.append((u, "tutorial" if "capcut" in u.lower() or "edit" in u.lower() else "documentary"))
+    elif args.batch_500:
+        print("\n[BATCH-500] Launching 500-video harvest across 25 viral editing & storytelling categories (20 per category):")
+        cat_configs_500 = [
+            # 1. CapCut Motion Graphics & NLE Visual Hacks
+            ("how to edit like vox in capcut pc tutorial", "tutorial", 20),
+            ("cinematic video editing hacks capcut premiere pro", "tutorial", 20),
+            ("how to edit viral reels shorts capcut pacing retention", "tutorial", 20),
+            ("johnny harris editing style map animation tutorial", "tutorial", 20),
+            ("capcut keyframe zoom animation sound design tutorial", "tutorial", 20),
+            ("how to edit dark aesthetic documentary Iman Gadzhi style", "tutorial", 20),
+            ("kinetic typography text animation tutorial capcut", "tutorial", 20),
+            ("cinematic b roll transitions paper texture mask tutorial", "tutorial", 20),
+            ("davinci resolve cinematic color grading documentary lut", "tutorial", 20),
+            ("ali abdaal video editing fast pacing retention tips", "tutorial", 20),
+            ("finzar video editing tricks comedic sound effects pacing", "tutorial", 20),
+            ("sound design for video editors whoosh riser impact tutorial", "tutorial", 20),
+            ("foley sound effects layering documentary b roll tutorial", "tutorial", 20),
+            ("mrbeast retention editing 1 second rule pacing tutorial", "tutorial", 20),
+            ("hayden hillier smith youtube editor pacing masterclass", "tutorial", 20),
+
+            # 2. Documentary Scriptwriting & Storytelling Architecture
+            ("how to write documentary script youtube storytelling", "documentary", 20),
+            ("magnates media business documentary video essay", "documentary", 20),
+            ("james jani documentary storytelling script breakdown", "documentary", 20),
+            ("lemmino documentary research and visual pacing", "documentary", 20),
+            ("studiobinder 3 act story structure pacing masterclass", "documentary", 20),
+            ("dan koe one person business scriptwriting hook formula", "documentary", 20),
+            ("coldfusion tech documentary storytelling masterclass", "documentary", 20),
+            ("sunnyv2 mini documentary youtube retention analysis", "documentary", 20),
+            ("kurzgesagt scriptwriting storytelling curiosity gap", "documentary", 20),
+            ("psychological hooks first 3 seconds retention youtube shorts", "documentary", 20),
+        ]
+        seen_urls = set()
+        for idx_cat, (q, m, c) in enumerate(cat_configs_500, 1):
+            print(f"\n--- [Category {idx_cat}/25] {q.upper()} ---")
+            urls = search_youtube_query(q, c)
+            for u in urls:
+                if u not in seen_urls:
+                    seen_urls.add(u)
+                    targets.append((u, m))
     elif args.batch_50:
         # Curated 50-video batch (10 per domain)
         print("\n[BATCH-50] Launching 50-video harvest across 5 viral editing categories:")
@@ -541,22 +634,18 @@ def main():
             targets.append((u, mode))
     else:
         # Default diverse multi-domain harvest:
-        # 1. CapCut Editing Tutorials
         capcut_urls = search_youtube_query("how to edit like vox capcut tutorial", args.count)
         for u in capcut_urls:
             targets.append((u, "tutorial"))
 
-        # 2. Cinematic Video Editing Hacks
         cinematic_urls = search_youtube_query("cinematic video editing hacks capcut premiere", args.count)
         for u in cinematic_urls:
             targets.append((u, "tutorial"))
 
-        # 3. High-Retention Storytelling & Scripting
         scripting_urls = search_youtube_query("how to write documentary script youtube storytelling", args.count)
         for u in scripting_urls:
             targets.append((u, "documentary"))
 
-        # 4. Long-form Master Video Essays
         doc_urls = search_youtube_query("magnates media documentary", args.count)
         for u in doc_urls:
             targets.append((u, "documentary"))
@@ -565,19 +654,31 @@ def main():
     print(f"Starting Zero-Disk Stream Harvester: {len(targets)} total video targets")
     print(f"Target Dataset: {DATASET_PATH}")
     print(f"Director Vault: {VAULT_DIR}")
+    print(f"Zero Video Bloat: 0 MB video files saved to disk")
     print(f"==================================================================")
 
     success_count = 0
+    start_time = time.time()
     for idx, (url, m) in enumerate(targets, 1):
-        print(f"\n[{idx}/{len(targets)}] Processing [{m.upper()}]: {url}")
-        res = harvest_video_entry(url, mode=m, sample_visual_cuts=args.visual_cuts)
+        elapsed = time.time() - start_time
+        rate = idx / max(1, elapsed)
+        print(f"\n[{idx}/{len(targets)}] (Elapsed: {int(elapsed)}s, ~{rate:.1f} vids/s) Processing [{m.upper()}]: {url}")
+        res = harvest_video_entry(
+            url,
+            mode=m,
+            sample_visual_cuts=args.visual_cuts,
+            existing_titles=already_harvested
+        )
         if res:
             success_count += 1
 
     dataset_size = os.path.getsize(DATASET_PATH) / 1024 if os.path.exists(DATASET_PATH) else 0
-    print(f"\n[HARVEST COMPLETE] Successfully harvested {success_count}/{len(targets)} videos.")
+    print(f"\n==================================================================")
+    print(f"[HARVEST COMPLETE] Successfully harvested {success_count}/{len(targets)} videos.")
     print(f"Total dataset size on disk: {dataset_size:.1f} KB (Zero disk bloat!).")
-    print(f"Obsidian Director Vault updated with all learned techniques.\n")
+    print(f"Total entries in dataset.jsonl: {len(already_harvested)}")
+    print(f"Obsidian Director Vault updated with all learned techniques.")
+    print(f"==================================================================\n")
 
 
 if __name__ == "__main__":
