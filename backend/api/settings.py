@@ -10,6 +10,7 @@ class SettingsUpdate(BaseModel):
     ollama_model: Optional[str] = None
     default_voice: Optional[str] = None
     force_offline: Optional[bool] = None
+    custom_domain: Optional[str] = None
     telegram_token: Optional[str] = None
     gemini_key: Optional[str] = None
     niche: Optional[str] = None
@@ -25,6 +26,7 @@ async def get_settings():
         "ollama_model": os.environ.get("OLLAMA_MODEL", "SparkLLM/Spark-X2.5-4B"),
         "default_voice": settings.tts_voice or "en-US-ChristopherNeural",
         "force_offline": os.environ.get("FORCE_OFFLINE", "false").lower() == "true",
+        "custom_domain": os.environ.get("CUSTOM_DOMAIN", "localhost:3000"),
         "openai_key": "********" if settings.gemini_api_key else "",
         "gemini_key": "********" if settings.gemini_api_key else "",
         "telegram_token": "********" if settings.telegram_bot_token else "",
@@ -44,5 +46,7 @@ async def update_settings(req: SettingsUpdate):
         settings.tts_voice = req.default_voice
     if req.force_offline is not None:
         os.environ["FORCE_OFFLINE"] = "true" if req.force_offline else "false"
+    if req.custom_domain:
+        os.environ["CUSTOM_DOMAIN"] = req.custom_domain
         
     return {"status": "success", "settings": data}

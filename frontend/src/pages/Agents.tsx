@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Badge, Button } from '../components/ui';
-import { Cpu, Zap, Volume2, Film, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { Cpu, Zap, Volume2, Film, CheckCircle2, Loader2, Target, Activity } from 'lucide-react';
 import { api } from '../api/client';
 
 export default function Agents() {
@@ -13,8 +13,8 @@ export default function Agents() {
       status: 'Active', 
       model: 'Gemini 3.6 Flash', 
       role: 'Evaluator', 
-      desc: 'Scores volume, competition, CPM, and evergreen potential with AI reasoning.',
-      icon: Sparkles
+      desc: 'Scores volume, competition, CPM, and evergreen potential with quantitative analysis.',
+      icon: Target
     },
     { 
       name: 'Viral Researcher', 
@@ -82,8 +82,8 @@ export default function Agents() {
       {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-3 mb-6 shrink-0">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-white">AI Agent Workforce</h1>
-          <div className="text-[var(--mu)] text-[13px] mt-1">Live status of the autonomous agents and rendering engines.</div>
+          <h1 className="text-xl font-semibold tracking-tight text-white">Production Engines & Pipelines</h1>
+          <div className="text-slate-400 text-xs mt-1">Operational status of core generation, synthesis, and rendering subsystems.</div>
         </div>
 
         <Button 
@@ -92,15 +92,15 @@ export default function Agents() {
           disabled={isTesting}
           className="flex items-center gap-2 text-xs border-slate-700"
         >
-          {isTesting ? <Loader2 size={13} className="animate-spin text-blue-400" /> : <Sparkles size={13} className="text-yellow-400" />}
-          <span>{isTesting ? 'Testing Brain...' : 'Test AI Brain Speed'}</span>
+          {isTesting ? <Loader2 size={13} className="animate-spin text-blue-400" /> : <Activity size={13} className="text-blue-400" />}
+          <span>{isTesting ? 'Testing Latency...' : 'Test Engine Latency'}</span>
         </Button>
       </div>
 
       {testResult && (
-        <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs mb-6 flex items-center gap-2">
-          <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-          <span><b>Brain Response:</b> {testResult}</span>
+        <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 rounded-md text-xs mb-6 flex items-center gap-2">
+          <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+          <span><b>Engine Response:</b> {testResult}</span>
         </div>
       )}
 

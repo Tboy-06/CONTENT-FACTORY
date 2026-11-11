@@ -44,7 +44,7 @@ export default function SafeZoneOverlay({
         <div className="flex-1 pr-14 text-left drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
           <div className="font-semibold text-white text-xs flex items-center gap-1.5 mb-1">
             @{channelName}
-            <span className="text-[10px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded-full">Follow</span>
+            <span className="text-[10px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded-sm">Follow</span>
           </div>
           <p className="text-[11px] text-white/90 line-clamp-2 leading-snug mb-1.5 font-normal">
             {caption}

@@ -5,12 +5,12 @@ export const Card = ({ children, className = '', ...props }: any) => (
 );
 
 export const Button = ({ children, variant = 'primary', className = '', ...props }: any) => {
-  const base = "rounded-lg font-medium px-4 py-2 transition-all duration-150 border disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
+  const base = "rounded-md font-medium px-3.5 py-2 text-xs transition-colors duration-150 border disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer inline-flex items-center justify-center gap-1.5";
   const variants: Record<string, string> = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white border-blue-500/50 shadow-sm",
+    primary: "bg-blue-600 hover:bg-blue-500 text-white border-blue-500",
     secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white",
-    danger: "bg-red-600/80 hover:bg-red-500 text-white border-red-500/40",
-    ghost: "bg-[var(--gl)] text-[var(--tx)] border-[var(--ln)] hover:bg-[var(--gl2)]"
+    danger: "bg-red-700 hover:bg-red-600 text-white border-red-600",
+    ghost: "bg-transparent text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white"
   };
   const chosen = variants[variant] || variants.primary;
   return <button className={`${base} ${chosen} ${className}`} {...props}>{children}</button>;
@@ -18,23 +18,23 @@ export const Button = ({ children, variant = 'primary', className = '', ...props
 
 export const Badge = ({ children, variant = 'info', className = '' }: any) => {
   const variants: Record<string, string> = {
-    info: "bg-blue-500/15 text-blue-300 border border-blue-500/30",
-    success: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-    warning: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
-    danger: "bg-red-500/15 text-red-400 border border-red-500/30",
-    neutral: "bg-slate-800 text-slate-300 border border-slate-700"
+    info: "bg-slate-800 text-blue-400 border border-slate-700",
+    success: "bg-slate-800 text-emerald-400 border border-slate-700",
+    warning: "bg-slate-800 text-amber-400 border border-slate-700",
+    danger: "bg-slate-800 text-red-400 border border-slate-700",
+    neutral: "bg-slate-900 text-slate-300 border border-slate-800"
   };
   const chosen = variants[variant] || variants.info;
-  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap ${chosen} ${className}`}>{children}</span>;
+  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${chosen} ${className}`}>{children}</span>;
 };
 
 export const Tabs = ({ tabs, activeTab, onChange }: any) => (
-  <div className="flex gap-1 mb-4">
+  <div className="flex gap-1 mb-4 border-b border-slate-800 pb-2">
     {tabs.map((t: string) => (
       <button 
         key={t}
         onClick={() => onChange(t)}
-        className={`px-3 py-1.5 rounded-lg text-sm transition-colors border ${activeTab === t ? 'bg-[var(--gl2)] text-white border-[var(--ln)]' : 'text-[var(--mu)] border-transparent hover:text-white'}`}
+        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${activeTab === t ? 'bg-slate-800 text-white border-slate-700' : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-900'}`}
       >
         {t}
       </button>

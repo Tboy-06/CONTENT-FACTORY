@@ -1,25 +1,22 @@
 :root {
   color-scheme: dark;
-  --bg: #0b0e17;
-  --gl: rgba(255, 255, 255, 0.045);
-  --gl2: rgba(255, 255, 255, 0.08);
-  --ln: rgba(255, 255, 255, 0.1);
-  --tx: #f1f4fc;
-  --mu: #97a0b8;
-  --ac: #3b82f6;
-  --ac2: #0284c7;
+  --bg: #0b0f19;
+  --gl: rgba(15, 23, 42, 0.75);
+  --gl2: rgba(30, 41, 59, 0.85);
+  --ln: #1e293b;
+  --tx: #f8fafc;
+  --mu: #94a3b8;
+  --ac: #2563eb;
+  --ac2: #1d4ed8;
   --ok: #10b981;
   --wa: #f59e0b;
   --er: #ef4444;
 }
 
 body {
-  background: radial-gradient(800px 460px at 10% -10%, rgba(59,130,246,.12), transparent 60%),
-              radial-gradient(700px 460px at 100% 0, rgba(2,132,199,.08), transparent 60%),
-              var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--tx);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   margin: 0;
@@ -28,17 +25,13 @@ body {
   overflow-y: auto;
 }
 
-/* Glass effect utilities */
+/* Structured card panels - Clean industrial design, no bubbly vibe-coding */
 .glass-panel {
   background: var(--gl);
   border: 1px solid var(--ln);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 14px;
+  border-radius: 8px;
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--ac), var(--ac2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }

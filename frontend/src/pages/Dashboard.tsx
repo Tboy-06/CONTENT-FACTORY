@@ -18,27 +18,27 @@ export default function Dashboard() {
     <div className="animate-in fade-in min-h-full flex flex-col pb-8">
       <div className="flex justify-between items-center flex-wrap gap-3 mb-6 shrink-0">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight">Dashboard</h1>
-          <div className="text-[var(--mu)] text-[13px] mt-1">Your video production studio.</div>
+          <h1 className="text-xl font-semibold tracking-tight text-white">Pipeline Dashboard</h1>
+          <div className="text-slate-400 text-xs mt-1">Real-time job queue, quality review approvals, and local cache monitoring.</div>
         </div>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 mb-6">
-        <div className="glass-panel flex justify-between items-center p-5 bg-gradient-to-br from-[rgba(79,124,255,0.08)] to-[rgba(139,92,255,0.02)] border-[rgba(79,124,255,0.2)]">
+        <div className="glass-panel flex justify-between items-center p-4 bg-slate-900 border border-slate-800">
           <div>
-            <div className="text-[var(--ac)] text-[13px] font-medium mb-1">Active Jobs</div>
-            <b className="text-3xl text-white">{activeJobs.length}</b>
+            <div className="text-blue-400 text-xs font-medium mb-1">Active Jobs in Queue</div>
+            <b className="text-2xl text-white">{activeJobs.length}</b>
           </div>
-          <Button onClick={() => navigate('/pipeline')}>View Pipeline</Button>
+          <Button variant="primary" onClick={() => navigate('/pipeline')}>View Pipeline</Button>
         </div>
         
-        <div className="glass-panel flex justify-between items-center p-5 border-[rgba(245,184,74,0.4)] bg-gradient-to-br from-[rgba(245,184,74,0.1)] to-[rgba(245,184,74,0.02)]">
+        <div className="glass-panel flex justify-between items-center p-4 bg-slate-900 border border-slate-800">
           <div>
-            <div className="text-[var(--wa)] text-[13px] font-medium mb-1">Approvals Needed</div>
-            <b className="text-3xl text-[var(--wa)]">{qcJobs.length}</b>
+            <div className="text-amber-400 text-xs font-medium mb-1">Quality Review Approvals</div>
+            <b className="text-2xl text-amber-400">{qcJobs.length}</b>
           </div>
           <Button 
-            className="!bg-[var(--wa)] !text-[#000]" 
+            variant="secondary"
             onClick={() => {
               if (qcJobs.length > 0) navigate(`/qc1/${qcJobs[0].id}`);
               else navigate('/pipeline');

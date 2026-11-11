@@ -131,8 +131,8 @@ export default function Pipeline() {
                               <Badge variant="warning">QC1 Review</Badge>
                             </div>
                           ) : (
-                            <div className="h-1 bg-[var(--gl2)] rounded-full overflow-hidden mt-2">
-                              <div className="h-full bg-gradient-to-r from-[var(--ac)] to-[var(--ac2)]" style={{ width: `${getJobProgress(job)}%` }} />
+                            <div className="h-1 bg-slate-800 rounded-sm overflow-hidden mt-2">
+                              <div className="h-full bg-blue-600" style={{ width: `${getJobProgress(job)}%` }} />
                             </div>
                           )}
                         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Sparkles, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useCreateInstantJob, useBrainstormHooks, useJobs, useDeleteJob, useClearAllJobs, useUploadAnchor, api } from '../api/client';
 
@@ -172,15 +172,15 @@ export default function Create() {
               disabled={brainstormMutation.isPending || isGenerating}
               className="flex items-center gap-1.5 whitespace-nowrap !py-3 !px-4 text-xs font-medium border-slate-700"
             >
-              {brainstormMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-amber-400" />}
-              <span>Brainstorm 3 Viral Hooks</span>
+              {brainstormMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <ListPlus size={14} className="text-blue-400" />}
+              <span>Generate 3 Hooks</span>
             </Button>
           </div>
 
-          {/* Brainstormed Hook Suggestions */}
+          {/* Suggested Hook Angles */}
           {suggestedHooks.length > 0 && (
-            <div className="space-y-1.5 pt-1 animate-in fade-in">
-              <span className="text-[11px] font-medium text-slate-400">Click any high-retention hook to use it:</span>
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-medium text-slate-400">Select hook angle to insert:</span>
               <div className="grid grid-cols-1 gap-1.5">
                 {suggestedHooks.map((hook, i) => (
                   <button
@@ -190,9 +190,9 @@ export default function Create() {
                       handleGenerate(hook);
                     }}
                     disabled={isGenerating}
-                    className="text-left text-xs p-2.5 rounded-lg bg-blue-950/30 border border-blue-800/40 text-blue-200 hover:bg-blue-900/40 hover:border-blue-500 transition-colors flex items-center justify-between group"
+                    className="text-left text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-between group cursor-pointer"
                   >
-                    <span>“{hook}”</span>
+                    <span>"{hook}"</span>
                     <ArrowRight size={14} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
                   </button>
                 ))}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, X, Shield, Eye, EyeOff, Clock, Sparkles, Volume2, Plus, Minus, Loader2, Check } from 'lucide-react';
+import { Film, X, Shield, Eye, EyeOff, Clock, Palette, Volume2, Plus, Minus, Loader2, Check } from 'lucide-react';
 import { Button, Badge } from './ui';
 import SafeZoneOverlay from './SafeZoneOverlay';
 import { useRegenerateAudio } from '../api/client';
@@ -241,7 +241,7 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
                     {/* Color Grade & SFX Selectors */}
                     <div className="flex items-center gap-3 pt-1 text-[11px]">
                       <div className="flex items-center gap-1.5">
-                        <Sparkles size={12} className="text-amber-400 shrink-0" />
+                        <Palette size={12} className="text-slate-400 shrink-0" />
                         <span className="text-slate-400">Grade:</span>
                         <select
                           value={sc.grade || "hard_bw"}

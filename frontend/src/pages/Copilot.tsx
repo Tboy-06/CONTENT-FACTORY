@@ -101,17 +101,17 @@ export default function Copilot() {
         <div className="glass-panel flex flex-col p-4 !pb-0 min-h-0">
           <div className="flex-1 overflow-auto flex flex-col gap-2.5 pr-2 mb-4">
             {messages.map((m, i) => (
-              <div key={i} className={`max-w-[85%] p-[10px_13px] rounded-xl text-[13px] ${
+              <div key={i} className={`max-w-[85%] p-[10px_13px] rounded-md text-[13px] ${
                 m.role === 'user' 
-                  ? 'self-end bg-gradient-to-br from-[rgba(79,124,255,0.4)] to-[rgba(139,92,255,0.32)] text-white' 
-                  : 'bg-[var(--gl2)] text-[var(--tx)]'
+                  ? 'self-end bg-blue-600 border border-blue-500/40 text-white' 
+                  : 'bg-slate-900 border border-slate-800 text-slate-200'
               }`}>
                 {m.text}
               </div>
             ))}
             {chatMutation.isPending && (
-              <div className="max-w-[85%] p-[10px_13px] rounded-xl text-[13px] bg-[var(--gl2)] text-[var(--mu)]">
-                Thinking...
+              <div className="max-w-[85%] p-[10px_13px] rounded-md text-[13px] bg-slate-900 border border-slate-800 text-slate-400">
+                Processing request...
               </div>
             )}
           </div>
@@ -212,12 +212,12 @@ export default function Copilot() {
               {mode === 'clone' && (
                 <div className="py-2 border-b border-[var(--ln)]">
                   <div className="text-[var(--mu)] text-xs mb-2">Reference Video</div>
-                  <div className="border-2 border-dashed border-[var(--ln)] rounded-xl p-6 flex flex-col items-center justify-center text-center bg-[var(--gl2)] hover:border-[var(--ac)] transition-colors cursor-pointer group">
-                    <div className="w-10 h-10 rounded-full bg-[var(--gl)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--tx)]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <div className="border border-dashed border-slate-700 rounded-md p-6 flex flex-col items-center justify-center text-center bg-slate-950 hover:border-slate-500 transition-colors cursor-pointer">
+                    <div className="w-10 h-10 rounded-md bg-slate-900 border border-slate-800 flex items-center justify-center mb-2">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </div>
-                    <div className="text-[13px] font-medium">Drop a video file here or click to browse</div>
-                    <div className="text-[11px] text-[var(--mu)] mt-1">MP4, MOV up to 50MB</div>
+                    <div className="text-[13px] font-medium text-slate-200">Select reference video file to analyze</div>
+                    <div className="text-[11px] text-slate-500 mt-1">MP4, MOV up to 50MB</div>
                   </div>
                   <div className="text-center text-[var(--mu)] text-[11px] my-2">OR</div>
                   <div className="flex justify-between items-center text-[13px]">

@@ -9,7 +9,6 @@ import {
   Eye, 
   EyeOff, 
   ExternalLink, 
-  Sparkles, 
   ShieldCheck, 
   Loader2, 
   AlertCircle,
