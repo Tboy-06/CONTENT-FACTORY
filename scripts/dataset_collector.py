@@ -82,7 +82,21 @@ TASK_QUERIES = {
         "mrbeast retention editing 1 second rule pacing tutorial",
         "hayden hillier smith youtube editor pacing masterclass",
         "finzar video editing tricks comedic sound effects pacing",
-        "ali abdaal video editing fast pacing retention tips"
+        "ali abdaal video editing fast pacing retention tips",
+        "capcut graph speed ramp tutorial smooth transitions",
+        "documentary editing workflow premiere pro tips",
+        "magnates media editing breakdown motion graphics",
+        "how to do 3D camera tracking after effects tutorial",
+        "sound sync jump cuts fast pacing video editing",
+        "split screen multi panel editing documentary tutorial",
+        "text slammer and stat counter animation tutorial",
+        "sam kolder transition tutorial zoom whip pan",
+        "davinci resolve power grade documentary film look",
+        "high retention short form video editing capcut",
+        "vox style collage animation tutorial premiere",
+        "film grain and chromatic aberration overlay tutorial",
+        "match cut and invisible transition tutorial video editing",
+        "how to edit like fern documentary style tutorial"
     ],
     "hooks": [
         "how to write viral hooks first 3 seconds retention youtube shorts",
@@ -92,7 +106,25 @@ TASK_QUERIES = {
         "viral video hooks that keep viewers watching till the end",
         "dan koe hook formula viral copywriting framework",
         "how to hook viewers in the first 5 seconds youtube",
-        "viral tiktok reels hook formulas that work every time"
+        "viral tiktok reels hook formulas that work every time",
+        "the psychology of viral hooks curiosity gap breakdown",
+        "pattern interrupt video hook formulas for shorts",
+        "negative bias hooks that get millions of views",
+        "storytelling hook opening lines for documentary video",
+        "viral finance video hooks money psychology",
+        "viral tech video hooks that explode retention",
+        "how to start a youtube video hook retention masterclass",
+        "alex hormozi hook formulas short form content",
+        "viral history hooks mystery unexplained openings",
+        "open loop scriptwriting technique youtube retention",
+        "counter intuitive video hooks that blow up views",
+        "first 3 seconds video retention dropoff fix",
+        "viral title and hook frameworks for creators",
+        "high retention intro script formula youtube",
+        "retention editing and hook formula breakdown",
+        "viral true crime and documentary opening hooks",
+        "5 hooks that generated 100 million views breakdown",
+        "how to write scripts that hook viewers instantly"
     ],
     "storytelling": [
         "how to write documentary script youtube storytelling",
@@ -103,7 +135,24 @@ TASK_QUERIES = {
         "studiobinder 3 act story structure pacing masterclass",
         "kurzgesagt scriptwriting storytelling curiosity gap",
         "how to structure a video essay 4 act narrative",
-        "johnny harris storytelling script breakdown"
+        "johnny harris storytelling script breakdown",
+        "how to write a 4 act documentary script",
+        "the hero with a thousand faces video essay structure",
+        "dan harmon story circle applied to youtube videos",
+        "business downfall documentary scriptwriting masterclass",
+        "how to turn boring research into compelling stories",
+        "tension and release narrative arc video essay",
+        "how vox builds tension in investigative documentaries",
+        "inciting anomaly hidden mechanism story structure",
+        "how to write an engaging voiceover script for youtube",
+        "cliffhanger placement 4 act story structure shorts",
+        "historical documentary storytelling script writing tips",
+        "investigative journalism video essay script breakdown",
+        "mystery pacing and revelation documentary storytelling",
+        "the science of storytelling will storr breakdown",
+        "how to write documentary conclusions and emotional takeaways",
+        "crafting compelling narratives in short form documentary",
+        "behind the scenes documentary script writing process"
     ],
     "visual_audio": [
         "sound design for video editors whoosh riser impact tutorial",
@@ -112,7 +161,26 @@ TASK_QUERIES = {
         "how to sound design a documentary film step by step",
         "fast cuts sfx cinematic sound effects for transitions",
         "film scoring and foley sound effects for documentary videos",
-        "how to sound design a video step by step tutorial"
+        "how to sound design a video step by step tutorial",
+        "audio ducking and voiceover mixing masterclass",
+        "cinematic braam and sub bass hit sound design",
+        "ambient drone soundscape for documentary editing",
+        "riser build up to impact drop sound design tutorial",
+        "diegetic vs non diegetic sound in video editing",
+        "documentary music selection and pacing transitions",
+        "whoosh thud hit sound effect layering premiere pro",
+        "high frequency ear candy sound design for video",
+        "sound design tricks that make videos feel professional",
+        "sound design breakdown magnates media style",
+        "vox style sound design clicks typing whooshes",
+        "cinematic tension music and sfx layering",
+        "reverb and delay automation for dramatic moments",
+        "atmospheric background audio and room tone tutorial",
+        "glitch sfx and digital distortion sound design",
+        "how to mix sfx under voiceover dialogue",
+        "micro sound effects for kinetic typography and motion graphics",
+        "sound design hacks that double viewer engagement",
+        "the secret audio layers in viral documentaries"
     ]
 }
 
@@ -884,7 +952,12 @@ def search_youtube_query(query: str, count: int = 10) -> List[Dict[str, Any]]:
                         "view_count": e.get('view_count') or 0
                     })
     except Exception as e:
-        print(f"     [WARN] yt-dlp search error: {e}")
+        err_msg = str(e).lower()
+        if "429" in err_msg or "too many requests" in err_msg or "timed out" in err_msg or "timeout" in err_msg:
+            print(f"\n     [RATE LIMIT 429 / TIMEOUT] Search hit rate limit ({e}). Backing off 120s...")
+            time.sleep(120)
+        else:
+            print(f"     [WARN] yt-dlp search error: {e}")
 
     if not candidates:
         print(f"     [ERROR] No candidates discovered for query '{query}'.")
@@ -997,13 +1070,18 @@ def harvest_video_entry(
             save_harvest_state(state)
 
             print(f"     [SUCCESS] Task [{task}] -> Logged to Vault + dataset.jsonl (0 MB disk bloat)")
-            delay = round(random.uniform(1.5, 2.0), 2)
-            print(f"     [PACING] Pausing {delay}s between requests to guard YouTube & Gemini limits...")
+            delay = round(random.uniform(4.5, 6.5), 2)
+            print(f"     [PACING] Pausing {delay}s between video requests (strictly respects 15 RPM limit)...")
             time.sleep(delay)
             return record
     except Exception as e:
-        print(f"     [ERROR] Failed harvesting {entry_or_url}: {e}")
-        time.sleep(round(random.uniform(1.5, 2.0), 2))
+        err_msg = str(e).lower()
+        if "429" in err_msg or "too many requests" in err_msg or "timed out" in err_msg or "timeout" in err_msg:
+            print(f"\n     [RATE LIMIT 429 / TIMEOUT] Rate limit detected during harvest ({e}). Auto-backing off for 120s...")
+            time.sleep(120)
+        else:
+            print(f"     [ERROR] Failed harvesting {entry_or_url}: {e}")
+            time.sleep(round(random.uniform(4.5, 6.5), 2))
         return None
 
 
@@ -1011,7 +1089,12 @@ def harvest_video_entry(
 # MASTER HARVEST RUNNER & CLI
 # ==============================================================================
 
-def run_balanced_plan(state: Dict[str, Any], count_per_task: int = 10, visual_cuts: bool = False):
+def run_balanced_plan(
+    state: Dict[str, Any],
+    count_per_task: int = 10,
+    visual_cuts: bool = False,
+    query_pointers: Optional[Dict[str, int]] = None
+) -> int:
     """Executes the balanced distribution across all 4 tasks towards the 6,000 target."""
     print("\n==================================================================")
     print(f"LAUNCHING BALANCED DATASET HARVESTER: {count_per_task} VIDEOS PER TASK ({count_per_task * 4} TOTAL)")
@@ -1019,29 +1102,45 @@ def run_balanced_plan(state: Dict[str, Any], count_per_task: int = 10, visual_cu
     print(f"Target Dataset: {DATASET_PATH}")
     print(f"Director Vault: {VAULT_DIR}")
     print(f"Checkpoint State: {STATE_PATH}")
+    print("Pacing: 4.5s - 6.5s per video (Guarantees < 12 RPM, respects Gemini 15 RPM ceiling)")
     print("Zero-Disk Guarantee: 0 MB video files saved to SSD")
     print("==================================================================\n")
 
+    total_harvested_cycle = 0
     tasks_order = ["editing", "hooks", "storytelling", "visual_audio"]
     for task_name in tasks_order:
         current_cnt = state["counts"].get(task_name, 0)
         target_cnt = TASK_BALANCED_TARGETS.get(task_name, 1500)
+        if current_cnt >= target_cnt:
+            print(f"\n>>> TASK: [{task_name.upper()}] target already met ({current_cnt}/{target_cnt}). Skipping. <<<")
+            continue
+
         print(f"\n>>> PROCESSING TASK: [{task_name.upper()}] (Current: {current_cnt} / Target: {target_cnt}) <<<")
 
         queries = TASK_QUERIES.get(task_name, [])
+        if not queries:
+            continue
+
+        start_ptr = 0
+        if query_pointers is not None:
+            start_ptr = query_pointers.get(task_name, 0)
+
         harvested_for_task = 0
 
-        for q_idx, q in enumerate(queries, 1):
+        for q_offset in range(len(queries)):
             if harvested_for_task >= count_per_task:
                 break
             if state["counts"].get(task_name, 0) >= target_cnt:
                 print(f"     [GOAL REACHED] Task [{task_name}] target met ({state['counts'][task_name]}/{target_cnt}).")
                 break
 
+            q_idx = (start_ptr + q_offset) % len(queries)
+            q = queries[q_idx]
+
             needed = count_per_task - harvested_for_task
-            fetch_count = max(needed * 2, 5)
+            fetch_count = max(needed * 2, 6)
             items = search_youtube_query(q, fetch_count)
-            time.sleep(round(random.uniform(1.5, 2.0), 2))
+            time.sleep(round(random.uniform(2.0, 3.5), 2))
 
             for item in items:
                 if harvested_for_task >= count_per_task:
@@ -1054,7 +1153,11 @@ def run_balanced_plan(state: Dict[str, Any], count_per_task: int = 10, visual_cu
                 )
                 if res and not res.get("skipped"):
                     harvested_for_task += 1
+                    total_harvested_cycle += 1
                     print(f"     [PROGRESS] Harvested {harvested_for_task}/{count_per_task} for task [{task_name}].")
+
+            if query_pointers is not None:
+                query_pointers[task_name] = (q_idx + 1) % len(queries)
 
         print(f"\n[TASK COMPLETE] [{task_name.upper()}] batch finished: {harvested_for_task} new examples added.\n")
 
@@ -1062,14 +1165,91 @@ def run_balanced_plan(state: Dict[str, Any], count_per_task: int = 10, visual_cu
     for t in tasks_order:
         print(f"  - {t}: {state['counts'].get(t, 0)} / {TASK_BALANCED_TARGETS[t]}")
     print(f"  - TOTAL: {state['counts'].get('total', 0)} / 6,000\n")
+    return total_harvested_cycle
+
+
+def run_continuous_harvest(
+    state: Dict[str, Any],
+    count_per_task: int = 5,
+    cooldown_seconds: int = 90,
+    target_total: int = 6000,
+    visual_cuts: bool = False
+):
+    """
+    Continuous auto-looping daemon that runs cycles indefinitely until target_total (6,000) is reached.
+    - Two-tier pacing: 4.5s-6.5s per video, 90s inter-cycle cooldown.
+    - Auto-backoff: 120s on HTTP 429 or network timeouts.
+    - Micro-batches: 5 videos per task (20 videos per cycle).
+    - Query rotation: rotates across 25+ diverse search queries per task.
+    - Zero-disk bloat: all temp files purged immediately.
+    """
+    print("\n==================================================================")
+    print("CONTINUOUS AUTO-PACED DATASET HARVESTER DAEMON STARTED (--continuous)")
+    print(f"Target Total: {target_total} examples in {DATASET_PATH}")
+    print(f"Micro-Batch: {count_per_task} videos per task ({count_per_task * 4} videos/cycle)")
+    print("Per-Video Delay: 4.5s - 6.5s (Guarantees < 12 RPM, respects Gemini 15 RPM ceiling)")
+    print(f"Inter-Cycle Cooldown: {cooldown_seconds}s sleep between cycles (prevents YouTube IP blocks)")
+    print("Zero-Disk Guarantee: 0 MB temporary files saved to SSD")
+    print(f"Checkpoint State: {STATE_PATH}")
+    print("==================================================================\n")
+
+    cycle = 1
+    query_pointers = {t: 0 for t in ["editing", "hooks", "storytelling", "visual_audio"]}
+
+    while True:
+        total_now = state["counts"].get("total", 0)
+        if total_now >= target_total:
+            print(f"\n[MASTER GOAL REACHED] Dataset reached {total_now}/{target_total} examples! Daemon completed.")
+            break
+
+        all_done = all(state["counts"].get(t, 0) >= TASK_BALANCED_TARGETS[t] for t in TASK_BALANCED_TARGETS)
+        if all_done:
+            print(f"\n[ALL TASK TARGETS MET] Total records: {total_now}. Daemon completed.")
+            break
+
+        print(f"\n==================================================================")
+        print(f">>> DAEMON CYCLE #{cycle} STARTING (Total Harvested So Far: {total_now} / {target_total}) <<<")
+        print(f"==================================================================")
+
+        cycle_added = run_balanced_plan(
+            state,
+            count_per_task=count_per_task,
+            visual_cuts=visual_cuts,
+            query_pointers=query_pointers
+        )
+
+        total_after = state["counts"].get("total", 0)
+        print(f"\n==================================================================")
+        print(f">>> DAEMON CYCLE #{cycle} FINISHED (+{cycle_added} new examples added) <<<")
+        print(f"Progress toward {target_total} target:")
+        print(f"  - editing:      {state['counts'].get('editing', 0):>5} / {TASK_BALANCED_TARGETS['editing']}")
+        print(f"  - hooks:        {state['counts'].get('hooks', 0):>5} / {TASK_BALANCED_TARGETS['hooks']}")
+        print(f"  - storytelling: {state['counts'].get('storytelling', 0):>5} / {TASK_BALANCED_TARGETS['storytelling']}")
+        print(f"  - visual_audio: {state['counts'].get('visual_audio', 0):>5} / {TASK_BALANCED_TARGETS['visual_audio']}")
+        print(f"  - TOTAL:        {total_after:>5} / {target_total}")
+        print(f"==================================================================")
+
+        if total_after >= target_total:
+            print(f"\n[MASTER GOAL REACHED] Reached {total_after}/{target_total} records! Daemon completed.")
+            break
+
+        print(f"\n[INTER-CYCLE COOLDOWN] Completed {count_per_task * 4}-video cycle. Sleeping {cooldown_seconds}s to reset IP thresholds before Cycle #{cycle + 1}...")
+        for remaining in range(cooldown_seconds, 0, -15):
+            print(f"     ... cooldown: {remaining}s remaining ...")
+            time.sleep(min(15, remaining))
+        cycle += 1
 
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-Task Balanced Video Dataset Harvester")
     parser.add_argument("--task", choices=["editing", "hooks", "storytelling", "visual_audio", "all"], default="all",
                         help="Specific production task to harvest")
+    parser.add_argument("--continuous", action="store_true",
+                        help="Run continuous auto-paced daemon looping until 6,000 target is reached")
+    parser.add_argument("--cooldown", type=int, default=90,
+                        help="Inter-cycle cooldown in seconds for continuous mode (default: 90s)")
     parser.add_argument("--run-balanced-plan", action="store_true",
-                        help="Run master 6,000 balanced distribution plan across all 4 tasks")
+                        help="Run master balanced distribution plan cycle across all 4 tasks")
     parser.add_argument("--count", type=int, default=10,
                         help="Number of videos per task in balanced plan or per query (default: 10)")
     parser.add_argument("--target-total", type=int, default=6000,
@@ -1122,6 +1302,17 @@ def main():
         print(f"- Styles notes: {len(os.listdir(os.path.join(VAULT_DIR, 'styles')))}")
         print(f"- SFX notes: {len(os.listdir(os.path.join(VAULT_DIR, 'sfx')))}")
         print("==================================================================\n")
+        return
+
+    if args.continuous:
+        cycle_count = args.count if args.count != 10 else 5
+        run_continuous_harvest(
+            state,
+            count_per_task=cycle_count,
+            cooldown_seconds=args.cooldown,
+            target_total=args.target_total,
+            visual_cuts=args.visual_cuts
+        )
         return
 
     if args.run_balanced_plan:
