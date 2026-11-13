@@ -1,27 +1,27 @@
-# Hook: 穿成虐文倒楣假千金，她果斷撕破懦弱人設！吊打白蓮真千金、硬剛偏心家人，全程打臉解壓，爽翻全場！#真假千金 #爽剧
+# Hook: 她顶替千金嫁给暗恋多年的高冷总裁，本以为只是偷偷圆梦，谁知他早已认出她！曾经遥不可及的男人，婚后却恨不得时时刻刻黏着她，连一句“老公”都能让他心甘情愿缴械投降！💕#短剧 #全集 #甜宠 #电视剧
 
 ## Performance Telemetry
-- Views: 894,172
-- Likes: 8,932
-- View-to-Like Ratio: 100.1:1
-- Primary First Spoken Line (0:00 - 0:03): "Due to a System bug, I went from a badass heroine to a Pseudoverse's"
+- Views: 73,406
+- Likes: 768
+- View-to-Like Ratio: 95.6:1
+- Primary Opening: "She believed she stole an heiress's identity to secretly marry a ruthless CEO, unaware he engineered the entire deception years ago."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Due to a System bug, I went from a badass heroine to a Pseudoverse's"
+> "She believed she stole an heiress's identity to secretly marry a ruthless CEO, unaware he engineered the entire deception years ago."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 穿成虐文倒楣假千金，她果斷撕破懦弱人設！吊打白蓮真千金、硬剛偏心家人，全程打臉解 is completely backwards."
+> "A cold billionaire caught an imposter in his wedding bed, but instead of ruining her, he surrendered his fortune for a single word."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 穿成虐文倒楣假千金，她果斷撕破懦弱人設！吊打白蓮真千金、硬剛偏心家人，."
+> "Stealing an heiress's place at the altar should have destroyed her life, but hiding her identity only exposed his terrifying secret obsession."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

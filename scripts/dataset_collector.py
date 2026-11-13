@@ -408,6 +408,10 @@ def extract_top_praise_comments(info: Dict[str, Any], max_comments: int = 35) ->
         if EXCLUDE_COMMENT_PATTERNS.search(text) or "http" in text.lower() or "www." in text.lower():
             continue
 
+        # Exclude questions (viewer asking for advice is not an authority quote!)
+        if text.endswith("?") or re.search(r"\?\s*$", text) or re.match(r"^(should i|how do i|how can|can you|what is|is it|any tips|where do)\b", text.lower()):
+            continue
+
         text_lower = text.lower()
         has_analytical = any(k in text_lower for k in ANALYTICAL_EDITING_KEYWORDS)
         timestamp_match = re.search(r"\b([0-9]{1,2}:[0-9]{2})\b", text)
@@ -618,13 +622,36 @@ def synthesize_editing_task(
     avg_interval = round(duration / max(1, cuts_count), 2)
     cuts_per_min = round(cuts_count / max(0.5, duration / 60.0), 1)
 
-    noun_phrases = extract_complete_noun_phrases(full_text or title, 4)
+    # Distill clean 2-3 word editorial techniques via ask_brain()
+    concepts_prompt = f"""You are an elite video editing director.
+Topic: "{title}"
+Spoken Narration Excerpt: "{full_text[:400]}"
+
+Extract 4 clean, professional 2-to-3 word editing techniques or visual pacing pillars based on this video (e.g. "MATCH CUT TRANSITIONS", "AUDIO MOTIVATION", "TACTILE PAPER OVERLAYS", "DYNAMIC ZOOM PUNCH").
+Return strictly a JSON array of 4 uppercase strings:
+["TECHNIQUE 1", "TECHNIQUE 2", "TECHNIQUE 3", "TECHNIQUE 4"]
+Output strictly JSON without markdown fences."""
+
+    brain_concepts = None
+    res = ask_brain_sync(concepts_prompt, format_json=True)
+    if res:
+        try:
+            clean_res = re.sub(r"^```(?:json)?|```$", "", res.strip(), flags=re.MULTILINE).strip()
+            parsed = json.loads(clean_res)
+            if isinstance(parsed, list) and len(parsed) >= 3:
+                brain_concepts = [str(x).strip().upper() for x in parsed if len(str(x).strip()) >= 4][:4]
+        except Exception:
+            pass
+
+    if not brain_concepts:
+        brain_concepts = extract_complete_noun_phrases(full_text or title, 4)
+
     slam_headline = "CORE REVELATION"
-    slam_highlight = noun_phrases[0] if noun_phrases else "VISUAL MOMENTUM"
+    slam_highlight = brain_concepts[0] if brain_concepts else "VISUAL MOMENTUM"
 
     stat_headline, stat_highlight = extract_dynamic_numeric_fact(sentences, info, cuts_per_min)
 
-    list_pillars = noun_phrases[:3] if len(noun_phrases) >= 3 else ["HOOK PACING", "AUDIO CONTRAST", "FINAL PAYOFF"]
+    list_pillars = brain_concepts[:3] if len(brain_concepts) >= 3 else ["HOOK PACING", "AUDIO CONTRAST", "FINAL PAYOFF"]
     list_highlight = " · ".join(list_pillars)
     stepper_highlight = " -> ".join([p.title() for p in list_pillars])
 
