@@ -1,19 +1,23 @@
 # How to edit 10x faster in 5 minutes
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 102
-- Viewer Praise Comments: 12
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 376.0s (6.3 min)
+- Cut Frequency: 2.61s per cut (~23.0 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
-- Layer whoosh/riser SFX 2-3 frames before every visual transition and heavy thud on fact reveals.
-- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual stimulation.
+## Core Pacing & Cutting Rules
+- Layer whoosh/riser SFX 2-3 frames before every cut transition, with heavy thud impact on data reveals.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "If you have been editing for a long time, you know the information he is giving here is golden" — @johubify
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@JOHNJOANEE`, SFX: `click.wav`, Grade: `hard_bw`)
 
-> "Great tips on speed. A lot of the remaining time is in prep, finding and logging the good takes. I am a co-founder at Nice Touch, an assistant inside Premiere and Resolve that automates that part. What is your biggest time sink?" — @OohNiceTouch
-
-> "Do you mean to say your media library is stored inside a separate premiere project? What if it's thousands of items?" — @Arthad
+## Viewer Feedback on Pacing
+> "the real speed boost usually isn't learning another 40 shortcuts. it's figuring out what shouldn't require your attention in the first place. once an agent can handle the repetitive first pass, you can spend that time on pacing and storytelling instead. Vizard Agent is pretty handy for that kind of workflow." — @johnjoanee
 

@@ -1,20 +1,38 @@
 # Why 'Good' AI is Still Terrible
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 376
-- Viewer Praise Comments: 5
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 1493.0s (24.9 min)
+- Cut Frequency: 2.6s per cut (~23.1 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
+## Core Pacing & Cutting Rules
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "Hii iam from india iam a n editing aspirant iam the beginner so plzz suggest some imp videos in your channel" — @UdaySaladi
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@NERDTORCHTV`, SFX: `click.wav`, Grade: `hard_bw`)
 
-> "The scary thing is that, on many occasions, people simply don’t notice these things. Editors do. People obsessed with filmmaking and cinema do. But the average person scrolling through tiktok? Not really... And honestly, it’s not that surprising. Plenty of high-budget films have hundreds of continuity errors, for example, the Harry Potter series was painful to watch in that regard ,and most people still didn't notice them. They just kept watching, even if the movie felt like it was just stitched together from favorite scenes in the books (and didn't make any sense whatsoever). So, why would it be easier to spot these (and other) errors in AI videos?
-I’ve heard this a couple of times from older viewers, around 50 years old, reacting to AI slop. They often couldn’t tell them apart from real ones, especially when the video was something simple or absurd, like a skit with cats. And the fact that these AI short films have millions of views, and accounts like blake ridder teaching how to combine filmmaking with AI tools grow crazily fast... It's starting to be a bit too much. 
-You guys have a good eye, you appreciate good stories or as chatgpt would say "you've got a taste" :D but honestly... this isn't the norm.
-I love what you guys made here, btw!" — @wakefulstories
+## Viewer Feedback on Pacing
+> "I do like to edit for the zombie film that was done starting with the newspaper. Like you said, it does bring in a lot of story elements where we know that there's a zombie outbreak and we seen that there's a robot riding in ostrich it gives the audience the appropriate amount of information. 
+
+
+However, I will say that the part at the beginning technically doesn't matter for the story, but at the same time why not do something just for the fun of it? 
+
+Even with your insert where you said that the music doesn't make sense. Is there really a rule where you absolutely have to use music from the particular time. Or can you just put it in there because you like the song?
+
+
+And my first feature film there was actually a scene in it where these guys get chased by a vampire that was kind of like a zombie and the same came out to feel more like a comedy and I knew that the proper thing to do would be to cut it so that the tone can stay consistent throughout the film. But I chose to leave it in simply because I liked it.
+
+I know that leaving it in was the wrong decision to do but I couldn't help but feeling like why not just do it for the fun of it? 
+
+I love the breakdowns that you provided. I think it will be cool for you to interview Blake Ridder. He is a filmmaker who has been experimenting with workflows that combine real filmmaking and AI together. 
+
+I think that will be a good conversation to have and make for a great video" — @NERDTorchTV
 
 > "Another important thing to remember is that you cannot edit AI. Say you just wanted that overhead scene of the cop and raccoon. Maybe you gave it a clean storyboard without the blue line and prompted them to chase each other in an overhead shot. It might get that right, but then it will also change several other things--the color of the floor, or the sound effects, or the cop's uniform is different, etc. Now you're two prompts in, and your tokens/credits are dwindling. You can try to prompt again, but is it worth rolling the dice? 
 

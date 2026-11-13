@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X, Sparkles } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useCreateInstantJob, useBrainstormHooks, useJobs, useDeleteJob, useClearAllJobs, useUploadAnchor, api } from '../api/client';
+import DirectorChatDrawer from '../components/DirectorChatDrawer';
 
 const stylePresets = [
   { id: 'Dark Documentary', label: 'Dark Documentary', desc: 'Moody lighting, anamorphic lens, 35mm grain' },
@@ -38,6 +39,7 @@ export default function Create() {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [suggestedHooks, setSuggestedHooks] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isDirectorChatOpen, setIsDirectorChatOpen] = useState(false);
 
   const { data: recentJobs = [] } = useJobs();
   const instantMutation = useCreateInstantJob();
@@ -145,7 +147,17 @@ export default function Create() {
           <h1 className="text-2xl font-semibold tracking-tight text-white">Video Launchpad</h1>
           <p className="text-[13px] text-[var(--mu)]">Zero-cost local short video production engine (Edge-TTS + FFmpeg + Pillow).</p>
         </div>
-        <Badge variant="success">Zero API Cost</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="success">Zero API Cost</Badge>
+          <Button
+            onClick={() => setIsDirectorChatOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 text-slate-950 shadow-md shadow-amber-500/20 rounded-lg transition-all"
+            title="Open AI Director Command Studio to clone styles or analyze videos"
+          >
+            <Sparkles size={14} className="text-slate-950 fill-slate-950" />
+            <span>AI Director Studio</span>
+          </Button>
+        </div>
       </div>
 
       {/* View 1: The "New Video" Launchpad Card */}
@@ -462,6 +474,12 @@ export default function Create() {
           </div>
         </div>
       )}
+
+      {/* AI Director Command Studio Drawer */}
+      <DirectorChatDrawer
+        isOpen={isDirectorChatOpen}
+        onClose={() => setIsDirectorChatOpen(false)}
+      />
 
     </div>
   );

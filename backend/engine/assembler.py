@@ -72,8 +72,11 @@ async def render_beat_pass1(
     custom_media = beat.get("custom_media")
     is_video_input = False
     video_source_path = None
+    reuse_existing_plate = os.path.exists(plate_path) and not beat.get("_force_reroll") and not custom_media
 
-    if custom_media and os.path.exists(custom_media):
+    if reuse_existing_plate:
+        logger.info(f"[assembler] Reusing existing plate: {plate_path}")
+    elif custom_media and os.path.exists(custom_media):
         # Tier 3: Custom Hero Clip / Image Drop
         norm_output = os.path.join(beats_dir, f"{beat_id}_custom_norm.mp4" if custom_media.lower().endswith(('.mp4', '.mov', '.webm', '.mkv')) else f"{beat_id}_plate.png")
         norm_res = visual_cortex.normalize_custom_media(custom_media, norm_output, aspect_ratio=aspect_ratio, duration=duration)
@@ -380,16 +383,30 @@ async def assemble_final_pass2(
     - Burns .ASS captions
     """
     beats_dir = os.path.join(job_dir, "beats")
+    os.makedirs(beats_dir, exist_ok=True)
     concat_txt = os.path.join(beats_dir, "concat_beats.txt")
 
     all_beats = []
-    for s in manifest.get("sentences", []):
-        all_beats.extend(s.get("beats", []))
+    if "beats" in manifest and manifest["beats"]:
+        all_beats = manifest["beats"]
+    else:
+        for s in manifest.get("sentences", []):
+            all_beats.extend(s.get("beats", []))
+
+    # Auto-render any missing beat clips from their preserved plates (resilient to post-render cleanup)
+    for b in all_beats:
+        r_path = b.get("rendered_path") or os.path.join(beats_dir, f"{b['id']}.mp4")
+        if not os.path.exists(r_path):
+            logger.info(f"[assembler] Auto-rendering missing beat {b.get('id')} from plate...")
+            try:
+                await render_beat_pass1(b, job_dir)
+            except Exception as e:
+                logger.warning(f"[assembler] Failed auto-rendering beat {b.get('id')}: {e}")
 
     # Write concat list
     with open(concat_txt, "w", encoding="utf-8") as f:
         for b in all_beats:
-            r_path = b.get("rendered_path")
+            r_path = b.get("rendered_path") or os.path.join(beats_dir, f"{b['id']}.mp4")
             if r_path and os.path.exists(r_path):
                 norm = os.path.abspath(r_path).replace("\\", "/")
                 f.write(f"file '{norm}'\n")

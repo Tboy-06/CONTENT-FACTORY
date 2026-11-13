@@ -63,6 +63,93 @@ export function useJobs() {
   });
 }
 
+export interface VideoContext {
+  status: string;
+  video_path: string;
+  filename: string;
+  duration: number;
+  dimensions: {
+    duration: number;
+    width: number;
+    height: number;
+    aspect_ratio: string;
+    fps: number;
+  };
+  pacing: {
+    cuts_count: number;
+    avg_cut_interval: number;
+    cuts_per_minute: number;
+    cut_timestamps: number[];
+  };
+  audio: {
+    total_words: number;
+    words_per_minute: number;
+    silence_segments: Array<{ start: number; end: number; duration: number }>;
+    total_silence_seconds: number;
+    transcript: Array<{ start: number | string; end: number | string; text: string }>;
+    full_text: string;
+  };
+  full_text: string;
+}
+
+export interface DirectorChatAction {
+  action?: string;
+  [key: string]: any;
+}
+
+export interface DirectorChatResponse {
+  status: string;
+  message: string;
+  actions: DirectorChatAction[];
+  executed_actions: any[];
+  video_url?: string;
+  job_id?: number;
+}
+
+export function useAnalyzeVideo() {
+  return useMutation({
+    mutationFn: async ({ file, jobId, videoPath }: { file?: File; jobId?: number; videoPath?: string }) => {
+      const formData = new FormData();
+      if (file) formData.append('file', file);
+      if (jobId !== undefined && jobId !== null) formData.append('job_id', String(jobId));
+      if (videoPath) formData.append('video_path', videoPath);
+      return (await api.upload('/api/copilot/analyze-video', formData)) as VideoContext;
+    }
+  });
+}
+
+export function useDirectorChat() {
+  return useMutation({
+    mutationFn: async ({
+      prompt,
+      jobId,
+      videoContext,
+      engineMode = 'auto',
+      history,
+    }: {
+      prompt: string;
+      jobId?: number;
+      videoContext?: VideoContext | null;
+      engineMode?: 'auto' | 'offline_spark' | 'cloud';
+      history?: Array<{ role: string; content: string }>;
+    }) => {
+      const data = await api.post('/api/copilot/chat', {
+        prompt,
+        job_id: jobId,
+        video_context: videoContext,
+        engine_mode: engineMode,
+        history,
+      });
+      return data as DirectorChatResponse;
+    },
+    onSuccess: (data) => {
+      if (data.executed_actions && data.executed_actions.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      }
+    }
+  });
+}
+
 export function useChat() {
   return useMutation({
     mutationFn: async ({ prompt, system_prompt }: { prompt: string, system_prompt?: string }) => {

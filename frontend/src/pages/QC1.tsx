@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Download,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sparkles
 } from 'lucide-react';
 import { 
   useJobs, 
@@ -28,6 +29,7 @@ import {
 import { Button, Badge, Card } from '../components/ui';
 import SafeZoneOverlay from '../components/SafeZoneOverlay';
 import VideoStudioModal from '../components/VideoStudioModal';
+import DirectorChatDrawer from '../components/DirectorChatDrawer';
 
 export default function QC1() {
   const { id } = useParams();
@@ -36,6 +38,8 @@ export default function QC1() {
 
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [isStudioOpen, setIsStudioOpen] = useState(false);
+  const [isDirectorChatOpen, setIsDirectorChatOpen] = useState(false);
+  const [overrideVideoUrl, setOverrideVideoUrl] = useState<string | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([
     'TikTok',
     'YouTube Shorts',
@@ -60,6 +64,7 @@ export default function QC1() {
   const videoAsset = job?.assets?.find((a: any) => a.type === 'VIDEO');
   const jobMeta = videoAsset?.metadata || {};
   const videoUrl = jobMeta.video_url || (videoAsset?.path ? `/output/${videoAsset.path.split(/[\\/]/).pop()}` : null);
+  const activeVideoUrl = overrideVideoUrl || videoUrl;
   const rawScenes = jobMeta.scenes || [];
 
   // Sync scenes into editable state whenever job or video changes
@@ -67,7 +72,7 @@ export default function QC1() {
     if (rawScenes.length > 0) {
       setEditedScenes(rawScenes);
     }
-  }, [id, videoUrl]);
+  }, [id, activeVideoUrl, job]);
 
   if (!job) {
     return (
@@ -216,9 +221,18 @@ export default function QC1() {
         </div>
 
         <div className="flex items-center gap-2">
-          {videoUrl && (
+          <Button
+            onClick={() => setIsDirectorChatOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold !py-2 !px-3.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-md shadow-amber-500/20 rounded-lg transition-all"
+            title="Open AI Director Command Studio"
+          >
+            <Sparkles size={14} className="text-slate-950 fill-slate-950" />
+            <span>AI Director Studio</span>
+          </Button>
+
+          {activeVideoUrl && (
             <a
-              href={videoUrl}
+              href={activeVideoUrl}
               download={`${job.niche.replace(/[^a-zA-Z0-9_-]/g, '_')}_9x16.mp4`}
               className="inline-flex items-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
               title="Download 9:16 vertical MP4 video"
@@ -279,14 +293,14 @@ export default function QC1() {
                   /* 16:9 Widescreen Cinema Container */
                   <div className="relative w-full max-w-[560px] aspect-video rounded-2xl p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
                     <div className="relative w-full h-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
-                      {videoUrl ? (
+                      {activeVideoUrl ? (
                         <video
                           controls
                           playsInline
                           autoPlay
                           loop
-                          key={videoUrl}
-                          src={videoUrl}
+                          key={activeVideoUrl}
+                          src={activeVideoUrl}
                           className="w-full h-full object-contain"
                         />
                       ) : (
@@ -304,14 +318,14 @@ export default function QC1() {
                     <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 border border-white/10" />
 
                     <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-black flex items-center justify-center">
-                      {videoUrl ? (
+                      {activeVideoUrl ? (
                         <video
                           controls
                           playsInline
                           autoPlay
                           loop
-                          key={videoUrl}
-                          src={videoUrl}
+                          key={activeVideoUrl}
+                          src={activeVideoUrl}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -608,6 +622,16 @@ export default function QC1() {
         isOpen={isStudioOpen}
         onClose={() => setIsStudioOpen(false)}
         job={job}
+      />
+
+      {/* AI Director Command Studio Drawer */}
+      <DirectorChatDrawer
+        isOpen={isDirectorChatOpen}
+        onClose={() => setIsDirectorChatOpen(false)}
+        jobId={Number(id)}
+        onVideoUpdated={(newUrl) => {
+          setOverrideVideoUrl(newUrl);
+        }}
       />
 
     </div>

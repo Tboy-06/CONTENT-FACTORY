@@ -1,22 +1,24 @@
 # The ‘5 Second Intro’ Is Dead, Here’s Why...
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 348
-- Viewer Praise Comments: 10
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 1510.0s (25.2 min)
+- Cut Frequency: 2.6s per cut (~23.0 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
-- Use dynamic cosine zoom-in (1.1x to 1.2x) on key emphasis nouns and data points.
-- Layer whoosh/riser SFX 2-3 frames before every visual transition and heavy thud on fact reveals.
-- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual stimulation.
+## Core Pacing & Cutting Rules
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Layer whoosh/riser SFX 2-3 frames before every cut transition, with heavy thud impact on data reveals.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "@HillierSmith when editing feels like a chore, I just watch some of your content and feel inspired. Thanks for that alone, let alone the detail, information ideas and tips." — @REDRUMTHEGAMER
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@RJACKSTHEARTOFW`, SFX: `click.wav`, Grade: `hard_bw`)
 
-> "They has be intention behind everything  you make in an edit. ❤" — @ATOFARATI255
-
-> "I WISH you would help me edit just one of my videos. I build bases in 7 Days to Die, it's kind of like Minecraft and I have an idea on how to do an intro but how do I possibly make doing a tour of a base I built entertaining with edits??
-
-EDIT: I would book a call with you but I just dnt have the money right now which sucks because I really need some help.." — @TXLNomad
+## Viewer Feedback on Pacing
+> "the sound design was mind shatteringly well thought out" — @rjackstheartofwealth6152
 

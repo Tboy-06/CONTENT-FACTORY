@@ -237,22 +237,32 @@ async def ask_brain(
     prompt: str,
     system_prompt: Optional[str] = None,
     format_json: bool = True,
-    num_predict: int = 2048
+    num_predict: int = 2048,
+    engine_mode: str = "auto"
 ) -> str:
     """
     Unified brain router (Hardware-Optimized Priority):
-    1. Online Mode (is_online() == True):
-       - Primary: Gemini API (gemini-2.5-flash) -> 2-second cloud speed, 0 MB local RAM, 0% CPU.
-       - Secondary: Zero-cost cloud endpoint (call_cloud_free).
-    2. Offline Mode (or if Cloud Fails / Rate-Limited):
-       - Automatically fails over to local Ollama (Spark-X2.5-4B with think: False).
-    3. Emergency Fallback:
-       - Raises RuntimeError to engage deterministic generator in planner.py.
+    - "offline_spark": Forces local Ollama (Spark-X2.5-4B) for 100% offline private execution.
+    - "cloud": Forces cloud endpoints (Kimi K3 / Gemini / Cloud router).
+    - "auto": Online Cloud priority with automatic Ollama offline fallback.
     """
-    online = is_online()
-    logger.info(f"[Brain] Routing query (Online={online})")
+    if engine_mode == "offline_spark":
+        if is_ollama_running():
+            logger.info("[Brain] Explicit engine_mode='offline_spark': Engaging local Ollama (Spark-X2.5-4B)...")
+            res = await call_ollama(
+                prompt,
+                system_prompt=system_prompt,
+                format_json=format_json,
+                num_predict=num_predict
+            )
+            if res:
+                return res
+        raise RuntimeError("Offline Ollama server (Spark-X2.5-4B) is not running on http://localhost:11434. Please start Ollama or switch to Auto / Cloud mode.")
 
-    # 1. When Online: Try Cloud FIRST (Gemini 2.5 Flash / Kimi K3 -> 0 MB local RAM, 0% CPU, 2s response)
+    online = is_online() if engine_mode != "cloud" else True
+    logger.info(f"[Brain] Routing query (EngineMode={engine_mode}, Online={online})")
+
+    # 1. When Online or Cloud Mode: Try Cloud FIRST (Gemini 3.1 Flash Lite / Kimi K3 -> 0 MB local RAM, 0% CPU, 2s response)
     if online:
         # A. Kimi K3 / Moonshot Engine (ONLY if key is populated)
         from backend.config import get_settings
