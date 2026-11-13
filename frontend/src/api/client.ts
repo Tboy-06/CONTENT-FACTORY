@@ -189,6 +189,19 @@ export function useUploadAnchor() {
   });
 }
 
+export function useUploadCustomSceneMedia() {
+  return useMutation({
+    mutationFn: async ({ jobId, sceneIndex, file }: { jobId: string | number, sceneIndex: number, file: File }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return await api.upload(`/api/jobs/${jobId}/scenes/${sceneIndex}/upload-custom-media`, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
 export function usePublishJob() {
   return useMutation({
     mutationFn: async ({ jobId, platforms }: { jobId: string | number, platforms: string[] }) => {

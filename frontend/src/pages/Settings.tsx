@@ -143,6 +143,20 @@ export default function Settings() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
               <div>
+                <span className="text-slate-200 font-medium text-xs">Kimi K3 / Moonshot API Key</span>
+                <p className="text-slate-500 text-[11px]">Optional key for Kimi K3 2.8T MoE frontier model routing ($0 local RAM).</p>
+              </div>
+              <input
+                type="password"
+                value={settings.moonshot_api_key || ''}
+                onChange={e => setSettings({ ...settings, moonshot_api_key: e.target.value })}
+                className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-950 text-slate-200 font-mono text-xs outline-none focus:border-blue-500 w-full sm:w-64"
+                placeholder="sk-..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
+              <div>
                 <span className="text-slate-200 font-medium text-xs">Default Voice Profile</span>
                 <p className="text-slate-500 text-[11px]">Speech synthesis actor voice profile.</p>
               </div>

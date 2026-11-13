@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     gemini_vision_model: str = Field(default="gemini-2.5-flash", description="Vision model for video analysis")
 
     # ------------------------------------------------------------------
+    # Kimi K3 / Moonshot AI
+    # ------------------------------------------------------------------
+    moonshot_api_key: str = Field(default="", description="Moonshot AI API key for Kimi K3 / Kimi models")
+    moonshot_model: str = Field(default="kimi-k3", description="kimi-k3 | moonshot-v1-auto | moonshot-v1-128k")
+    kimi_endpoint: str = Field(default="https://api.moonshot.cn/v1/chat/completions", description="Kimi / Moonshot API endpoint")
+
+    # ------------------------------------------------------------------
     # Images
     # ------------------------------------------------------------------
     image_provider: str = Field(default="pexels", description="pexels | comfyui | nanobanana")

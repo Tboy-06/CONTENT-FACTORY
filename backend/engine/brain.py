@@ -172,6 +172,67 @@ async def call_cloud_free(
     return None
 
 
+async def call_kimi_k3(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    format_json: bool = True,
+    model: Optional[str] = None,
+    timeout: float = 30.0
+) -> Optional[str]:
+    """
+    Kimi K3 / Moonshot AI Engine:
+    Queries Moonshot AI / Kimi endpoint using OpenAI-compatible payload format.
+    Zero local RAM overhead (0 MB local VRAM), true frontier MoE execution.
+    """
+    from backend.config import get_settings
+    cfg = get_settings()
+    api_key = cfg.moonshot_api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
+    if not api_key:
+        return None
+
+    target_model = model or cfg.moonshot_model or "kimi-k3"
+    endpoint = cfg.kimi_endpoint or "https://api.moonshot.cn/v1/chat/completions"
+
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+
+    payload: Dict[str, Any] = {
+        "model": target_model,
+        "messages": messages,
+        "reasoning_effort": "low",
+    }
+    # NOTE: Moonshot Kimi K3 locks temperature=1.0 and top_p=0.95 at server level.
+    # Explicitly omit temperature and top_p to prevent HTTP 400 Bad Request.
+    if format_json:
+        payload["response_format"] = {"type": "json_object"}
+
+    def _sync_kimi():
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            endpoint,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            res_obj = json.loads(resp.read().decode("utf-8"))
+            return res_obj.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+    try:
+        content = await asyncio.to_thread(_sync_kimi)
+        if content and len(content.strip()) > 0:
+            logger.info(f"[Brain] Kimi K3 inference succeeded via {target_model}")
+            return content.strip()
+    except Exception as e:
+        logger.warning(f"[Brain] Kimi K3 API call failed: {e}")
+
+    return None
+
+
 async def ask_brain(
     prompt: str,
     system_prompt: Optional[str] = None,
@@ -191,9 +252,22 @@ async def ask_brain(
     online = is_online()
     logger.info(f"[Brain] Routing query (Online={online})")
 
-    # 1. When Online: Try Cloud FIRST (Gemini 2.5 Flash -> 0 MB local RAM, 0% CPU, 2s response)
+    # 1. When Online: Try Cloud FIRST (Gemini 2.5 Flash / Kimi K3 -> 0 MB local RAM, 0% CPU, 2s response)
     if online:
-        # A. Gemini API with candidate model cascade
+        # A. Kimi K3 / Moonshot Engine (ONLY if key is populated)
+        from backend.config import get_settings
+        cfg = get_settings()
+        moonshot_key = cfg.moonshot_api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
+        if moonshot_key and len(moonshot_key.strip()) > 0:
+            try:
+                kimi_res = await call_kimi_k3(prompt, system_prompt=system_prompt, format_json=format_json)
+                if kimi_res:
+                    logger.info("[Brain] Kimi K3 MoE inference succeeded (0 MB local RAM used)")
+                    return kimi_res
+            except Exception as e:
+                logger.warning(f"[Brain] Kimi K3 routing error: {e}")
+
+        # B. Gemini API with candidate model cascade
         try:
             from backend.config import get_settings
             cfg = get_settings()

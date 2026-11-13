@@ -1,14 +1,21 @@
 # Write Viral Scripts For YouTube Videos
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 0
-- Viewer Praise Comments: 4
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 894.0s (14.9 min)
+- Cut Frequency: 2.61s per cut (~23.0 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
 
-## Extracted Editing Rules
-- Maintain high-tempo visual rhythm: cut every 2.5s and align audio transitions with vocal pauses.
+## Core Pacing & Cutting Rules
+- Maintain high-tempo visual rhythm: cut every 2.4s and align audio transitions with vocal pauses.
 
-## Top Viewer Feedback
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
+- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+
+## Viewer Feedback on Pacing
 > "Bhaiya aisi editing kaise kare pura batao
 Aur iska meterial kaha le laye 
 Sahi information bataiye 

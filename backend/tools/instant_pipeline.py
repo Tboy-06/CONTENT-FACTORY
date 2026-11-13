@@ -158,13 +158,23 @@ def get_audio_duration(file_path: str) -> float:
 
 
 async def render_video_from_scenes(job_id: int, scenes: List[Dict[str, Any]], audio_path: str, final_video_path: str) -> bool:
-    """Assembles final 9:16 vertical MP4 from scene images and audio via FFmpeg."""
+    """Assembles final 9:16 vertical MP4 from scene images and video clips with audio via FFmpeg."""
     cmd = ["ffmpeg", "-y", "-i", audio_path]
     for sc in scenes:
-        cmd.extend(["-loop", "1", "-t", str(sc["duration"]), "-i", sc["image_path"]])
+        path = sc.get("video_path") or sc.get("image_path")
+        dur = float(sc.get("duration", 4.0))
+        is_video = sc.get("is_video") or (path and path.lower().endswith(('.mp4', '.mov', '.webm', '.mkv')))
+        if is_video:
+            cmd.extend(["-t", str(dur), "-i", path])
+        else:
+            cmd.extend(["-loop", "1", "-t", str(dur), "-i", path])
 
-    filter_inputs = "".join(f"[{i+1}:v]" for i in range(len(scenes)))
-    filter_complex = f"{filter_inputs}concat=n={len(scenes)}:v=1:a=0[v];[v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[outv]"
+    filter_inputs = "".join(
+        f"[{i+1}:v]setpts=PTS-STARTPTS,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1[v{i}];"
+        for i in range(len(scenes))
+    )
+    concat_inputs = "".join(f"[v{i}]" for i in range(len(scenes)))
+    filter_complex = f"{filter_inputs}{concat_inputs}concat=n={len(scenes)}:v=1:a=0[outv]"
 
     cmd.extend([
         "-filter_complex", filter_complex,

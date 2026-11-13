@@ -21,12 +21,22 @@ from backend.engine.vault_graph import query_director_vault, log_script_to_vault
 
 logger = logging.getLogger("engine.planner")
 
-PLANNER_SYSTEM_PROMPT = """You are an elite YouTube documentary director specializing in high-retention 45-second vertical shorts (Vox/Johnny Harris/Editor-V1 style).
+PLANNER_SYSTEM_PROMPT = """You are an elite YouTube documentary director specializing in high-retention vertical shorts (Vox/Johnny Harris/Editor-V1 style).
 For any given topic, structure an 8-sentence documentary script.
-Each sentence must be split into exactly 2 rapid visual beats (each beat lasting between 1.0s and 1.8s).
-Beat types must alternate between:
-1. "motion_card" (templates: "red_slam_word", "stat_counter", "3_item_list", "quote_box") with "headline", "highlight", and sfx ("thud.wav" or "whoosh.wav").
-2. "treated_image" with an archival documentary prompt, color grade ("hard_bw", "teal_split", or "amber"), and sfx ("click.wav").
+Each sentence must be split into exactly 2 rapid visual beats (each beat lasting between 1.0s and 1.8s, total 16 beats).
+
+Strict Visual Choreography Rules:
+1. Beat #1 MUST be "hero_hook": A high-tension 3-second moving cinematic video hook or 3D camera move.
+2. Beat types to balance across the 16 beats:
+   - "hero_hook": Beat 1 moving video opening.
+   - "declassified_scan": Aged government memo / CIA dossier with redacted black bars and translucent yellow highlighter sweep.
+   - "evidence_board": Dark forensic pinboard with entity suspect nodes and connecting red yarn lines.
+   - "map_flyover": Tactical geopolitical vector grid with targeting reticle, coordinates, and radar beacon.
+   - "motion_card" (templates: "red_slam_word", "stat_counter", "3_item_list", "quote_box", "workflow_stepper", "star_badge") with "headline", "highlight", and sfx ("thud.wav" or "whoosh.wav").
+   - "treated_image": With explicit "visual_prompt", "grade" ("hard_bw"|"teal_split"|"amber"), and "camera_movement" ("orbital"|"dolly_vertigo"|"rack_focus_bokeh").
+   - "broll_video": Free moving B-roll with "broll_query" and "visual_prompt".
+
+Ensure high visual variety: every 2-3 beats must alternate between motion cards/highlighters and 3D treated imagery.
 
 Return ONLY a valid JSON object matching this schema:
 {
@@ -50,8 +60,10 @@ Return ONLY a valid JSON object matching this schema:
         {
           "id": "beat_02",
           "type": "treated_image",
+          "visual_prompt": "Cinematic 35mm anamorphic archival film shot, volumetric chiaroscuro shadows, 35mm Kodak grain, slow dramatic push-in zoom, 8k UHD",
           "prompt": "Detailed archival documentary prompt",
           "grade": "hard_bw",
+          "camera_movement": "slow_zoom_in",
           "duration": 1.6,
           "sfx": "click.wav"
         }
@@ -77,18 +89,21 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
             "beats": [
                 {
                     "id": "beat_01",
-                    "type": "motion_card",
-                    "template": "red_slam_word",
+                    "type": "hero_hook",
+                    "visual_prompt": f"Cinematic 35mm anamorphic film shot, dramatic volumetric lighting, {topic_clean} in high tension atmosphere, slow push-in zoom, 8k UHD",
                     "headline": "THE UNTOLD TRUTH",
                     "highlight": topic_clean.upper()[:24],
+                    "camera_movement": "dolly_vertigo",
                     "duration": 1.4,
                     "sfx": "thud.wav"
                 },
                 {
                     "id": "beat_02",
                     "type": "treated_image",
+                    "visual_prompt": f"Cinematic 35mm photograph of {topic_clean}, dramatic chiaroscuro lighting, 35mm film grain, orbital rotation",
                     "prompt": f"cinematic archival photograph of {topic_clean}, dramatic chiaroscuro lighting, 35mm film grain",
                     "grade": "hard_bw",
+                    "camera_movement": "orbital",
                     "duration": 1.6,
                     "sfx": "click.wav"
                 }
@@ -109,9 +124,10 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 },
                 {
                     "id": "beat_04",
-                    "type": "treated_image",
-                    "prompt": f"historical diagram and technical blueprints detailing {topic_clean}, warm amber desk lamp",
-                    "grade": "amber",
+                    "type": "declassified_scan",
+                    "headline": f"ORIGINS OF {topic_clean.upper()[:24]}",
+                    "text": f"CLASSIFIED MEMORANDUM REGARDING THE HISTORIC EMERGENCE OF {topic_clean.upper()}. ALL RECORDS CONFIRM IMMEDIATE EXPONENTIAL SCALE.",
+                    "highlight": "EXPONENTIAL SCALE",
                     "duration": 1.5,
                     "sfx": "click.wav"
                 }
@@ -132,11 +148,13 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 },
                 {
                     "id": "beat_06",
-                    "type": "treated_image",
-                    "prompt": f"retro laboratory workshop with inventors gathered around {topic_clean}, dramatic rim lighting",
+                    "type": "broll_video",
+                    "broll_query": f"{topic_clean} laboratory research",
+                    "visual_prompt": f"retro laboratory workshop with inventors gathered around {topic_clean}, dramatic rim lighting",
                     "grade": "teal_split",
+                    "camera_movement": "rack_focus_bokeh",
                     "duration": 1.6,
-                    "sfx": "click.wav"
+                    "sfx": "whoosh.wav"
                 }
             ]
         },
@@ -155,9 +173,13 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 },
                 {
                     "id": "beat_08",
-                    "type": "treated_image",
-                    "prompt": f"newspaper front page headline from historic archives about {topic_clean}, authentic monochrome",
-                    "grade": "hard_bw",
+                    "type": "evidence_board",
+                    "headline": f"{topic_clean.upper()[:20]} TARGET NETWORK",
+                    "nodes": [
+                        {"title": topic_clean[:16], "desc": "CORE DISRUPTION"},
+                        {"title": "EARLY INVESTORS", "desc": "SECRET SYNDICATE"},
+                        {"title": "GLOBAL IMPACT", "desc": "SYSTEMIC SHIFT"}
+                    ],
                     "duration": 1.6,
                     "sfx": "click.wav"
                 }
@@ -169,18 +191,20 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
             "beats": [
                 {
                     "id": "beat_09",
-                    "type": "motion_card",
-                    "template": "red_slam_word",
-                    "headline": "HIDDEN MECHANISM",
-                    "highlight": "PSYCHOLOGICAL LEVERAGE",
+                    "type": "map_flyover",
+                    "location": topic_clean[:18],
+                    "coords": "37.7749° N, 122.4194° W",
+                    "headline": f"GEOPOLITICAL ADOPTION // {topic_clean.upper()[:16]}",
                     "duration": 1.4,
                     "sfx": "thud.wav"
                 },
                 {
                     "id": "beat_10",
                     "type": "treated_image",
+                    "visual_prompt": f"close-up detailed macro lens shot representing the essence of {topic_clean}, high contrast, 35mm Kodak grain",
                     "prompt": f"close-up detailed macro lens shot representing the essence of {topic_clean}, high contrast",
                     "grade": "amber",
+                    "camera_movement": "dolly_vertigo",
                     "duration": 1.6,
                     "sfx": "click.wav"
                 }
@@ -202,8 +226,10 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 {
                     "id": "beat_12",
                     "type": "treated_image",
+                    "visual_prompt": f"futuristic modern minimalist workspace focused on {topic_clean}, sleek aesthetic, dark mode, volumetric cyan glow",
                     "prompt": f"futuristic modern minimalist workspace focused on {topic_clean}, sleek aesthetic, dark mode",
                     "grade": "teal_split",
+                    "camera_movement": "rack_focus_bokeh",
                     "duration": 1.5,
                     "sfx": "click.wav"
                 }
@@ -225,8 +251,10 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 {
                     "id": "beat_14",
                     "type": "treated_image",
+                    "visual_prompt": f"cinematic silhouette overlooking bustling modern city skyline, twilight volumetric fog, 35mm grain",
                     "prompt": f"cinematic silhouette overlooking bustling modern city skyline, twilight atmosphere",
                     "grade": "hard_bw",
+                    "camera_movement": "orbital",
                     "duration": 1.5,
                     "sfx": "click.wav"
                 }
@@ -248,8 +276,10 @@ def generate_fallback_manifest(topic: str, job_id: int, duration_target: float =
                 {
                     "id": "beat_16",
                     "type": "treated_image",
+                    "visual_prompt": f"powerful inspiring portrait framing {topic_clean}, golden hour warm backlight, 85mm anamorphic flare",
                     "prompt": f"powerful inspiring portrait framing {topic_clean}, golden hour warm backlight",
                     "grade": "amber",
+                    "camera_movement": "dolly_vertigo",
                     "duration": 1.8,
                     "sfx": "thud.wav"
                 }

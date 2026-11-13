@@ -452,6 +452,86 @@ async def reroll_visual(job_id: int, req: RerollVisualRequest):
     
     return {"status": "success", "scene": sc, "video_url": meta["video_url"]}
 
+@router.post('/{job_id}/scenes/{scene_index}/upload-custom-media')
+async def upload_custom_scene_media(
+    job_id: int,
+    scene_index: int,
+    file: UploadFile = File(...)
+):
+    job = await repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    assets = await repository.get_job_assets(job_id)
+    video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
+    if not video_asset or not video_asset.metadata_json:
+        raise HTTPException(status_code=400, detail="Video asset not found for job")
+    
+    meta = dict(video_asset.metadata_json)
+    scenes = meta.get("scenes", [])
+    if scene_index < 0 or scene_index >= len(scenes):
+        raise HTTPException(status_code=400, detail="Invalid scene index")
+    
+    sc = scenes[scene_index]
+    aspect_ratio = meta.get("aspect_ratio", "9:16")
+    duration = float(sc.get("duration", 4.0))
+    ts = int(datetime.utcnow().timestamp())
+    
+    raw_ext = os.path.splitext(file.filename or "")[1].lower() or ".mp4"
+    raw_path = f"temp/custom_upload_{job_id}_{scene_index}_{ts}_raw{raw_ext}"
+    os.makedirs("temp", exist_ok=True)
+    
+    content = await file.read()
+    with open(raw_path, "wb") as f:
+        f.write(content)
+        
+    from backend.engine.visual_cortex import normalize_custom_media
+    is_video = raw_ext in (".mp4", ".mov", ".mkv", ".webm", ".avi")
+    normalized_path = f"temp/custom_{job_id}_{scene_index}_{ts}{'.mp4' if is_video else '.jpg'}"
+    norm_result = normalize_custom_media(
+        input_file=raw_path,
+        output_path=normalized_path,
+        aspect_ratio=aspect_ratio,
+        duration=duration
+    )
+    
+    if os.path.exists(raw_path):
+        try:
+            os.remove(raw_path)
+        except OSError:
+            pass
+            
+    if not norm_result.get("success"):
+        raise HTTPException(status_code=500, detail="Failed to normalize uploaded media")
+        
+    if norm_result["type"] == "video":
+        sc["video_path"] = normalized_path
+        sc["image_path"] = None
+        sc["visual_type"] = "broll_video"
+    else:
+        sc["image_path"] = normalized_path
+        sc["video_path"] = None
+        sc["visual_type"] = "treated_image"
+        
+    audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)
+    audio_path = audio_asset.path if audio_asset else f"output/audio_{job_id}.mp3"
+    final_video_path = f"output/video_{job_id}_9x16.mp4"
+    
+    success = await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to assemble updated video")
+        
+    meta["scenes"] = scenes
+    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    await repository.update_asset_metadata(video_asset.id, meta)
+    
+    return {
+        "status": "success",
+        "scene": sc,
+        "video_url": meta["video_url"],
+        "media_type": norm_result["type"],
+        "message": f"Custom {norm_result['type']} applied to Scene #{scene_index + 1}"
+    }
+
 @router.post('/{job_id}/regenerate-audio')
 async def regenerate_audio(job_id: int, req: RegenerateAudioRequest):
     job = await repository.get_job(job_id)

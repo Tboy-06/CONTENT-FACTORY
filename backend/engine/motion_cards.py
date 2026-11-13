@@ -113,6 +113,46 @@ def render_motion_card(
             # Item text
             draw.text((180, y + 8), item[:42], fill=(226, 232, 240), font=font_medium)
 
+    elif tpl in ("workflow_stepper", "dev_stepper"):
+        # Video 1 Matt Pocock multi-step pill stepper
+        headline_y = center_y - 120
+        draw.text((90, headline_y), headline.upper()[:40], fill=(248, 250, 252), font=font_large)
+
+        # Parse steps from highlight (e.g. "install > setup > grill > spec > tickets > implement > review")
+        raw_steps = [s.strip() for s in highlight.replace(">", ",").replace("·", ",").split(",") if s.strip()]
+        if not raw_steps:
+            raw_steps = ["install", "setup", "grill", "spec", "tickets", "implement", "review"]
+
+        start_y = center_y - 20
+        pill_w = min(220, (width - 180) // 2)
+        pill_h = 52
+        for idx, step_name in enumerate(raw_steps[:6]):
+            col = idx % 2
+            row = idx // 2
+            px = 90 + col * (pill_w + 24)
+            py = start_y + row * (pill_h + 18)
+
+            # Active/completed state vs pending
+            is_done = idx < 2
+            is_active = idx == 2
+            bg_color = (22, 101, 52) if is_done else ((30, 58, 138) if is_active else (30, 41, 59))
+            border_color = (74, 222, 128) if is_done else ((96, 165, 250) if is_active else (51, 65, 85))
+            txt_prefix = "✓ " if is_done else ("► " if is_active else "  ")
+
+            draw.rectangle([px, py, px + pill_w, py + pill_h], fill=bg_color, outline=border_color, width=2)
+            draw.text((px + 14, py + 12), f"{txt_prefix}{step_name.upper()[:12]}", fill=(255, 255, 255), font=font_small)
+
+    elif tpl in ("star_badge", "metric_hook"):
+        # Glowing star metric badge (e.g. ★ 320,000 STARS)
+        headline_y = center_y - 100
+        draw.text((90, headline_y), headline.upper()[:40], fill=(148, 163, 184), font=font_medium)
+
+        badge_y = center_y - 20
+        badge_w = min(width - 160, 580)
+        badge_h = 100
+        draw.rectangle([80, badge_y, 80 + badge_w, badge_y + badge_h], fill=(15, 23, 42), outline=(245, 158, 11), width=3)
+        draw.text((105, badge_y + 16), f"★ {highlight.upper()[:24]}", fill=(251, 191, 36), font=font_huge)
+
     else:  # quote_box or fallback
         box_y = center_y
         box_h = 120

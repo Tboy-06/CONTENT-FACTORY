@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Play, 
@@ -22,7 +22,8 @@ import {
   useRegenerateAudio, 
   usePublishJob, 
   useDeleteJobTemp,
-  useUploadAnchor
+  useUploadAnchor,
+  useUploadCustomSceneMedia
 } from '../api/client';
 import { Button, Badge, Card } from '../components/ui';
 import SafeZoneOverlay from '../components/SafeZoneOverlay';
@@ -50,7 +51,9 @@ export default function QC1() {
   const publishMutation = usePublishJob();
   const deleteTempMutation = useDeleteJobTemp();
   const uploadAnchorMutation = useUploadAnchor();
+  const uploadCustomMediaMutation = useUploadCustomSceneMedia();
   const [anchorUploadMsg, setAnchorUploadMsg] = useState<string | null>(null);
+  const [activeUploadingIndex, setActiveUploadingIndex] = useState<number | null>(null);
 
   const job = useMemo(() => jobs.find((j: any) => String(j.id) === id), [jobs, id]);
 
@@ -125,6 +128,27 @@ export default function QC1() {
       console.error('Failed to reroll visual:', e);
     } finally {
       setActiveRerollingIndex(null);
+    }
+  };
+
+  const handleUploadCustomMedia = async (index: number, e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    setActiveUploadingIndex(index);
+    try {
+      const res = await uploadCustomMediaMutation.mutateAsync({ jobId: id, sceneIndex: index, file });
+      if (res?.scene) {
+        setEditedScenes((prev) => {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], ...res.scene };
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to upload custom media:', err);
+    } finally {
+      setActiveUploadingIndex(null);
+      e.target.value = '';
     }
   };
 
@@ -406,6 +430,11 @@ export default function QC1() {
                   <div className="flex gap-3">
                     {/* Visual Plate Thumbnail */}
                     <div className="relative w-24 h-36 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                      {sc.video_path && (
+                        <span className="absolute top-1 right-1 z-10 bg-amber-500/90 text-slate-950 font-black text-[9px] px-1 py-0.5 rounded shadow">
+                          VIDEO
+                        </span>
+                      )}
                       {thumbUrl ? (
                         <img
                           src={thumbUrl}
@@ -418,10 +447,10 @@ export default function QC1() {
                       ) : (
                         <div className="text-[10px] text-slate-500 font-mono text-center p-1">9:16 Plate</div>
                       )}
-                      {isRerolling && (
-                        <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center gap-1 text-[10px] text-blue-300">
+                      {(isRerolling || activeUploadingIndex === idx) && (
+                        <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center gap-1 text-[10px] text-blue-300 z-20">
                           <Loader2 size={16} className="animate-spin text-blue-400" />
-                          <span>Re-rolling...</span>
+                          <span>{activeUploadingIndex === idx ? 'Stitching Media...' : 'Re-rolling...'}</span>
                         </div>
                       )}
                     </div>
@@ -456,26 +485,49 @@ export default function QC1() {
                     </div>
                   </div>
 
-                  {/* Two Quick Buttons: Re-roll Visual & Regenerate Audio */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                  {/* Quick Action Buttons: Re-roll Visual, Custom Clip Upload, Regenerate Audio */}
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-slate-800">
                     <Button
                       variant="secondary"
                       onClick={() => handleRerollVisual(idx)}
-                      disabled={isRerolling || rerollMutation.isPending}
+                      disabled={isRerolling || rerollMutation.isPending || activeUploadingIndex === idx}
                       className="flex-1 flex items-center justify-center gap-1.5 text-xs !py-1.5 border-slate-700 hover:border-blue-500 text-slate-200"
                     >
-                      <RotateCw size={13} className={isRerolling ? 'animate-spin text-blue-400' : 'text-blue-400'} />
-                      <span>{isRerolling ? 'Stitching Video...' : 'Re-roll Visual'}</span>
+                      <RotateCw size={12} className={isRerolling ? 'animate-spin text-blue-400' : 'text-blue-400'} />
+                      <span>{isRerolling ? 'Stitching...' : 'Re-roll'}</span>
                     </Button>
+
+                    <label
+                      className={`flex items-center justify-center gap-1 text-xs !py-1.5 px-2.5 rounded-lg border transition-all cursor-pointer ${
+                        activeUploadingIndex === idx
+                          ? 'bg-blue-900/40 border-blue-500 text-blue-300'
+                          : 'bg-slate-800/70 border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white'
+                      }`}
+                      title="Upload custom video clip (.mp4, .mov) or image"
+                    >
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm,image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        disabled={activeUploadingIndex === idx}
+                        onChange={(e) => handleUploadCustomMedia(idx, e)}
+                      />
+                      {activeUploadingIndex === idx ? (
+                        <Loader2 size={12} className="animate-spin text-amber-400" />
+                      ) : (
+                        <Upload size={12} className="text-amber-400" />
+                      )}
+                      <span>Clip</span>
+                    </label>
 
                     <Button
                       variant="ghost"
                       onClick={() => handleRegenerateAudio(idx)}
                       disabled={audioMutation.isPending}
-                      className="flex items-center justify-center gap-1 text-xs !py-1.5 text-slate-400 hover:text-white"
+                      className="flex items-center justify-center gap-1 text-xs !py-1.5 px-2 text-slate-400 hover:text-white"
                       title="Regenerate voiceover for this shot"
                     >
-                      <Mic size={13} className="text-emerald-400" />
+                      <Mic size={12} className="text-emerald-400" />
                       <span>Voice</span>
                     </Button>
                   </div>

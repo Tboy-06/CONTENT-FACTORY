@@ -1,17 +1,24 @@
 # Create a VOX style Documentary in Canva
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 144
-- Viewer Praise Comments: 8
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 848.0s (14.1 min)
+- Cut Frequency: 2.6s per cut (~23.1 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
 
-## Extracted Editing Rules
-- Use dynamic cosine zoom-in (1.1x to 1.2x) on key emphasis nouns and data points.
-- Render stark bold subtitles with active-word color highlights (yellow or cyan) matching spoken timing.
-- Apply paper-texture border overlays and photo cutouts with drop shadows for documentary feel.
+## Core Pacing & Cutting Rules
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Render stark bold kinetic subtitles with active-word yellow/cyan highlights matching spoken timing.
+- Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
+- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+
+## Viewer Feedback on Pacing
 > "Learn Vox-style editing properly in my Canva course: https://thepixelvillage.com/go/vox
 
 🚀♥GET MY CANVA TEMPLATES ON PATREON: https://patreon.com/lillytech
