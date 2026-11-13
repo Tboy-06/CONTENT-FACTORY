@@ -324,6 +324,49 @@ async def render_beat_pass1(
     return out_mp4
 
 
+def cleanup_job_temp_files(job_dir: str) -> int:
+    """
+    Purges heavy intermediate files (stitched_temp.mp4, beat_XX.mp4 chunks, concat lists)
+    to protect disk space on constrained drives while preserving manifest.json, voice_master.mp3,
+    and lightweight plate images for QC1 previews. Returns total bytes freed.
+    """
+    freed_bytes = 0
+    # 1. Remove stitched_temp.mp4
+    stitched = os.path.join(job_dir, "stitched_temp.mp4")
+    if os.path.exists(stitched):
+        try:
+            s = os.path.getsize(stitched)
+            os.remove(stitched)
+            freed_bytes += s
+            logger.info(f"[assembler] Cleaned up intermediate stitched video: {stitched} ({s/(1024*1024):.1f} MB freed)")
+        except Exception as e:
+            logger.warning(f"[assembler] Could not remove {stitched}: {e}")
+
+    # 2. Remove intermediate beat MP4 clips in job_dir/beats/
+    beats_dir = os.path.join(job_dir, "beats")
+    if os.path.exists(beats_dir):
+        for f in os.listdir(beats_dir):
+            if f.endswith(".mp4") or f.endswith(".tmp") or f == "concat_beats.txt":
+                fp = os.path.join(beats_dir, f)
+                try:
+                    s = os.path.getsize(fp)
+                    os.remove(fp)
+                    freed_bytes += s
+                except Exception as e:
+                    logger.warning(f"[assembler] Could not remove temp beat file {fp}: {e}")
+        logger.info(f"[assembler] Cleaned up intermediate beat clips in {beats_dir}")
+
+    # 3. Remove temporary audio concat list
+    audio_concat = os.path.join(job_dir, "audio", "concat_list.txt")
+    if os.path.exists(audio_concat):
+        try:
+            os.remove(audio_concat)
+        except Exception:
+            pass
+
+    return freed_bytes
+
+
 async def assemble_final_pass2(
     manifest: Dict[str, Any],
     job_dir: str,
@@ -447,11 +490,14 @@ async def assemble_final_pass2(
     except Exception as e:
         logger.error(f"[assembler] Pass 2 master execution error: {e}")
         res = None
-    if res.returncode == 0 and os.path.exists(output_mp4):
-        logger.info(f"[assembler] Pass 2 complete! Final documentary MP4: {output_mp4}")
-        return True
+
+    success = False
+    if res and res.returncode == 0 and os.path.exists(output_mp4) and os.path.getsize(output_mp4) > 0:
+        logger.info(f"[assembler] Pass 2 complete! Final documentary MP4: {output_mp4} ({os.path.getsize(output_mp4)/(1024*1024):.1f} MB)")
+        success = True
     else:
-        logger.error(f"[assembler] Pass 2 error: {res.stderr.decode(errors='ignore')}")
+        err = res.stderr.decode(errors='ignore') if res else 'Execution error or timeout'
+        logger.error(f"[assembler] Pass 2 error: {err}")
         # Robust fallback merge
         if voice_path and os.path.exists(voice_path):
             cmd_fallback = [
@@ -464,5 +510,12 @@ async def assemble_final_pass2(
                 output_mp4
             ]
             res_fb = await asyncio.to_thread(subprocess.run, cmd_fallback, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return res_fb.returncode == 0
-        return False
+            if res_fb.returncode == 0 and os.path.exists(output_mp4) and os.path.getsize(output_mp4) > 0:
+                logger.info(f"[assembler] Pass 2 fallback merge complete: {output_mp4}")
+                success = True
+
+    if success:
+        # Automatic disk cleanup: purge intermediate stitched video and beat clips
+        cleanup_job_temp_files(job_dir)
+        return True
+    return False

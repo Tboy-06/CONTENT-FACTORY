@@ -1,22 +1,26 @@
 # How I Actually Edit Viral Videos
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 276
-- Viewer Praise Comments: 6
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 1327.0s (22.1 min)
+- Cut Frequency: 2.6s per cut (~23.1 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
-- Use dynamic cosine zoom-in (1.1x to 1.2x) on key emphasis nouns and data points.
-- Layer whoosh/riser SFX 2-3 frames before every visual transition and heavy thud on fact reveals.
-- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual stimulation.
-- Render stark bold subtitles with active-word color highlights (yellow or cyan) matching spoken timing.
-- Apply paper-texture border overlays and photo cutouts with drop shadows for documentary feel.
+## Core Pacing & Cutting Rules
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Layer whoosh/riser SFX 2-3 frames before every cut transition, with heavy thud impact on data reveals.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
+- Render stark bold kinetic subtitles with active-word yellow/cyan highlights matching spoken timing.
+- Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "Abe Bhai kya editing krta hai yrr tu" — @filmkhor12356
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@M_AI_ACADEMY`, SFX: `click.wav`, Grade: `hard_bw`)
 
-> "Bro the editing was so fire you actually kept my dog engaged and watching the whole time 😭" — @joethepro-qz1xn
-
-> "Artificial intelligence replaced editors, and the brother took the place of artificial intelligence." — @brandFall1
+## Viewer Feedback on Pacing
+> "16:26 that is neat tip I should use it in my next edits." (at 16:26) — @m_ai_academy
 

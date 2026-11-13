@@ -221,6 +221,12 @@ def load_harvest_state() -> Dict[str, Any]:
             "visual_audio": 0,
             "total": 0
         },
+        "query_indices": {
+            "editing": 0,
+            "hooks": 0,
+            "storytelling": 0,
+            "visual_audio": 0
+        },
         "targets": TASK_BALANCED_TARGETS,
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
@@ -234,6 +240,9 @@ def load_harvest_state() -> Dict[str, Any]:
                     default_state["processed_ids"][task] = set(task_ids)
                 default_state["counts"] = data.get("counts", default_state["counts"])
                 default_state["targets"] = data.get("targets", TASK_BALANCED_TARGETS)
+                default_state["query_indices"] = data.get("query_indices", {
+                    "editing": 0, "hooks": 0, "storytelling": 0, "visual_audio": 0
+                })
                 return default_state
         except Exception as e:
             print(f"[WARN] Error loading state file ({e}). Backfilling from dataset.jsonl...")
@@ -265,6 +274,9 @@ def save_harvest_state(state: Dict[str, Any]):
     save_data = {
         "processed_ids": {k: list(v) if isinstance(v, set) else v for k, v in state["processed_ids"].items()},
         "counts": state["counts"],
+        "query_indices": state.get("query_indices", {
+            "editing": 0, "hooks": 0, "storytelling": 0, "visual_audio": 0
+        }),
         "targets": state.get("targets", TASK_BALANCED_TARGETS),
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
@@ -1176,16 +1188,30 @@ def fetch_batch_video_metadata(video_ids: List[str], api_key: str) -> Dict[str, 
     return metadata_map
 
 
-def search_youtube_query(query: str, count: int = 10) -> List[Dict[str, Any]]:
+QUERY_MODIFIERS = [
+    "breakdown", "case study", "retention 2026", "tutorial 2025",
+    "deep dive analysis", "masterclass", "secrets", "behind the scenes",
+    "workflow", "viral formula", "pacing techniques", "documentary style",
+    "johnny harris style", "vox style", "magnates media style", "advanced editing"
+]
+
+
+def search_youtube_query(
+    query: str,
+    count: int = 10,
+    exclude_ids: Optional[Set[str]] = None
+) -> List[Dict[str, Any]]:
     """
     QUOTA-SAFE SEARCH (0 units on discovery, 1 unit per 50 videos for metadata):
-    1. Discovers video IDs via yt-dlp flat playlist extraction (0 API units).
-    2. Enriches candidates with batch /youtube/v3/videos if key present.
+    1. Discovers video IDs via yt-dlp flat playlist extraction with depth 50 (0 API units).
+    2. Detects query saturation (>80% seen) and dynamically appends modifiers (e.g. breakdown, case study, 2026).
+    3. Enriches candidates with batch /youtube/v3/videos if key present.
+    4. Prioritizes unseen candidates to break duplicate loops.
     """
-    print(f"\nSearching YouTube (0-Quota Flat Search) for top {count} videos: '{query}'...")
     api_key = get_youtube_api_key()
+    candidate_limit = max(count * 5, 50)
+    print(f"\nSearching YouTube (0-Quota Flat Search, depth: {candidate_limit}) for query: '{query}'...")
 
-    candidate_limit = max(count * 2, 10)
     ydl_opts = {
         'quiet': True,
         'extract_flat': True,
@@ -1212,6 +1238,28 @@ def search_youtube_query(query: str, count: int = 10) -> List[Dict[str, Any]]:
         else:
             print(f"     [WARN] yt-dlp search error: {e}")
 
+    # Query Saturation Check (>80% already seen) -> Dynamically append modifier keywords
+    if exclude_ids and candidates:
+        seen = [c for c in candidates if c["id"] in exclude_ids or c["title"].lower().strip() in exclude_ids]
+        seen_ratio = len(seen) / len(candidates)
+        if seen_ratio >= 0.8:
+            modifier = random.choice(QUERY_MODIFIERS)
+            mod_query = f"{query} {modifier}"
+            print(f"     [QUERY SATURATED {seen_ratio*100:.0f}% SEEN] Appending modifier: '{mod_query}'...")
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    res_mod = ydl.extract_info(f"ytsearch{candidate_limit}:{mod_query}", download=False)
+                    for e in res_mod.get('entries', []):
+                        if e and e.get('id') and not any(c['id'] == e['id'] for c in candidates):
+                            candidates.append({
+                                "id": e['id'],
+                                "title": e.get('title', ''),
+                                "url": f"https://www.youtube.com/watch?v={e['id']}",
+                                "view_count": e.get('view_count') or 0
+                            })
+            except Exception as e:
+                print(f"     [WARN] Modifier search error: {e}")
+
     if not candidates:
         print(f"     [ERROR] No candidates discovered for query '{query}'.")
         return []
@@ -1227,11 +1275,22 @@ def search_youtube_query(query: str, count: int = 10) -> List[Dict[str, Any]]:
                     c["like_count"] = meta_map[c["id"]]["like_count"]
                     c["title"] = meta_map[c["id"]]["title"]
 
-    candidates.sort(key=lambda x: x.get("view_count", 0), reverse=True)
-    top_items = candidates[:count]
+    # Partition and prioritize unseen candidates
+    if exclude_ids:
+        unseen = [c for c in candidates if c["id"] not in exclude_ids and c["title"].lower().strip() not in exclude_ids]
+        seen = [c for c in candidates if c["id"] in exclude_ids or c["title"].lower().strip() in exclude_ids]
+        unseen.sort(key=lambda x: x.get("view_count", 0), reverse=True)
+        seen.sort(key=lambda x: x.get("view_count", 0), reverse=True)
+        sorted_candidates = unseen + seen
+    else:
+        candidates.sort(key=lambda x: x.get("view_count", 0), reverse=True)
+        sorted_candidates = candidates
+
+    top_items = sorted_candidates[:count]
     for idx, c in enumerate(top_items, 1):
         vc = f"{c['view_count']:,}" if c.get('view_count') else "N/A"
-        print(f"     {idx}. [{vc} views] {c['title'][:65]}")
+        is_new = " [NEW]" if exclude_ids and (c["id"] not in exclude_ids and c["title"].lower().strip() not in exclude_ids) else ""
+        print(f"     {idx}. [{vc} views]{is_new} {c['title'][:65]}")
 
     return top_items
 
@@ -1377,11 +1436,12 @@ def run_balanced_plan(
         if not queries:
             continue
 
-        start_ptr = 0
+        start_ptr = state.get("query_indices", {}).get(task_name, 0)
         if query_pointers is not None:
-            start_ptr = query_pointers.get(task_name, 0)
+            start_ptr = query_pointers.get(task_name, start_ptr)
 
         harvested_for_task = 0
+        task_processed = state["processed_ids"].get(task_name, set())
 
         for q_offset in range(len(queries)):
             if harvested_for_task >= count_per_task:
@@ -1395,7 +1455,7 @@ def run_balanced_plan(
 
             needed = count_per_task - harvested_for_task
             fetch_count = max(needed * 2, 6)
-            items = search_youtube_query(q, fetch_count)
+            items = search_youtube_query(q, fetch_count, exclude_ids=task_processed)
             time.sleep(round(random.uniform(2.0, 3.5), 2))
 
             for item in items:
@@ -1412,8 +1472,14 @@ def run_balanced_plan(
                     total_harvested_cycle += 1
                     print(f"     [PROGRESS] Harvested {harvested_for_task}/{count_per_task} for task [{task_name}].")
 
+            # Advance and persist query pointer across restarts
+            next_q_idx = (q_idx + 1) % len(queries)
+            if "query_indices" not in state:
+                state["query_indices"] = {}
+            state["query_indices"][task_name] = next_q_idx
             if query_pointers is not None:
-                query_pointers[task_name] = (q_idx + 1) % len(queries)
+                query_pointers[task_name] = next_q_idx
+            save_harvest_state(state)
 
         print(f"\n[TASK COMPLETE] [{task_name.upper()}] batch finished: {harvested_for_task} new examples added.\n")
 
@@ -1450,7 +1516,7 @@ def run_continuous_harvest(
     print("==================================================================\n")
 
     cycle = 1
-    query_pointers = {t: 0 for t in ["editing", "hooks", "storytelling", "visual_audio"]}
+    query_pointers = state.get("query_indices", {t: 0 for t in ["editing", "hooks", "storytelling", "visual_audio"]})
 
     while True:
         total_now = state["counts"].get("total", 0)

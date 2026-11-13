@@ -14,7 +14,7 @@ from backend.tools.nuzky_engine import build_nuzky_project, save_nuzky_project, 
 from backend.tools.llm import generate_script
 from backend.engine.planner import generate_documentary_plan
 from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
-from backend.engine.assembler import render_beat_pass1, assemble_final_pass2
+from backend.engine.assembler import render_beat_pass1, assemble_final_pass2, cleanup_job_temp_files
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +292,11 @@ async def run_instant_pipeline(
         if not assembled or not os.path.exists(final_video_path):
             logger.warning(f"[Instant Pipeline] Fallback render engaging for Job {job_id}")
             await render_video_from_scenes(job_id, scenes, voice_path, final_video_path)
+
+        # Verify master MP4 and ensure intermediate build files are purged to protect D: drive
+        if os.path.exists(final_video_path) and os.path.getsize(final_video_path) > 0:
+            freed = cleanup_job_temp_files(job_dir)
+            logger.info(f"[Instant Pipeline] Master verified ({final_video_path}). Cleaned intermediate chunks ({freed/(1024*1024):.1f} MB freed).")
 
         # Build OpenCut timeline for web editor scrubbing
         opencut_timeline = build_opencut_timeline(
