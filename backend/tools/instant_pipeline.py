@@ -12,7 +12,7 @@ from backend.vault import repository
 from backend.vault.models import JobStatus, ApprovalDecision
 from backend.tools.nuzky_engine import build_nuzky_project, save_nuzky_project, build_opencut_timeline
 from backend.tools.llm import generate_script
-from backend.engine.planner import generate_documentary_plan
+from backend.engine.planner import generate_documentary_plan, save_manifest
 from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
 from backend.engine.assembler import render_beat_pass1, assemble_final_pass2, cleanup_job_temp_files
 
@@ -242,6 +242,7 @@ async def run_instant_pipeline(
             aspect_ratio=aspect_ratio,
             duration_target=duration_target
         )
+        save_manifest(manifest, job_dir)
 
         # -------------------------------------------------------------
         # STEP 2: AUDIO SYNTHESIS & KARAOKE SUBTITLES
@@ -326,6 +327,7 @@ async def run_instant_pipeline(
                 "cta": "Follow for more declassified files."
             },
             "voice": voice,
+            "fact_dossier": manifest.get("fact_dossier"),
             "opencut_timeline": opencut_path,
             "manifest_path": os.path.join(job_dir, "manifest.json"),
         })

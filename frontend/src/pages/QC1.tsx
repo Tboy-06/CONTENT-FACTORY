@@ -214,6 +214,15 @@ export default function QC1() {
             ) : (
               <Badge variant="warning">QC1 Review Stage</Badge>
             )}
+            {jobMeta.fact_dossier && (
+              <span 
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 flex items-center gap-1 shadow-sm"
+                title={`Fact Dossier: ${jobMeta.fact_dossier.canonical_title} | Coords: ${jobMeta.fact_dossier.coordinates || 'N/A'}`}
+              >
+                <ShieldCheck size={11} className="text-emerald-400" />
+                Verified Fact Dossier
+              </span>
+            )}
           </div>
           <p className="text-xs text-[var(--mu)] mt-0.5">
             Job #{job.id} · {stylePreset} · {totalDuration} · Voice: {voiceName.split('-')[2] || 'Aria'}

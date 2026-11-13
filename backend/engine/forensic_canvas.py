@@ -176,11 +176,25 @@ def render_evidence_board(
     draw.text((70, header_y + 40), headline.upper()[:36], fill=(248, 250, 252), font=font_title)
     draw.line([70, header_y + 105, width - 70, header_y + 105], fill=(35, 42, 56), width=2)
 
-    # Setup 3 pinboard cards
+    # Setup 3 pinboard cards with robust node parsing (supports dicts or plain strings)
+    def _parse_node(idx: int, default_title: str, default_desc: str):
+        if idx >= len(nodes):
+            return default_title, default_desc
+        item = nodes[idx]
+        if isinstance(item, dict):
+            return str(item.get("title") or default_title), str(item.get("desc") or default_desc)
+        elif isinstance(item, str):
+            return item, default_desc
+        return default_title, default_desc
+
+    t1, d1 = _parse_node(0, "TARGET ORG", "OFFSHORE ACCOUNTS")
+    t2, d2 = _parse_node(1, "KEY SUSPECT", "KNOWN OPERATOR")
+    t3, d3 = _parse_node(2, "SECRET WIRE", "$42,000,000 TRANSFER")
+
     card_positions = [
-        (120, 480, "ENTITY 01", nodes[0]["title"] if len(nodes) > 0 else "TARGET ORG", nodes[0].get("desc", "FINANCIAL ANCHOR") if len(nodes) > 0 else "OFFSHORE ACCOUNTS"),
-        (540, 840, "ENTITY 02", nodes[1]["title"] if len(nodes) > 1 else "KEY SUSPECT", nodes[1].get("desc", "DIRECTOR") if len(nodes) > 1 else "KNOWN OPERATOR"),
-        (160, 1260, "ENTITY 03", nodes[2]["title"] if len(nodes) > 2 else "SECRET WIRE", nodes[2].get("desc", "UNTRACEABLE") if len(nodes) > 2 else "$42,000,000 TRANSFER")
+        (120, 480, "ENTITY 01", t1, d1),
+        (540, 840, "ENTITY 02", t2, d2),
+        (160, 1260, "ENTITY 03", t3, d3)
     ]
 
     # Draw Red Connecting Yarn Lines between nodes first

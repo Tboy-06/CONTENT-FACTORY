@@ -19,6 +19,44 @@ import edge_tts
 logger = logging.getLogger("engine.audio_subs")
 
 
+def get_contrasting_archival_voice(primary_voice: str) -> str:
+    """Returns a distinct secondary voice for historical quotes, memos, and intercepted records."""
+    if any(fv.lower() in primary_voice.lower() for fv in ["aria", "jenny", "michelle", "ava"]):
+        # Primary is female -> use deep authoritative male
+        return "en-US-ChristopherNeural"
+    elif any(mv.lower() in primary_voice.lower() for mv in ["christopher", "andrew"]):
+        # Primary is deep male -> use gritty male or distinct voice
+        return "en-US-GuyNeural"
+    else:
+        # Default contrasting voice
+        return "en-US-ChristopherNeural"
+
+
+async def apply_archival_audio_filter(input_path: str, output_path: str) -> bool:
+    """
+    Passes audio through vintage radio/tape bandpass filter (highpass 300Hz, lowpass 3200Hz)
+    with subtle gain leveling to give authentic intercepted/declassified recording texture.
+    """
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", input_path,
+        "-af", "highpass=f=300,lowpass=f=3200,volume=1.25",
+        "-c:a", "libmp3lame",
+        "-b:a", "192k",
+        "-ar", "44100",
+        output_path
+    ]
+    def _run():
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
+
+    try:
+        res = await asyncio.to_thread(_run)
+        return res.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 0
+    except Exception as e:
+        logger.warning(f"[audio_subs] Archival audio filter failed: {e}")
+        return False
+
+
 def get_exact_audio_duration(file_path: str) -> float:
     """Probes exact float duration in seconds via ffprobe."""
     try:
@@ -177,7 +215,39 @@ async def process_manifest_audio(
         s_text = s["text"]
         s_path = os.path.join(audio_dir, f"sentence_{s_id:02d}.mp3")
 
-        dur, words = await generate_sentence_audio(s_text, s_path, voice=voice)
+        # Detect if sentence contains an archival quote or declassified memo beat
+        beats = s.get("beats", [])
+        is_archival_beat = any(
+            b.get("type") in ("declassified_scan", "quote_box") or
+            b.get("template") == "quote_box" or
+            b.get("voice_filter") == "archival"
+            for b in beats
+        )
+
+        if is_archival_beat:
+            active_voice = get_contrasting_archival_voice(voice)
+            raw_path = os.path.join(audio_dir, f"sentence_{s_id:02d}_raw.mp3")
+            dur, words = await generate_sentence_audio(s_text, raw_path, voice=active_voice)
+            
+            # Apply authentic vintage radio/tape bandpass filter
+            filter_ok = await apply_archival_audio_filter(raw_path, s_path)
+            if not filter_ok:
+                # Fallback to unfiltered raw
+                s_path = raw_path
+            else:
+                dur = get_exact_audio_duration(s_path)
+                try:
+                    os.remove(raw_path)
+                except Exception:
+                    pass
+
+            logger.info(f"[audio_subs] Sentence #{s_id}: applied archival voice '{active_voice}' + radio tape filter")
+            s["voice"] = active_voice
+            s["voice_filter"] = "archival_bandpass"
+        else:
+            dur, words = await generate_sentence_audio(s_text, s_path, voice=voice)
+            s["voice"] = voice
+
         s["audio_path"] = s_path
         s["duration"] = dur
         sentence_files.append(s_path)
