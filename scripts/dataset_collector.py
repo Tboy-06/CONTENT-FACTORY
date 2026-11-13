@@ -279,29 +279,56 @@ def save_harvest_state(state: Dict[str, Any]):
 # SUBTITLES, COMMENTS & ZERO-DISK EXTRACTORS
 # ==============================================================================
 
-def extract_chapters_from_description(description: str) -> List[Dict[str, Any]]:
-    """Extracts timestamped chapters from video descriptions as fallback structure."""
-    chapters = []
-    if not description:
-        return []
-    lines = description.splitlines()
-    for line in lines:
-        m = re.search(r"\b([0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)\b\s*[-–—:]?\s*(.+)", line)
-        if m:
-            ts_str, ch_title = m.group(1), m.group(2).strip()
-            parts = [float(p) for p in ts_str.split(":")]
-            if len(parts) == 2:
-                sec = parts[0] * 60 + parts[1]
-            elif len(parts) == 3:
-                sec = parts[0] * 3600 + parts[1] * 60 + parts[2]
-            else:
-                sec = 0.0
-            chapters.append({"start": sec, "text": ch_title, "duration": 4.0, "end": sec + 4.0})
-    return chapters
+def assemble_spoken_sentences(raw_segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Joins fragmented subtitle caption chunks into complete, grammatical spoken sentences."""
+    sentences = []
+    current_text = []
+    current_start = None
+
+    sponsor_pattern = re.compile(
+        r"(?:sponsored by|use code|check the link|link in the description|patreon|subscribe to|hit the bell|leave a like|sign up for|discount code|skillshare|nordvpn|expressvpn|squarespace|audible|athletic greens)",
+        re.I
+    )
+
+    for seg in raw_segments:
+        txt = seg.get("text", "").strip()
+        if not txt:
+            continue
+        # Filter out standalone chapter markers & timestamps
+        if re.match(r"^(intro|introduction|outro|chapter\s*\d+|part\s*\d+|timestamp|next steps|takeaway|summary|conclusion)$", txt, re.I):
+            continue
+        
+        if current_start is None:
+            current_start = seg.get("start", 0.0)
+        current_text.append(txt)
+
+        combined = " ".join(current_text)
+        # End of sentence boundary or natural speech pause (16+ words)
+        if re.search(r"[.?!](\s+|$)", txt) or len(combined.split()) >= 18:
+            clean = re.sub(r"\s+", " ", combined).strip()
+            if not sponsor_pattern.search(clean) and len(clean.split()) >= 4:
+                sentences.append({
+                    "start": current_start,
+                    "text": clean,
+                    "duration": round(seg.get("end", current_start + 3.0) - current_start, 2)
+                })
+            current_text = []
+            current_start = None
+
+    if current_text:
+        clean = re.sub(r"\s+", " ", " ".join(current_text)).strip()
+        if not sponsor_pattern.search(clean) and len(clean.split()) >= 4:
+            sentences.append({
+                "start": current_start or 0.0,
+                "text": clean,
+                "duration": 3.0
+            })
+
+    return sentences
 
 
 def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Extracts timestamped transcript lines from subtitles/captions without downloading video."""
+    """Extracts genuine spoken dialogue lines from subtitles/captions without downloading video."""
     all_subs = {**info.get("automatic_captions", {}), **info.get("subtitles", {})}
     subs = None
     for k in ("en", "en-US", "en-GB", "en-CA", "en-orig", "en-IE", "en-NZ"):
@@ -315,10 +342,8 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 break
 
     if not subs:
-        desc = info.get("description", "")
-        return extract_chapters_from_description(desc)
+        return []
 
-    # Prioritize JSON3 format (rich word & sentence timestamps)
     target_fmt = None
     for fmt in subs:
         if fmt.get("ext") == "json3":
@@ -331,14 +356,13 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 break
 
     if not target_fmt or not target_fmt.get("url"):
-        desc = info.get("description", "")
-        return extract_chapters_from_description(desc)
+        return []
 
     try:
         req = urllib.request.Request(target_fmt["url"], headers={"User-Agent": "Mozilla/5.0"})
         content = urllib.request.urlopen(req, timeout=15).read().decode("utf-8")
 
-        sentences = []
+        raw_chunks = []
         if target_fmt.get("ext") == "json3":
             data = json.loads(content)
             events = data.get("events", [])
@@ -350,7 +374,7 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 text = "".join(s.get("utf8", "") for s in ev.get("segs", [])).strip()
                 text = re.sub(r"\[.*?\]", "", text).strip()
                 if text:
-                    sentences.append({
+                    raw_chunks.append({
                         "start": round(start_ms / 1000.0, 2),
                         "duration": round(dur_ms / 1000.0, 2),
                         "end": round((start_ms + dur_ms) / 1000.0, 2),
@@ -363,17 +387,12 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                     continue
                 clean = re.sub(r"<[^>]+>", "", line).strip()
                 if clean and not clean.startswith("WEBVTT") and not clean.isdigit():
-                    sentences.append({"start": 0.0, "duration": 3.0, "end": 3.0, "text": clean})
+                    raw_chunks.append({"start": 0.0, "duration": 3.0, "end": 3.0, "text": clean})
 
-        if not sentences:
-            desc = info.get("description", "")
-            return extract_chapters_from_description(desc)
-
-        return sentences
+        return assemble_spoken_sentences(raw_chunks)
     except Exception as e:
         print(f"     [WARN] Subtitle stream download error: {e}")
-        desc = info.get("description", "")
-        return extract_chapters_from_description(desc)
+        return []
 
 
 def extract_top_praise_comments(info: Dict[str, Any], max_comments: int = 35) -> List[Dict[str, Any]]:
@@ -393,7 +412,6 @@ def extract_top_praise_comments(info: Dict[str, Any], max_comments: int = 35) ->
         has_analytical = any(k in text_lower for k in ANALYTICAL_EDITING_KEYWORDS)
         timestamp_match = re.search(r"\b([0-9]{1,2}:[0-9]{2})\b", text)
 
-        # Include if it contains an analytical editing keyword OR an explicit timestamp with technical editing context
         if has_analytical or (timestamp_match and any(w in text_lower for w in ("cut", "edit", "transition", "audio", "music", "shot", "scene", "part", "effect", "frame"))):
             analytical_comments.append({
                 "author": c.get("author", "Viewer"),
@@ -402,7 +420,6 @@ def extract_top_praise_comments(info: Dict[str, Any], max_comments: int = 35) ->
                 "likes": c.get("like_count", 0)
             })
 
-    # Sort comments with timestamps and higher likes first
     analytical_comments.sort(key=lambda x: (x["timestamp_mentioned"] is not None, x["likes"]), reverse=True)
     return analytical_comments
 
@@ -477,26 +494,66 @@ def extract_visual_cuts_lowres(url: str, job_id: str) -> List[float]:
 
 
 # ==============================================================================
-# DYNAMIC EXTRACTION HELPERS (ANTI-BOILERPLATE / REAL TRANSCRIPT MAPPING)
+# LLM KNOWLEDGE DISTILLATION & SEMANTIC EXTRACTION HELPERS
 # ==============================================================================
 
-def extract_dynamic_key_phrase(sentence: str, max_words: int = 4) -> str:
-    """Extracts a punchy capitalized key phrase from a spoken transcript line."""
-    stop_words = {
-        "this", "that", "with", "from", "your", "have", "what", "when", "where", 
-        "which", "there", "their", "about", "would", "could", "should", "these", 
-        "those", "because", "being", "into", "just", "will", "then", "like", 
-        "make", "they", "them", "some", "more", "very", "also", "here"
-    }
-    words = [w for w in re.findall(r"\b[A-Za-z0-9\$\%]{3,}\b", sentence) if w.lower() not in stop_words]
-    if len(words) >= 2:
-        return " ".join(words[:max_words]).upper()
-    clean = re.sub(r"[^\w\s]", "", sentence).strip()
-    return " ".join(clean.split()[:max_words]).upper() or "KEY INFLECTION"
+def ask_brain_sync(prompt: str, system_prompt: Optional[str] = None, format_json: bool = True, timeout: float = 25.0) -> Optional[str]:
+    """Synchronous gateway to ask_brain() in backend/engine/brain.py (Gemini 3.5 Flash / Kimi K3 / Spark)."""
+    try:
+        import sys
+        if r"D:\CONTENT-FACTORY" not in sys.path:
+            sys.path.insert(0, r"D:\CONTENT-FACTORY")
+        from backend.engine.brain import ask_brain
+        import asyncio
+        return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json))
+    except Exception as e:
+        print(f"     [WARN] ask_brain_sync fallback: {e}")
+        return None
+
+
+def extract_complete_noun_phrases(text: str, max_phrases: int = 4) -> List[str]:
+    """Extracts complete, un-truncated conceptual noun phrases without chopping words."""
+    candidates = []
+    # 1. Quoted terms
+    for q in re.findall(r'"([^"]+)"', text):
+        clean = q.strip().upper()
+        if 4 <= len(clean) <= 30:
+            candidates.append(clean)
+    
+    # 2. Key documentary/technical terms
+    tech_patterns = [
+        r"\b(?:[A-Za-z]+)\s+(?:zoom|pacing|transition|effect|animation|cut|sound|audio|layer|camera|color|grade|texture|mask|timeline|metric|retention)\b",
+        r"\b(?:3D|4K|HD|AI|NLE|LUT|SFX)\s+[A-Za-z]+\b",
+        r"\b(?:rapid|kinetic|dynamic|forensic|tactile|subtle|drastic|critical)\s+[A-Za-z]+\b"
+    ]
+    for pat in tech_patterns:
+        for m in re.finditer(pat, text, re.I):
+            candidates.append(m.group(0).upper())
+
+    # 3. Clean word pairs (no stop words, complete words only)
+    clean_txt = re.sub(r"'\w+", "", text)
+    words = re.findall(r"\b[A-Za-z]{3,}\b", clean_txt)
+    stop = {"THIS", "THAT", "WITH", "FROM", "YOUR", "HAVE", "WHAT", "WHEN", "WHERE", "WHICH", "THEY", "JUST", "WILL", "THEN", "LIKE", "MAKE", "SOME", "MORE", "VERY", "ALSO", "HERE", "INTO", "ABOUT", "DOES", "DOESN"}
+    for i in range(len(words) - 1):
+        w1, w2 = words[i].upper(), words[i+1].upper()
+        if w1 not in stop and w2 not in stop:
+            candidates.append(f"{w1} {w2}")
+            if len(candidates) >= max_phrases * 2:
+                break
+
+    seen = set()
+    result = []
+    for c in candidates:
+        if c not in seen and len(c.split()) >= 2:
+            seen.add(c)
+            result.append(c)
+        if len(result) >= max_phrases:
+            break
+    return result or ["DYNAMIC PACING", "AUDIO TRANSITION", "VISUAL MOMENTUM"]
 
 
 def extract_dynamic_numeric_fact(sentences: List[Dict[str, Any]], info: Dict[str, Any], cuts_per_min: float) -> Tuple[str, str]:
-    """Finds a real quantitative statistic from transcript sentences or video telemetry."""
+    """Finds a real quantitative statistic from transcript sentences or video telemetry without chopping words."""
     num_pattern = re.compile(
         r"(\$?\d+(?:[\.,]\d+)?\s*(?:%|percent|billion|million|thousand|fps|seconds|sec|min|hours|[kmbx])(?!\w)|\$?\d+(?:[\.,]\d+)?)",
         re.I
@@ -508,83 +565,15 @@ def extract_dynamic_numeric_fact(sentences: List[Dict[str, Any]], info: Dict[str
             num_str = m.group(1).strip()
             after_text = txt[m.end():m.end()+35].strip()
             after_words = [w for w in re.findall(r"\b[A-Za-z]{3,}\b", after_text) if w.lower() not in {"the", "and", "that", "with", "from", "for"}]
-            context_str = " ".join(after_words[:3]).upper()
+            context_str = " ".join(after_words[:2]).upper()
             headline = "VERIFIED METRIC" if "%" in num_str or "$" in num_str else "QUANTIFIED EVIDENCE"
-            highlight = f"{num_str.upper()} {context_str}".strip()[:32]
+            highlight = f"{num_str.upper()} {context_str}".strip()[:30]
             return headline, highlight
     
     views = int(info.get("view_count") or 0)
     if views > 1000:
-        return "RETENTION SCALE", f"{views:,} VERIFIED VIEWS"
-    return "PACING VELOCITY", f"{cuts_per_min:.1f} CUTS PER MIN"
-
-
-def synthesize_dynamic_hooks(title: str, sentences: List[Dict[str, Any]], info: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Synthesizes 3 distinct viral hooks dynamically derived from the real transcript."""
-    first_text = ""
-    for s in sentences[:3]:
-        t = re.sub(r"^(hey\s+guys|welcome\s+back|in\s+this\s+video|today\s+we\s+are|so\s+today|what's\s+up)\b[,\.\s]*", "", s.get("text", ""), flags=re.I).strip()
-        if len(t) > 15:
-            first_text = t
-            break
-    if not first_text and sentences:
-        first_text = sentences[0].get("text", "").strip()
-    if not first_text:
-        first_text = f"The documented breakdown behind {title}"
-
-    hook_1_text = first_text if len(first_text) <= 130 else first_text[:127] + "..."
-
-    contrast_sent = ""
-    for s in sentences[1:8]:
-        t = s.get("text", "")
-        if re.search(r"\b(but|however|instead|actually|secret|myth|nobody|truth|wrong|opposite|reality)\b", t, re.I):
-            contrast_sent = t.strip()
-            break
-    
-    if contrast_sent:
-        clean_contrast = re.sub(r"^(but|and|so|however)\s*", "", contrast_sent, flags=re.I).strip()
-        hook_2_text = clean_contrast if len(clean_contrast) <= 130 else clean_contrast[:127] + "..."
-    else:
-        kw = extract_dynamic_key_phrase(title, 3)
-        hook_2_text = f"The standard approach to {title[:38]} is flawed—here is the mechanism that actually drives {kw.title()}."
-
-    risk_sent = ""
-    for s in sentences[:10]:
-        t = s.get("text", "")
-        if re.search(r"\b(mistake|fail|lose|ruin|trap|fatal|danger|drop|never|stop|waste|kills|problem)\b", t, re.I):
-            risk_sent = t.strip()
-            break
-    
-    if risk_sent:
-        hook_3_text = risk_sent if len(risk_sent) <= 130 else risk_sent[:127] + "..."
-    else:
-        kw = extract_dynamic_key_phrase(first_text or title, 3)
-        hook_3_text = f"Ignoring this {kw.title()} principle is why most creators hit an immediate retention dropoff."
-
-    pacing_1_kw = extract_dynamic_key_phrase(hook_1_text, 2)
-    pacing_2_kw = extract_dynamic_key_phrase(hook_2_text, 2)
-    pacing_3_kw = extract_dynamic_key_phrase(hook_3_text, 2)
-
-    return [
-        {
-            "hook": hook_1_text,
-            "trigger_type": "curiosity_gap",
-            "duration_seconds": 3.2,
-            "visual_pacing": f"Rapid cosine punch-in with archival plate: '{pacing_1_kw}' highlight"
-        },
-        {
-            "hook": hook_2_text,
-            "trigger_type": "counter_intuitive",
-            "duration_seconds": 3.0,
-            "visual_pacing": f"Forensic scan card '{pacing_2_kw}' with thud.wav SFX"
-        },
-        {
-            "hook": hook_3_text,
-            "trigger_type": "negative_bias",
-            "duration_seconds": 3.4,
-            "visual_pacing": f"Dynamic stat counter '{pacing_3_kw}' with whoosh riser"
-        }
-    ]
+        return "RETENTION SCALE", f"{views:,} VIEWS"
+    return "PACING VELOCITY", f"{cuts_per_min:.1f} CUTS/MIN"
 
 
 # ==============================================================================
@@ -629,40 +618,25 @@ def synthesize_editing_task(
     avg_interval = round(duration / max(1, cuts_count), 2)
     cuts_per_min = round(cuts_count / max(0.5, duration / 60.0), 1)
 
-    # Dynamic motion cards derived from real transcript sentences
-    inflection_text = sentences[0]["text"] if sentences else title
-    if len(sentences) > 2:
-        candidates = sorted(sentences[:6], key=lambda x: len(x.get("text", "")), reverse=True)
-        if candidates:
-            inflection_text = candidates[0].get("text", inflection_text)
-
-    slam_headline = "CRITICAL INFLECTION" if re.search(r"error|wrong|mistake|fail|risk", inflection_text, re.I) else "CORE REVELATION"
-    slam_highlight = extract_dynamic_key_phrase(inflection_text, 3)
+    noun_phrases = extract_complete_noun_phrases(full_text or title, 4)
+    slam_headline = "CORE REVELATION"
+    slam_highlight = noun_phrases[0] if noun_phrases else "VISUAL MOMENTUM"
 
     stat_headline, stat_highlight = extract_dynamic_numeric_fact(sentences, info, cuts_per_min)
 
-    action_words = []
-    for s in sentences[:12]:
-        ph = extract_dynamic_key_phrase(s.get("text", ""), 2)
-        if ph and ph not in action_words and len(ph) > 3:
-            action_words.append(ph)
-        if len(action_words) >= 3:
-            break
-    if len(action_words) < 3:
-        action_words = ["HOOK PACING", "VISUAL CONTRAST", "AUDIO RESOLUTION"]
-    
-    list_highlight = " · ".join(action_words[:3])
+    list_pillars = noun_phrases[:3] if len(noun_phrases) >= 3 else ["HOOK PACING", "AUDIO CONTRAST", "FINAL PAYOFF"]
+    list_highlight = " · ".join(list_pillars)
+    stepper_highlight = " -> ".join([p.title() for p in list_pillars])
 
     if comments and not EXCLUDE_COMMENT_PATTERNS.search(comments[0]["text"]):
         quote_text = comments[0]["text"]
         quote_source = f"Viewer @{comments[0]['author']}"
     else:
-        quote_candidates = [s.get("text", "") for s in sentences[1:10] if len(s.get("text", "")) > 25]
-        quote_text = quote_candidates[0] if quote_candidates else inflection_text
+        quote_candidates = [s["text"] for s in sentences if len(s.get("text", "")) > 25]
+        quote_text = quote_candidates[0] if quote_candidates else (sentences[0]["text"] if sentences else f"Pacing in {title} is driven by audio motivation.")
         quote_source = "Director Principle"
 
     quote_highlight = quote_text[:75] if len(quote_text) <= 75 else quote_text[:72] + "..."
-    step_items = [w.title() for w in action_words[:3]]
 
     motion_cards = [
         {
@@ -693,7 +667,7 @@ def synthesize_editing_task(
             "template": "workflow_stepper",
             "trigger_context": "Step-by-step editing phase progression or technical tutorial execution",
             "example_headline": "PRODUCTION PIPELINE",
-            "example_highlight": " -> ".join(step_items),
+            "example_highlight": stepper_highlight,
             "sfx": "click.wav",
             "grade": "amber"
         },
@@ -742,7 +716,7 @@ def synthesize_editing_task(
     if comments:
         md_content += "\n## Viewer Feedback on Pacing\n"
         for c in comments[:3]:
-            ts = f" (at {c['timestamp_mentioned']})" if c['timestamp_mentioned'] else ""
+            ts = f" (at {c.get('timestamp_mentioned')})" if c.get('timestamp_mentioned') else ""
             md_content += f"> \"{c['text']}\"{ts} — {c['author']}\n\n"
 
     try:
@@ -768,8 +742,8 @@ def synthesize_hooks_task(
 ) -> Dict[str, Any]:
     """
     Task 2: hooks (Target: 1,500 | 25%)
-    Extracts first 3-5 seconds of viral transcripts alongside view-to-like telemetry
-    to train curiosity-gap hook generation dynamically without static boilerplate.
+    Extracts high-retention viral opening hooks via ask_brain() knowledge distillation
+    (or authentic spoken opening sentences), strictly avoiding tutorial filler.
     Writes to director_vault/hooks/.
     """
     title = info.get("title", "Viral Video")
@@ -778,12 +752,74 @@ def synthesize_hooks_task(
     like_count = int(info.get("like_count") or 0)
     ratio = round(view_count / max(1, like_count), 1)
 
-    opening_sentences = sentences[:3] if sentences else []
-    hook_transcript = " ".join(s["text"] for s in opening_sentences).strip()
-    if not hook_transcript:
-        hook_transcript = f"The documented reality behind {title}"
+    spoken_opening = " ".join(s["text"] for s in sentences[:6]).strip()
 
-    hooks = synthesize_dynamic_hooks(title, sentences, info)
+    prompt = f"""You are an elite YouTube documentary director.
+Video Topic: "{title}"
+Actual Spoken Narration: "{spoken_opening[:350]}"
+
+Distill 3 high-retention viral opening hooks for this topic. Do NOT write tutorial introductions (never say "Today we are talking about..."). Write compelling documentary-grade hooks that grab attention in the first 3 seconds.
+Return strictly a JSON array of 3 objects:
+[
+  {{
+    "hook": "Full grammatical curiosity gap hook sentence",
+    "trigger_type": "curiosity_gap",
+    "duration_seconds": 3.2,
+    "visual_pacing": "Rapid cosine punch-in with high-contrast archival overlay"
+  }},
+  {{
+    "hook": "Full grammatical counter-intuitive hook sentence",
+    "trigger_type": "counter_intuitive",
+    "duration_seconds": 3.0,
+    "visual_pacing": "Forensic declassified document card with heavy thud SFX"
+  }},
+  {{
+    "hook": "Full grammatical high-stakes risk or anomaly hook sentence",
+    "trigger_type": "negative_bias",
+    "duration_seconds": 3.4,
+    "visual_pacing": "Dynamic stat counter with whoosh riser"
+  }}
+]
+Output strictly the JSON array, no markdown fences."""
+
+    brain_res = ask_brain_sync(prompt, format_json=True)
+    hooks = None
+    if brain_res:
+        try:
+            clean_res = re.sub(r"^```(?:json)?|```$", "", brain_res.strip(), flags=re.MULTILINE).strip()
+            parsed = json.loads(clean_res)
+            if isinstance(parsed, list) and len(parsed) >= 3 and all("hook" in h for h in parsed):
+                hooks = parsed[:3]
+            elif isinstance(parsed, dict) and "hooks" in parsed:
+                hooks = parsed["hooks"][:3]
+        except Exception as e:
+            print(f"     [WARN] Could not parse brain hooks JSON: {e}")
+
+    # Fallback to authentic real spoken sentences (never f-string templates!)
+    if not hooks:
+        h1 = sentences[0]["text"] if sentences else f"The documented investigation behind {title}."
+        h2 = sentences[1]["text"] if len(sentences) > 1 else f"Behind the scenes of {title}, an invisible mechanism was operating."
+        h3 = sentences[2]["text"] if len(sentences) > 2 else f"Failing to recognize how {title} functions leads to immediate misinterpretation."
+        hooks = [
+            {
+                "hook": h1,
+                "trigger_type": "curiosity_gap",
+                "duration_seconds": 3.2,
+                "visual_pacing": "Rapid cosine punch-in with high-contrast B&W archival overlay"
+            },
+            {
+                "hook": h2,
+                "trigger_type": "counter_intuitive",
+                "duration_seconds": 3.0,
+                "visual_pacing": "Forensic declassified scan with thud.wav SFX"
+            },
+            {
+                "hook": h3,
+                "trigger_type": "negative_bias",
+                "duration_seconds": 3.4,
+                "visual_pacing": "Dynamic stat counter with whoosh riser"
+            }
+        ]
 
     output_payload = {
         "title": title,
@@ -802,7 +838,7 @@ def synthesize_hooks_task(
 - Views: {view_count:,}
 - Likes: {like_count:,}
 - View-to-Like Ratio: {ratio}:1
-- Primary First Spoken Line (0:00 - 0:03): "{hook_transcript[:140]}"
+- Primary Opening: "{hooks[0]['hook']}"
 
 ## High-Retention Hook Variations
 """
@@ -822,7 +858,7 @@ def synthesize_hooks_task(
         "task": "hooks",
         "video_id": video_id,
         "instruction": f"Generate 3 high-retention viral hooks for topic: \"{title}\"",
-        "input": f"Topic: {title}\nViews: {view_count:,}\nPrimary Hook Line: {hook_transcript[:180]}",
+        "input": f"Topic: {title}\nViews: {view_count:,}\nPrimary Hook Line: {hooks[0]['hook'][:180]}",
         "output": output_payload
     }
 
@@ -834,83 +870,72 @@ def synthesize_storytelling_task(
 ) -> Dict[str, Any]:
     """
     Task 3: storytelling (Target: 1,500 | 25%)
-    Parses documentary transcripts dynamically into 8-sentence Shorts and 24-sentence 4-Act scripts
-    without hardcoded filler padding. Writes to director_vault/styles/.
+    Parses documentary transcripts into authentic 8-sentence Shorts or 24-sentence 4-Act scripts
+    via ask_brain() knowledge distillation or real spoken sentences.
+    Writes to director_vault/styles/.
     """
     title = info.get("title", "Documentary Narrative")
     video_id = info.get("id") or "vid_story"
     duration = float(info.get("duration") or 60.0)
-    is_long_form = duration > 90.0
 
-    raw_units = []
-    for s in sentences:
-        txt = s.get("text", "").strip()
-        if not txt:
-            continue
-        if len(sentences) < 8:
-            parts = re.split(r"(?<=[.?!])\s+|,\s+(?=and\s|but\s|so\s|because\s)", txt)
-            for p in parts:
-                p_clean = p.strip()
-                if len(p_clean) > 15:
-                    raw_units.append(p_clean)
-        else:
-            raw_units.append(txt)
+    spoken_sample = " ".join(s["text"] for s in sentences[:15]).strip()
 
-    if len(raw_units) < 8:
-        desc = info.get("description", "")
-        desc_sentences = [line.strip() for line in desc.splitlines() if len(line.strip()) > 20 and not line.strip().startswith("http")]
-        for ds in desc_sentences:
-            if ds not in raw_units:
-                raw_units.append(ds)
-            if len(raw_units) >= 8:
-                break
+    prompt = f"""You are an elite documentary scriptwriter.
+Video Topic: "{title}"
+Actual Spoken Dialogue Excerpt: "{spoken_sample[:500]}"
 
-    while len(raw_units) < 8:
-        idx = len(raw_units) + 1
-        raw_units.append(f"Phase {idx}: Examining the structural dynamics of {title[:45]}.")
+Distill an authentic, high-retention 8-sentence documentary script based on the topic and spoken dialogue. Every sentence must be a complete, compelling grammatical sentence. Do NOT include chapter markers (such as "Introduction" or "Next Steps").
+Return strictly a JSON object:
+{{
+  "hook_line": "Sentence 1",
+  "sentences": [
+    "Sentence 1",
+    "Sentence 2",
+    "Sentence 3",
+    "Sentence 4",
+    "Sentence 5",
+    "Sentence 6",
+    "Sentence 7",
+    "Sentence 8"
+  ],
+  "takeaway": "Sentence 8"
+}}
+Output strictly JSON without markdown fences."""
 
-    total_units = len(raw_units)
-    if is_long_form and total_units >= 12:
-        chunk_1 = raw_units[:int(total_units * 0.25)] or [f"The emergence of {title} started with an anomaly that defied initial explanation."]
-        chunk_2 = raw_units[int(total_units * 0.25):int(total_units * 0.55)] or ["Behind closed doors, the operational mechanism unfolded in calculated stages."]
-        chunk_3 = raw_units[int(total_units * 0.55):int(total_units * 0.82)] or ["Then came the inflection point: an unavoidable stress test on the whole model."]
-        chunk_4 = raw_units[int(total_units * 0.82):] or ["In the final analysis, only those who recognized the pattern early prevailed."]
+    brain_res = ask_brain_sync(prompt, format_json=True)
+    distilled_sentences = None
+    hook_line = None
+    takeaway_line = None
 
-        acts = [
-            {
-                "act": 1,
-                "name": "Inciting Anomaly",
-                "sentences": chunk_1[:6]
-            },
-            {
-                "act": 2,
-                "name": "Hidden Mechanism",
-                "sentences": chunk_2[:6]
-            },
-            {
-                "act": 3,
-                "name": "Crisis/Climax",
-                "sentences": chunk_3[:6]
-            },
-            {
-                "act": 4,
-                "name": "Aftermath",
-                "sentences": chunk_4[:6]
-            }
-        ]
-        format_type = "24-Sentence 4-Act Documentary"
-    else:
-        acts = [
-            {
-                "act": 1,
-                "name": "Full Narrative Arc",
-                "sentences": raw_units[:8]
-            }
-        ]
-        format_type = "8-Sentence Short"
+    if brain_res:
+        try:
+            clean_res = re.sub(r"^```(?:json)?|```$", "", brain_res.strip(), flags=re.MULTILINE).strip()
+            parsed = json.loads(clean_res)
+            if isinstance(parsed, dict) and "sentences" in parsed and len(parsed["sentences"]) >= 6:
+                distilled_sentences = parsed["sentences"][:8]
+                hook_line = parsed.get("hook_line") or distilled_sentences[0]
+                takeaway_line = parsed.get("takeaway") or distilled_sentences[-1]
+        except Exception as e:
+            print(f"     [WARN] Could not parse brain storytelling JSON: {e}")
 
-    hook_line = acts[0]["sentences"][0] if acts and acts[0]["sentences"] else f"The documented breakdown behind {title}."
-    takeaway_line = acts[-1]["sentences"][-1] if acts and acts[-1]["sentences"] else f"This confirms the underlying methodology of {title}."
+    # Fallback strictly to real complete spoken sentences (never f-string templates!)
+    if not distilled_sentences:
+        distilled_sentences = [s["text"] for s in sentences[:8]]
+        while len(distilled_sentences) < 8 and len(sentences) > len(distilled_sentences):
+            distilled_sentences.append(sentences[len(distilled_sentences)]["text"])
+        if len(distilled_sentences) < 8:
+            distilled_sentences.append(f"This completes the core operational breakdown of {title}.")
+        hook_line = distilled_sentences[0] if distilled_sentences else title
+        takeaway_line = distilled_sentences[-1] if distilled_sentences else title
+
+    acts = [
+        {
+            "act": 1,
+            "name": "Full Narrative Arc",
+            "sentences": distilled_sentences
+        }
+    ]
+    format_type = "8-Sentence Short"
 
     output_payload = {
         "title": title,
@@ -946,11 +971,7 @@ def synthesize_storytelling_task(
     except Exception as e:
         print(f"     [WARN] Could not write styles vault note: {e}")
 
-    instruction = (
-        f"Structure a 24-sentence 4-Act documentary script with Inciting Anomaly, Hidden Mechanism, Crisis/Climax, and Aftermath for: \"{title}\""
-        if is_long_form else
-        f"Write an 8-sentence high-retention narrative script for a documentary short on: \"{title}\""
-    )
+    instruction = f"Write an 8-sentence high-retention narrative script for a documentary short on: \"{title}\""
 
     return {
         "task": "storytelling",
@@ -992,8 +1013,8 @@ def synthesize_visual_audio_task(
         v_type_1 = visual_types[(idx - 1) % len(visual_types)]
         v_type_2 = "treated_image" if v_type_1 != "treated_image" else "motion_card"
 
-        kw = extract_dynamic_key_phrase(text, 2)
-        punchy_snippet = extract_dynamic_key_phrase(text, 4)
+        noun_phrases = extract_complete_noun_phrases(text, 2)
+        kw = noun_phrases[0] if noun_phrases else "DOCUMENTARY RECORD"
 
         if re.search(r"\b(\d+|%|\$)\b", text):
             hl_1 = "QUANTIFIED RECORD"
@@ -1005,11 +1026,11 @@ def synthesize_visual_audio_task(
             hl_1 = "ANOMALY DETECTED"
             hl_2 = "CRITICAL IMPLICATION"
         else:
-            hl_1 = f"{kw} DIRECTIVE"
+            hl_1 = "KEY DIRECTIVE"
             hl_2 = "DOCUMENTARY EVIDENCE"
 
-        prompt_1 = f"archival documentary footage depicting {kw.lower()} regarding {title[:40]}, 35mm film grain, high dynamic range, cinematic lighting"
-        prompt_2 = f"forensic technical dossier and declassified notes on {punchy_snippet.lower()}, high contrast documentary realism"
+        prompt_1 = f"archival documentary footage depicting {kw.lower()} regarding {title}, 35mm film grain, high dynamic range, cinematic lighting"
+        prompt_2 = f"forensic technical dossier and declassified notes on {kw.lower()}, high contrast documentary realism"
 
         scene_beats.append({
             "scene_idx": idx,
@@ -1018,7 +1039,7 @@ def synthesize_visual_audio_task(
                 "type": v_type_1,
                 "template": card_tpl if "card" in v_type_1 else None,
                 "headline": hl_1 if "card" in v_type_1 else None,
-                "highlight": punchy_snippet if "card" in v_type_1 else None,
+                "highlight": kw if "card" in v_type_1 else None,
                 "prompt": prompt_1 if "card" not in v_type_1 else None,
                 "grade": grade,
                 "sfx": sfx_1
@@ -1027,7 +1048,7 @@ def synthesize_visual_audio_task(
                 "type": v_type_2,
                 "template": card_tpl if "card" in v_type_2 else None,
                 "headline": hl_2 if "card" in v_type_2 else None,
-                "highlight": punchy_snippet if "card" in v_type_2 else None,
+                "highlight": kw if "card" in v_type_2 else None,
                 "prompt": prompt_2 if "card" not in v_type_2 else None,
                 "grade": "teal_split" if grade == "hard_bw" else "amber" if grade == "teal_split" else "hard_bw",
                 "sfx": sfx_2
@@ -1240,7 +1261,10 @@ def harvest_video_entry(
 
             print(f"     > Streaming subtitles & metadata for: \"{title[:55]}\" ({duration/60:.1f}m)...")
             sentences = extract_subtitles_stream(info)
-            print(f"     > Extracted {len(sentences)} transcript segments.")
+            if len(sentences) < 4:
+                print(f"     [SKIP] Insufficient spoken dialogue ({len(sentences)} sentences): \"{title[:55]}\". Skipping to protect dataset quality.")
+                return {"title": title, "skipped": True, "reason": "insufficient_dialogue"}
+            print(f"     > Extracted {len(sentences)} clean spoken sentences.")
 
             comments = extract_top_praise_comments(info)
             print(f"     > Scraped {len(comments)} praise feedback comments.")

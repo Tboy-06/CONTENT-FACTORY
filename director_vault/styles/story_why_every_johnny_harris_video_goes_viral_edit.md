@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 580.0s
-- Hook: "Johnny Harris doesn't just edit videos, he orchestrates visual momentum."
-- Payoff: "That is the forensic editing framework that generated over 1.4 million views."
+- Hook: "Johnny Harris does not simply edit videos; he orchestrates visual momentum through relentless pacing and sound design."
+- Payoff: "Ultimately, his viral success is not luck, but a calculated engineering of visual momentum and sensory retention."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Johnny Harris doesn't just edit videos, he orchestrates visual momentum.
-2. Notice how the map animations aren't flat illustrations, but tactile 3D paper cutouts.
-3. In fact, 92% of viewers drop off before 30 seconds unless a sound riser triggers beforehand.
-4. Most amateur editors make the fatal mistake of letting the frame sit still for more than 2 seconds.
-5. By deploying paper texture overlays and whoosh SFX, he forces the eye to track every inflection.
-6. The secret is combining three layers: sound design, kinetic punch-ins, and archival declassified maps.
-7. When you align audio ducking with rapid punch-cuts, retention remains pinned near the top.
-8. That is the forensic editing framework that generated over 1.4 million views.
+1. Johnny Harris does not simply edit videos; he orchestrates visual momentum through relentless pacing and sound design.
+2. Instead of flat map illustrations, his visuals rely on tactile, three-dimensional paper cutouts featuring realistic drop shadows.
+3. This tangible aesthetic turns abstract geographic data into a captivating, physical world.
+4. Crucially, over ninety percent of viewers drop off before thirty seconds unless a strategic audio riser resets their attention.
+5. While amateur editors make the fatal mistake of letting the frame sit completely still, Harris ensures continuous optical stimulation.
+6. By deploying tactile paper cutouts alongside dynamic camera pushes, he creates an uninterrupted visual rhythm.
+7. Every sound effect and kinetic movement is meticulously timed to hook the brain before cognitive fatigue sets in.
+8. Ultimately, his viral success is not luck, but a calculated engineering of visual momentum and sensory retention.
 

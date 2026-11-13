@@ -280,14 +280,11 @@ async def ask_brain(
                     full_prompt += "\nOutput strictly a valid JSON object or array."
 
                 candidate_models = [
-                    cfg.gemini_model or "gemini-2.5-flash",
-                    "gemini-2.5-flash",
-                    "gemini-flash-latest",
-                    "gemini-3.8-flash",
-                    "gemini-2.5-flash-lite",
-                    "gemini-flash-lite-latest",
-                    "gemini-2.5-pro",
-                    "gemini-pro-latest",
+                    cfg.gemini_model if cfg.gemini_model and "2.5" not in cfg.gemini_model else "models/gemini-3.5-flash",
+                    "models/gemini-3.5-flash",
+                    "models/gemini-3.1-flash-lite",
+                    "gemini-3.5-flash",
+                    "gemini-3.1-flash-lite",
                 ]
                 seen_models = set()
                 models_to_try = []
@@ -301,7 +298,7 @@ async def ask_brain(
                         model_inst = genai.GenerativeModel(model_name)
                         res = await asyncio.wait_for(
                             model_inst.generate_content_async(full_prompt),
-                            timeout=12.0
+                            timeout=20.0
                         )
                         if res and res.text:
                             logger.info(f"[Brain] Cloud inference succeeded via {model_name} (0 MB local RAM used)")
