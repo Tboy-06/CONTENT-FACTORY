@@ -1,31 +1,27 @@
 # Hook: Shorts Genius Shares Everything She Knows (Jenny Hoyos Interview)
 
 ## Performance Telemetry
-- Views: 5,023,139
-- Likes: 166,214
+- Views: 5,029,197
+- Likes: 166,267
 - View-to-Like Ratio: 30.2:1
-- Primary First Spoken Line (0:00 - 0:03): "I don't ask if it'll go viral I can
-figure out how to make it viral that is an absurd thing to
-say that's Jenny Hoyos an 18-year-old YouTube"
+- Primary Opening: "I don't ask if it'll go viral I can figure out how to make it viral that is"
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "I don't ask if it'll go viral I can
-figure out how to make it viral that is an absurd thing to
-say that's Jenny Hoyos an"
+> "I don't ask if it'll go viral I can figure out how to make it viral that is"
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Shorts Genius Shares Everything She Know is completely backwards."
+> "an absurd thing to say that's Jenny Hoyos an 18-year-old YouTuber who is absolutely crushing shorts she's done over 600 million views"
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Shorts Genius Shares Everything She."
+> "in the past year alone averaging 10 million views per video how does she do it I have analyzed thousands of shorts I've analyzed all of Mr B shorts all of"
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

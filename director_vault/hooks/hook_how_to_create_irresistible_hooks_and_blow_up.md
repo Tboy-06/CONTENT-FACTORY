@@ -1,31 +1,27 @@
 # Hook: How to Create Irresistible Hooks (and blow up your content)
 
 ## Performance Telemetry
-- Views: 888,139
-- Likes: 34,067
-- View-to-Like Ratio: 26.1:1
-- Primary First Spoken Line (0:00 - 0:03): "today we're talking about hooks if you
-want your videos to perform better you have to make better hooks but here's the
-thing I'm not going t"
+- Views: 892,133
+- Likes: 34,114
+- View-to-Like Ratio: 26.2:1
+- Primary Opening: "today we're talking about hooks if you want your videos to perform better you have to make better hooks but here's the thing I'm not going to give you a list"
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "today we're talking about hooks if you
-want your videos to perform better you have to make better hooks but here's the
-t"
+> "today we're talking about hooks if you want your videos to perform better you have to make better hooks but here's the thing I'm not going to give you a list"
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to Create Irresistible Hooks (and bl is completely backwards."
+> "of 25 proven viral hooks cuz that's not what you need what you need is to understand the psychology behind why those hooks worked and then the tactics"
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to Create Irresistible Hooks (a."
+> "for how to use that psychology in your own stuff so these are going to be the six best ways to improve your hooks immediately and if you do all of these I"
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

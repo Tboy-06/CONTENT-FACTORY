@@ -1,31 +1,27 @@
 # Hook: How To Write A Killer Script That Keeps Viewers Hooked
 
 ## Performance Telemetry
-- Views: 685,596
-- Likes: 27,337
-- View-to-Like Ratio: 25.1:1
-- Primary First Spoken Line (0:00 - 0:03): "today we're talking about writing killer
-scripts the reason winning creators go viral so often is because of their
-script writing you might "
+- Views: 691,119
+- Likes: 27,421
+- View-to-Like Ratio: 25.2:1
+- Primary Opening: "today we're talking about writing killer scripts the reason winning creators go viral so often is because of their script writing you might have a great"
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "today we're talking about writing killer
-scripts the reason winning creators go viral so often is because of their
-scrip"
+> "today we're talking about writing killer scripts the reason winning creators go viral so often is because of their script writing you might have a great"
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How To Write A Killer Script That Keeps  is completely backwards."
+> "video idea but how do you actually write a script with a compelling story that keeps people hooked the entire time this is an art I've analyzed hundreds of the"
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How To Write A Killer Script That K."
+> "top creators across every Niche and they all run the exact same script writing process so in this video I'm going to break it all down this is the proven"
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

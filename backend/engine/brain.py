@@ -20,8 +20,18 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger("engine.brain")
 
-DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "SparkLLM/Spark-X2.5-4B")
+DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "copilot-brain:latest")
 OLLAMA_ENDPOINT = os.environ.get("OLLAMA_ENDPOINT", "http://localhost:11434/api/chat")
+
+
+def clean_json_text(text: str) -> str:
+    """Strips markdown code fences (```json ... ```) to guarantee parseable JSON."""
+    if not text:
+        return ""
+    clean = text.strip()
+    clean = re.sub(r"^```[a-zA-Z0-9_-]*\n?", "", clean)
+    clean = re.sub(r"\n?```$", "", clean)
+    return clean.strip()
 
 
 def is_ollama_running(timeout: float = 0.2) -> bool:
@@ -248,7 +258,7 @@ async def ask_brain(
     """
     if engine_mode == "offline_spark":
         if is_ollama_running():
-            logger.info("[Brain] Explicit engine_mode='offline_spark': Engaging local Ollama (Spark-X2.5-4B)...")
+            logger.info(f"[Brain] Explicit engine_mode='offline_spark': Engaging local Ollama ({DEFAULT_OLLAMA_MODEL})...")
             res = await call_ollama(
                 prompt,
                 system_prompt=system_prompt,
@@ -256,8 +266,8 @@ async def ask_brain(
                 num_predict=num_predict
             )
             if res:
-                return res
-        raise RuntimeError("Offline Ollama server (Spark-X2.5-4B) is not running on http://localhost:11434. Please start Ollama or switch to Auto / Cloud mode.")
+                return clean_json_text(res) if format_json else res
+        raise RuntimeError(f"Offline Ollama server ({DEFAULT_OLLAMA_MODEL}) is not running on http://localhost:11434. Please start Ollama or switch to Auto / Cloud mode.")
 
     online = is_online() if engine_mode != "cloud" else True
     logger.info(f"[Brain] Routing query (EngineMode={engine_mode}, Online={online})")
@@ -273,7 +283,7 @@ async def ask_brain(
                 kimi_res = await call_kimi_k3(prompt, system_prompt=system_prompt, format_json=format_json)
                 if kimi_res:
                     logger.info("[Brain] Kimi K3 MoE inference succeeded (0 MB local RAM used)")
-                    return kimi_res
+                    return clean_json_text(kimi_res) if format_json else kimi_res
             except Exception as e:
                 logger.warning(f"[Brain] Kimi K3 routing error: {e}")
 
@@ -287,7 +297,7 @@ async def ask_brain(
                 genai.configure(api_key=gemini_key)
                 full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
                 if format_json and "JSON" not in full_prompt.upper():
-                    full_prompt += "\nOutput strictly a valid JSON object or array."
+                    full_prompt += "\nOutput strictly a valid JSON object or array without markdown fences."
 
                 candidate_models = [
                     cfg.gemini_model if cfg.gemini_model and "2.5" not in cfg.gemini_model else "models/gemini-flash-latest",
@@ -312,7 +322,8 @@ async def ask_brain(
                         )
                         if res and res.text:
                             logger.info(f"[Brain] Cloud inference succeeded via {model_name} (0 MB local RAM used)")
-                            return res.text.strip()
+                            cleaned = clean_json_text(res.text) if format_json else res.text.strip()
+                            return cleaned
                     except Exception as model_err:
                         err_str = str(model_err)
                         if "429" in err_str or "quota" in err_str.lower() or "404" in err_str or "timeout" in err_str.lower():
@@ -324,18 +335,18 @@ async def ask_brain(
         except Exception as e:
             logger.warning(f"[Brain] Gemini cloud generation error: {e}")
 
-        # B. Free cloud endpoint fallback (0 key, 0 RAM)
+        # C. Free cloud endpoint fallback (0 key, 0 RAM)
         try:
             cloud_res = await call_cloud_free(prompt, system_prompt=system_prompt, format_json=format_json)
             if cloud_res:
                 logger.info("[Brain] Free cloud endpoint inference succeeded (0 MB local RAM used)")
-                return cloud_res
+                return clean_json_text(cloud_res) if format_json else cloud_res
         except Exception as e:
             logger.warning(f"[Brain] Free cloud fallback error: {e}")
 
-    # 2. Offline Mode or Cloud Failover: Use local Ollama (Spark-X2.5-4B)
+    # 2. Offline Mode or Cloud Failover: Use local Ollama (copilot-brain:latest)
     if is_ollama_running():
-        logger.info("[Brain] Engaging local Ollama (Spark-X2.5-4B) offline engine...")
+        logger.info(f"[Brain] Engaging local Ollama ({DEFAULT_OLLAMA_MODEL}) offline engine...")
         res = await call_ollama(
             prompt,
             system_prompt=system_prompt,
@@ -344,6 +355,6 @@ async def ask_brain(
         )
         if res:
             logger.info("[Brain] Local Ollama inference completed successfully")
-            return res
+            return clean_json_text(res) if format_json else res
 
     raise RuntimeError("No LLM engine responded. Fallback generator should engage.")

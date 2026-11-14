@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     gemini_model: str = Field(default="models/gemini-3.1-flash-lite", description="Default LLM model")
     gemini_pro_model: str = Field(default="gemini-2.5-flash", description="Pro model for complex tasks")
     gemini_vision_model: str = Field(default="gemini-2.5-flash", description="Vision model for video analysis")
+    ollama_model: str = Field(default="copilot-brain:latest", description="Local Ollama model name")
+    ollama_endpoint: str = Field(default="http://localhost:11434/api/chat", description="Local Ollama endpoint")
 
     # ------------------------------------------------------------------
     # Kimi K3 / Moonshot AI

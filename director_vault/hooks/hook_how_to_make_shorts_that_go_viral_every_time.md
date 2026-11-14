@@ -1,31 +1,27 @@
 # Hook: How to make shorts that go viral every time
 
 ## Performance Telemetry
-- Views: 3,028,380
-- Likes: 128,357
-- View-to-Like Ratio: 23.6:1
-- Primary First Spoken Line (0:00 - 0:03): "3 million views 5 million views 9
-million views about 1 year into starting shorts I had finally figured out the
-blueprint to consistently go"
+- Views: 3,047,363
+- Likes: 128,586
+- View-to-Like Ratio: 23.7:1
+- Primary Opening: "Most creators spend their entire lives chasing an algorithm that was never designed to reward their hard work."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "3 million views 5 million views 9
-million views about 1 year into starting shorts I had finally figured out the
-blueprin"
+> "Most creators spend their entire lives chasing an algorithm that was never designed to reward their hard work."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to make shorts that go viral every t is completely backwards."
+> "The secret to 10 million views isn't better editing, it's actually the psychological manipulation of your first three seconds."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to make shorts that go viral ev."
+> "You are currently losing thousands of potential subscribers every single day because you are following the exact advice that kills channel growth."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

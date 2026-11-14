@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 1046.0s
-- Hook: "Imagine a single circle representing one million dollars, then watch it expand until it dwarfs the scale of human comprehension at one billi"
-- Payoff: "True financial freedom begins the moment you stop working for money and start forcing your money to work for you."
+- Hook: "Let this circle represent $1,000,000 This is what ten million dollars would look like This is what one hundred million dollars would look li"
+- Payoff: "Especially the ones who got there at such a young age It baffles you it makes you angry they got lucky they were born into well"
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Imagine a single circle representing one million dollars, then watch it expand until it dwarfs the scale of human comprehension at one billion.
-2. Jeff Bezos possesses a net worth so immense that it multiplies that billion-dollar figure by over one hundred times.
-3. Meanwhile, you are likely tethered to a traditional job, relying on a university degree that promised security but delivered stagnation.
-4. Your savings remain thin while the relentless weight of rising living expenses keeps you perpetually treading water.
-5. This suffocating cycle makes the chasm between your current reality and true wealth feel utterly insurmountable.
-6. The truth is that wealth is not merely a product of labor, but a byproduct of fundamentally changing how you deploy your resources.
-7. To build from nothing, you must shift your mindset from trading time for wages to owning the systems that generate value.
-8. True financial freedom begins the moment you stop working for money and start forcing your money to work for you.
+1. Let this circle represent $1,000,000 This is what ten million dollars would look like This is what one hundred million dollars would look like and this is what 1 billion dollars would look like
+2. Jeff Bezos the founder of Amazon has a net worth of 117 times this number and then There's you
+3. You're probably working a job right now one that you got from the degree that you studied for in university
+4. you probably don't have much in savings your living expenses seem Ridiculously high you feel as though you're not paid enough
+5. You have credit card debt that needs taking care of maybe your student Studying for a degree that you ho can and your job that you hope can bring some good money
+6. You probably don't have any savings only a pesky student debt hanging above your head wealth getting rich
+7. That all seems like a distant dream. How did they do it you ask yourself seeing all those millionaires billionaires
+8. Especially the ones who got there at such a young age It baffles you it makes you angry they got lucky they were born into well
 

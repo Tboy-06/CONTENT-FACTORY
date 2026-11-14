@@ -4,7 +4,7 @@
 - Category: CapCut & NLE Visual Techniques
 - Duration: 848.0s (14.1 min)
 - Cut Frequency: 2.6s per cut (~23.1 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
 - Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
@@ -13,19 +13,8 @@
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
-
-## Viewer Feedback on Pacing
-> "Learn Vox-style editing properly in my Canva course: https://thepixelvillage.com/go/vox
-
-🚀♥GET MY CANVA TEMPLATES ON PATREON: https://patreon.com/lillytech
-🤖 HOW I MAKE MY VOICE: https://elevenlabs.io/?from=partnermorse3288
-🎨CANVA ANIMATION PLAYLIST: https://www.youtube.com/watch?v=TsxgIg6R1Gw&list=PLY6eD_ECHBXV5j9p0Rmg4xKqFh3tbhHb0" — @LillysTechTips
-
-> "Much appreciated ❤❤❤❤. Can you please share canva hacks for beginners , editing too.s please" — @FrançaisiavecLouis
-
-> "Do we need canva pro to edit like this? I mean those elements and all" — @Noah-c7e5z
-
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `DIRECTOR PRINCIPLE`, SFX: `click.wav`, Grade: `hard_bw`)

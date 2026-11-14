@@ -416,142 +416,162 @@ def record_to_house_quota(
     return True
 
 
-def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 5) -> int:
+def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) -> int:
     """
-    Zero-disk bloat live streamer using Hugging Face Datasets Server REST API.
-    Streams real scene dialogues & critical analyses directly in memory:
-    - stanfordnlp/imdb -> HOUSE_2_SCREENWRITER_ARC & HOUSE_3_VISUAL_DIRECTOR
-    - cornell-movie-review-data/rotten_tomatoes -> HOUSE_1_HOOK_PSYCHOLOGY & HOUSE_4_SOUND_AND_CUT_EDITOR
-    - databricks/databricks-dolly-15k -> HOUSE_5_COPILOT_AND_REFLEXION (director_chat_commands)
+    Zero-disk bloat live narrative streamer using Hugging Face Datasets Server REST API.
+    Streams genuine narrative prompts, stories, and dialogues directly in memory.
+    MANDATORY: Every row is distilled through ask_brain_sync()—zero static template dicts!
+    - euclaise/writingprompts -> HOUSE_2_SCREENWRITER_ARC (5 genres: crime_doc, comedy_skit, action_hype, movie_cinema, viral_edu)
+    - allenai/prosocial-dialog -> HOUSE_1_HOOK_PSYCHOLOGY (5 hook categories) & HOUSE_4_SOUND_AND_CUT_EDITOR
+    - alespalla/chatbot_instruction_prompts -> HOUSE_5_COPILOT_AND_REFLEXION (valid copilot actions)
     """
     added = 0
-    hf_offsets = state.setdefault("hf_offsets", {"imdb": 0, "rotten_tomatoes": 0, "dolly": 0})
+    hf_offsets = state.setdefault("hf_offsets", {"writingprompts": 0, "dialog": 0, "instructions": 0})
 
-    # 1. stanfordnlp/imdb -> HOUSE_2_SCREENWRITER_ARC (5 genres)
+    # 1. euclaise/writingprompts -> HOUSE_2_SCREENWRITER_ARC
     h2 = state.get("houses", {}).get("HOUSE_2_SCREENWRITER_ARC", {})
     open_h2_rooms = [r for r, d in h2.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
-
     if open_h2_rooms and h2.get("status") == "OPEN":
-        offset = hf_offsets.get("imdb", 0)
-        url = f"https://datasets-server.huggingface.co/rows?dataset=stanfordnlp/imdb&config=plain_text&split=train&offset={offset}&length={count_per_cycle}"
+        offset = hf_offsets.get("writingprompts", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=euclaise/writingprompts&config=default&split=train&offset={offset}&length={count_per_cycle}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=12) as res:
                 data = json.loads(res.read().decode("utf-8"))
                 rows = data.get("rows", [])
                 for r in rows:
-                    row_text = r.get("row", {}).get("text", "").strip()
-                    if len(row_text) < 70:
+                    prompt_txt = r.get("row", {}).get("prompt", "").strip()
+                    story_txt = r.get("row", {}).get("story", "").strip()
+                    if len(prompt_txt) < 20:
                         continue
-                    sentences = [s.strip() for s in re.split(r"[.!?]+", row_text) if len(s.strip().split()) >= 4]
-                    if len(sentences) < 3:
-                        continue
-
+                    clean_concept = f"{prompt_txt} {story_txt[:250]}".strip()
                     target_genre = random.choice(open_h2_rooms)
-                    prompt_title = " ".join(sentences[0].split()[:5]).title()
 
-                    beats = []
-                    for b_idx, sent in enumerate(sentences[:6], start=1):
-                        camera = "snap_zoom" if target_genre == "comedy_skit" else ("camera_shake" if target_genre == "action_hype" else ("slow_pan_zoom" if target_genre == "movie_cinema" else "cosine_in"))
-                        flt = "skit_warm" if target_genre == "comedy_skit" else ("action_crush" if target_genre == "action_hype" else ("cinema_scope" if target_genre == "movie_cinema" else "teal_split"))
-                        beats.append({
-                            "index": b_idx,
-                            "narration": sent,
-                            "camera": camera,
-                            "filter": flt,
-                            "motion_type": "kinetic_text" if b_idx == 1 else "treated_image"
-                        })
-
-                    record = {
-                        "instruction": f"Construct a structured documentary beat sheet for {target_genre} editing physics based on this scene narrative.",
-                        "input": " ".join(sentences[:5]),
-                        "output": json.dumps({
-                            "title": prompt_title,
-                            "genre": target_genre,
-                            "beats": beats
-                        }, ensure_ascii=False)
-                    }
-                    if record_to_house_quota(record, "HOUSE_2_SCREENWRITER_ARC", target_genre, target_genre, state):
-                        added += 1
-                        print(f"     [HF STREAM -> H2] Ingested '{prompt_title[:30]}' into {target_genre}")
-                hf_offsets["imdb"] = offset + len(rows)
+                    distill_prompt = (
+                        f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}]\n"
+                        f"Transform this story premise into a structured {target_genre} short-form video beat sheet (3 to 6 beats):\n"
+                        f"Premise: {clean_concept}\n"
+                        f"Output strictly valid JSON with keys: title, genre, target_pacing_cpm, beats (list with index, narration, camera, filter, motion_type, sfx)."
+                    )
+                    sys_prompt = f"You are a professional Hollywood scriptwriter and video editor specializing in {target_genre} pacing."
+                    raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                    if not raw_llm:
+                        continue
+                    try:
+                        parsed_llm = json.loads(raw_llm)
+                        record = {
+                            "instruction": f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}] Convert narrative concept into {target_genre} beat sheet.",
+                            "input": clean_concept[:300],
+                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
+                            "house": "HOUSE_2_SCREENWRITER_ARC",
+                            "sub_room": target_genre,
+                            "genre": target_genre
+                        }
+                        if record_to_house_quota(record, "HOUSE_2_SCREENWRITER_ARC", target_genre, target_genre, state):
+                            added += 1
+                            print(f"     [HF DISTILL -> H2] Ingested '{prompt_txt[:35]}...' into {target_genre}")
+                    except Exception as json_err:
+                        print(f"     [WARN] H2 LLM JSON parse failed: {json_err}")
+                hf_offsets["writingprompts"] = offset + len(rows)
         except Exception as e:
-            print(f"     [WARN] HF imdb streaming: {e}")
+            print(f"     [WARN] HF writingprompts streaming: {e}")
 
-    # 2. cornell-movie-review-data/rotten_tomatoes -> HOUSE_1_HOOK_PSYCHOLOGY
+    # 2. ajibawa-2023/Children-Stories-Collection -> HOUSE_1_HOOK_PSYCHOLOGY
     h1 = state.get("houses", {}).get("HOUSE_1_HOOK_PSYCHOLOGY", {})
     open_h1_rooms = [r for r, d in h1.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
-
     if open_h1_rooms and h1.get("status") == "OPEN":
-        offset = hf_offsets.get("rotten_tomatoes", 0)
-        url = f"https://datasets-server.huggingface.co/rows?dataset=cornell-movie-review-data/rotten_tomatoes&config=default&split=train&offset={offset}&length={count_per_cycle}"
+        offset = hf_offsets.get("stories", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=ajibawa-2023/Children-Stories-Collection&config=default&split=train&offset={offset}&length={count_per_cycle}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=12) as res:
                 data = json.loads(res.read().decode("utf-8"))
                 rows = data.get("rows", [])
                 for r in rows:
-                    row_text = r.get("row", {}).get("text", "").strip()
-                    if len(row_text) < 25:
+                    prompt_txt = r.get("row", {}).get("prompt", "").strip()
+                    story_txt = r.get("row", {}).get("text", "").strip()
+                    if len(story_txt) < 30:
                         continue
+                    concept = f"{prompt_txt}: {story_txt[:200]}".strip()
                     target_sub = random.choice(open_h1_rooms)
-                    record = {
-                        "instruction": f"Formulate a high-retention viral opening hook ({target_sub}) from this review critique.",
-                        "input": row_text,
-                        "output": json.dumps({
-                            "hook_type": target_sub,
-                            "hook_script": row_text,
-                            "visual_cue": "red_slam_word",
-                            "audio_cue": "riser.wav"
-                        }, ensure_ascii=False)
-                    }
-                    if record_to_house_quota(record, "HOUSE_1_HOOK_PSYCHOLOGY", target_sub, "auto", state):
-                        added += 1
-                        print(f"     [HF STREAM -> H1] Ingested hook into {target_sub}")
-                hf_offsets["rotten_tomatoes"] = offset + len(rows)
-        except Exception as e:
-            print(f"     [WARN] HF rotten_tomatoes streaming: {e}")
 
-    # 3. databricks/databricks-dolly-15k -> HOUSE_5_COPILOT_AND_REFLEXION (director_chat_commands)
+                    distill_prompt = (
+                        f"[HOUSE: HOUSE_1_HOOK_PSYCHOLOGY | GENRE: auto]\n"
+                        f"Distill an irresistible short-form opening hook formula ({target_sub}) from this dramatic narrative conflict:\n"
+                        f"{concept}\n"
+                        f"Output strictly valid JSON with keys: hook_type, hook_script, visual_cue, audio_cue, retention_target_percent."
+                    )
+                    sys_prompt = "You are a master of audience retention psychology and viral video hooks."
+                    raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                    if not raw_llm:
+                        continue
+                    try:
+                        parsed_llm = json.loads(raw_llm)
+                        record = {
+                            "instruction": f"[HOUSE: HOUSE_1_HOOK_PSYCHOLOGY | GENRE: auto] Formulate viral opening hook ({target_sub}) from story premise.",
+                            "input": concept[:300],
+                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
+                            "house": "HOUSE_1_HOOK_PSYCHOLOGY",
+                            "sub_room": target_sub,
+                            "genre": "auto"
+                        }
+                        if record_to_house_quota(record, "HOUSE_1_HOOK_PSYCHOLOGY", target_sub, "auto", state):
+                            added += 1
+                            print(f"     [HF DISTILL -> H1] Ingested hook into {target_sub}")
+                    except Exception as json_err:
+                        print(f"     [WARN] H1 LLM JSON parse failed: {json_err}")
+                hf_offsets["stories"] = offset + len(rows)
+        except Exception as e:
+            print(f"     [WARN] HF stories streaming: {e}")
+
+    # 3. tatsu-lab/alpaca -> HOUSE_5_COPILOT_AND_REFLEXION (valid copilot actions)
     h5 = state.get("houses", {}).get("HOUSE_5_COPILOT_AND_REFLEXION", {})
     open_h5_cmd = h5.get("sub_rooms", {}).get("director_chat_commands", {}).get("status") == "OPEN"
     if open_h5_cmd and h5.get("status") == "OPEN":
-        offset = hf_offsets.get("dolly", 0)
-        url = f"https://datasets-server.huggingface.co/rows?dataset=databricks/databricks-dolly-15k&config=default&split=train&offset={offset}&length={count_per_cycle}"
+        offset = hf_offsets.get("alpaca", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=tatsu-lab/alpaca&config=default&split=train&offset={offset}&length={count_per_cycle}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=12) as res:
                 data = json.loads(res.read().decode("utf-8"))
                 rows = data.get("rows", [])
                 for r in rows:
-                    inst = r.get("row", {}).get("instruction", "").strip()
-                    resp = r.get("row", {}).get("response", "").strip()
-                    if not inst:
+                    user_req = r.get("row", {}).get("instruction", "").strip()
+                    user_inp = r.get("row", {}).get("input", "").strip()
+                    full_req = f"{user_req} {user_inp}".strip()
+                    if len(full_req) < 10:
                         continue
-                    tool_action = random.choice(["modify_timeline_beats", "recut_genre", "clone_reference_style"])
                     genre = random.choice(["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"])
-                    record = {
-                        "instruction": "Execute user timeline editing instruction and return structured Director actions.",
-                        "input": inst,
-                        "output": json.dumps({
-                            "message": f"Director command executed. Applying {tool_action} for {genre} style.",
-                            "actions": [
-                                {
-                                    "action": tool_action,
-                                    "params": {
-                                        "genre": genre,
-                                        "details": resp[:120]
-                                    }
-                                }
-                            ]
-                        }, ensure_ascii=False)
-                    }
-                    if record_to_house_quota(record, "HOUSE_5_COPILOT_AND_REFLEXION", "director_chat_commands", genre, state):
-                        added += 1
-                        print(f"     [HF STREAM -> H5] Ingested director command: '{inst[:30]}...'")
-                hf_offsets["dolly"] = offset + len(rows)
+
+                    distill_prompt = (
+                        f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}]\n"
+                        f"Act as the AI Director Assistant for CONTENT-FACTORY. The user asks in chat: \"{full_req[:150]}\".\n"
+                        f"Formulate an authoritative Director response message and structured copilot actions array for {genre} editing.\n"
+                        f"Valid action names: modify_timeline_beats, recut_genre, slice_viral_shorts, clone_reference_style, regenerate_asset.\n"
+                        f"Output strictly valid JSON with keys: message, actions (list of objects with 'action' and 'params')."
+                    )
+                    sys_prompt = "You are the AI Director Copilot. You translate user video requests into concrete copilot tool executions."
+                    raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                    if not raw_llm:
+                        continue
+                    try:
+                        parsed_llm = json.loads(raw_llm)
+                        record = {
+                            "instruction": f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}] Translate user request into structured copilot actions.",
+                            "input": full_req[:250],
+                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
+                            "house": "HOUSE_5_COPILOT_AND_REFLEXION",
+                            "sub_room": "director_chat_commands",
+                            "genre": genre
+                        }
+                        if record_to_house_quota(record, "HOUSE_5_COPILOT_AND_REFLEXION", "director_chat_commands", genre, state):
+                            added += 1
+                            print(f"     [HF DISTILL -> H5] Ingested director command for '{full_req[:30]}...'")
+                    except Exception as json_err:
+                        print(f"     [WARN] H5 LLM JSON parse failed: {json_err}")
+                hf_offsets["alpaca"] = offset + len(rows)
         except Exception as e:
-            print(f"     [WARN] HF dolly streaming: {e}")
+            print(f"     [WARN] HF alpaca streaming: {e}")
 
     save_harvest_state(state)
     return added
@@ -819,18 +839,33 @@ def extract_visual_cuts_lowres(url: str, job_id: str) -> List[float]:
 # LLM KNOWLEDGE DISTILLATION & SEMANTIC EXTRACTION HELPERS
 # ==============================================================================
 
-def ask_brain_sync(prompt: str, system_prompt: Optional[str] = None, format_json: bool = True, timeout: float = 25.0) -> Optional[str]:
-    """Synchronous gateway to ask_brain() in backend/engine/brain.py (Gemini 3.5 Flash / Kimi K3 / Spark)."""
+def ask_brain_sync(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    format_json: bool = True,
+    timeout: float = 25.0,
+    engine_mode: str = "auto"
+) -> Optional[str]:
+    """Synchronous Dual-Brain gateway to ask_brain() in backend/engine/brain.py.
+    Automatically and seamlessly fails over to Brain #2 (Local Ollama copilot-brain)
+    if Brain #1 (Cloud Gemini) hits 429 quota, network error, or times out.
+    """
     try:
         import sys
         if r"D:\CONTENT-FACTORY" not in sys.path:
             sys.path.insert(0, r"D:\CONTENT-FACTORY")
         from backend.engine.brain import ask_brain
         import asyncio
-        return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json))
+        return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json, engine_mode=engine_mode))
     except Exception as e:
-        print(f"     [WARN] ask_brain_sync fallback: {e}")
-        return None
+        print(f"     [WARN] ask_brain_sync primary route error ({e}). Engaging Brain #2 failover...")
+        try:
+            from backend.engine.brain import ask_brain
+            import asyncio
+            return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json, engine_mode="offline_spark"))
+        except Exception as failover_err:
+            print(f"     [ERROR] ask_brain_sync dual-brain failover failed: {failover_err}")
+            return None
 
 
 def extract_complete_noun_phrases(text: str, max_phrases: int = 4) -> List[str]:

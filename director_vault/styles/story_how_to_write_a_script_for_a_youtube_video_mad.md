@@ -1,51 +1,19 @@
 # Story Structure: How to Write a Script for a YouTube Video (Made Easy!)
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 518.0s
-- Hook: "- In this video, I'm gonna share with you"
-- Payoff: "retention rate is actually in your script,"
+- Hook: "- In this video, I'm gonna share with you how I write my scripts for YouTube videos to ultimately save me time and create better videos."
+- Payoff: "And then we're gonna come back and I am going to show you what my scripts look like and share some tips with you"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. - In this video, I'm gonna share with you
-2. how I write my scripts for YouTube videos
-3. to ultimately save me time
-and create better videos.
-4. Coming up.
-5. You gotta just
-6. (camera beeping)
-press record.
-
-### Act 2: Hidden Mechanism
-1. ranking and search and getting
-in those suggested videos.
-2. Now that you understand the format
-3. and the general idea of the script,
-4. let's really dive in to the
-details of how I do this.
-5. Now there's really two different
-ways to write a script.
-6. So right now, I'm not using a teleprompter
-
-### Act 3: Crisis/Climax
-1. and how I use that for my script
-2. and then I'm going to
-share a hack with you
-3. that is gonna help you get more likes
-4. by implementing this into your script.
-5. And it's also gonna
-help you with increasing
-6. your audience retention rate.
-
-### Act 4: Aftermath
-1. As for me, sometimes I
-need a bit longer sentences
-2. and it helps me memorize it better.
-3. So find out what works best for you.
-4. Now this bonus tip that
-I talk to you guys about
-5. about getting more likes
-and increasing audience
-6. retention rate is actually in your script,
+### Act 1: Full Narrative Arc
+1. - In this video, I'm gonna share with you how I write my scripts for YouTube videos to ultimately save me time and create better videos.
+2. You gotta just (camera beeping) press record.
+3. Hey my name is Nolan Molt with Think Media and we had a question come in recently and Gil asked, "How to write a script for a video"
+4. That's a great question and I'm excited to dive in and share it with you, exactly what I do
+5. for my YouTube scripts and how it helps me shoot better videos.
+6. Now the generic answer of how I write these videos would be the hook, the content and then the call to action.
+7. I'm gonna show you this quick video that I just recorded recently where I go in depth on what each of the sections mean.
+8. And then we're gonna come back and I am going to show you what my scripts look like and share some tips with you
 

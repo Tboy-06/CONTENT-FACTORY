@@ -1,26 +1,26 @@
 # Hook: Create Videos That People Can’t Stop Watching!
 
 ## Performance Telemetry
-- Views: 272,100
-- Likes: 12,199
+- Views: 272,374
+- Likes: 12,205
 - View-to-Like Ratio: 22.3:1
-- Primary Opening: "You think those 890 videos made me a master storyteller, but the truth is, I’ve only ever really written one."
+- Primary Opening: "You may have a great video idea."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "You think those 890 videos made me a master storyteller, but the truth is, I’ve only ever really written one."
+> "You may have a great video idea."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Great ideas don't go viral, scripts do; and most of what you've been taught about writing is actually killing your retention."
+> "But the script will make it meaningful."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "90% of your viewers will abandon your video before the first minute, simply because you forgot the most dangerous rule of human attention."
+> "which will compel the audience to watch ."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser
