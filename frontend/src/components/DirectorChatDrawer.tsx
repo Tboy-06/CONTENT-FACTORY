@@ -21,12 +21,14 @@ import {
   Play,
   Download,
   Scissors,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Brain
 } from 'lucide-react';
 import { Button, Badge, Card } from './ui';
 import { 
   useAnalyzeVideo, 
   useDirectorChat, 
+  useLearnedRules,
   VideoContext, 
   DirectorChatResponse 
 } from '../api/client';
@@ -63,6 +65,7 @@ export default function DirectorChatDrawer({
   const [videoContext, setVideoContext] = useState<VideoContext | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
+  const [showLearnedRules, setShowLearnedRules] = useState(false);
   const [ytUrl, setYtUrl] = useState('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
@@ -71,6 +74,7 @@ export default function DirectorChatDrawer({
 
   const analyzeMutation = useAnalyzeVideo();
   const chatMutation = useDirectorChat();
+  const { data: learnedData } = useLearnedRules();
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -332,6 +336,25 @@ export default function DirectorChatDrawer({
             <span>YouTube URL</span>
           </Button>
 
+          <Button
+            variant="ghost"
+            onClick={() => setShowLearnedRules(prev => !prev)}
+            className={`!py-1 !px-2.5 text-[11px] border flex items-center gap-1.5 rounded-lg transition-colors ${
+              showLearnedRules
+                ? 'bg-purple-950/80 border-purple-500/60 text-purple-200'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+            }`}
+            title="Reflexion Continuous Learning Memory (Mistakes Caught & Prevented)"
+          >
+            <Brain size={12} className="text-purple-400" />
+            <span>Learned Rules</span>
+            {learnedData?.total_rules ? (
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                {learnedData.total_rules}
+              </span>
+            ) : null}
+          </Button>
+
           {jobId && (
             <Button
               variant="ghost"
@@ -428,6 +451,48 @@ export default function DirectorChatDrawer({
         <div className="px-4 py-2 bg-blue-950/60 border-b border-blue-900/50 text-blue-300 text-xs flex items-center gap-2">
           <Loader2 size={13} className="animate-spin shrink-0" />
           <span>{statusMsg}</span>
+        </div>
+      )}
+
+      {/* Learned Rules Panel (Reflexion RL) */}
+      {showLearnedRules && (
+        <div className="p-3 bg-purple-950/20 border-b border-purple-900/40 text-xs space-y-2 animate-in fade-in max-h-60 overflow-y-auto">
+          <div className="flex items-center justify-between pb-1 border-b border-purple-900/30">
+            <div className="flex items-center gap-1.5 text-purple-300 font-semibold text-[11px]">
+              <Brain size={13} className="text-purple-400" />
+              <span>Reflexion Memory — Active Learned Guardrails</span>
+            </div>
+            <span className="text-[10px] text-purple-400/70 font-mono">
+              {learnedData?.total_rules || 0} active rules
+            </span>
+          </div>
+
+          {learnedData?.rules && learnedData.rules.length > 0 ? (
+            <div className="space-y-1.5 pt-0.5">
+              {learnedData.rules.map((rule, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-slate-900/90 border border-purple-900/30 text-[11px]">
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-purple-950 border border-purple-500/40 text-purple-300">
+                      #{rule.category}
+                    </span>
+                    <span className="text-[10px] text-amber-400 font-mono font-medium">
+                      Caught {rule.occurrences}x
+                    </span>
+                  </div>
+                  <p className="text-slate-200 leading-snug">{rule.lesson}</p>
+                  {rule.context_topic && (
+                    <p className="text-[10px] text-slate-500 mt-1 italic">
+                      Topic context: {rule.context_topic}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-[11px] italic py-1">
+              No mistakes logged yet. Every user timeline edit or auto-critic catch is recorded and injected into future scripts.
+            </p>
+          )}
         </div>
       )}
 

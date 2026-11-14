@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 from backend.engine.brain import ask_brain
 from backend.engine.vault_graph import query_director_vault, log_script_to_vault
 from backend.engine.researcher import research_fact_dossier
+from backend.engine.reflexion import audit_and_heal_beats
 
 logger = logging.getLogger("engine.planner")
 
@@ -501,15 +502,23 @@ async def plan_documentary(
                 parsed["duration_target"] = duration_target
                 parsed["fact_dossier"] = fact_dossier
 
-                # Tag all beats with aspect_ratio
+                # Tag all beats with aspect_ratio & run Reflexion Auto-Critic
                 all_beats = []
                 for s in parsed.get("sentences", []):
                     for b in s.get("beats", []):
                         b["aspect_ratio"] = aspect_ratio
                         all_beats.append(b)
 
+                healed_beats, logged = audit_and_heal_beats(all_beats, topic)
+                h_idx = 0
+                for s in parsed.get("sentences", []):
+                    num_b = len(s.get("beats", []))
+                    s["beats"] = healed_beats[h_idx : h_idx + num_b]
+                    h_idx += num_b
+                parsed["beats"] = healed_beats
+
                 hook_txt = parsed["sentences"][0].get("text", "")
-                log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", all_beats)
+                log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", healed_beats)
 
                 return parsed
     except Exception as e:
@@ -526,15 +535,23 @@ async def plan_documentary(
     manifest["duration_target"] = duration_target
     manifest["fact_dossier"] = fact_dossier
 
-    # Tag all beats with aspect_ratio
+    # Tag all beats with aspect_ratio & run Reflexion Auto-Critic
     fb_beats = []
     for s in manifest.get("sentences", []):
         for b in s.get("beats", []):
             b["aspect_ratio"] = aspect_ratio
             fb_beats.append(b)
 
+    healed_fb, logged_fb = audit_and_heal_beats(fb_beats, topic)
+    h_idx = 0
+    for s in manifest.get("sentences", []):
+        num_b = len(s.get("beats", []))
+        s["beats"] = healed_fb[h_idx : h_idx + num_b]
+        h_idx += num_b
+    manifest["beats"] = healed_fb
+
     hook_txt = manifest["sentences"][0].get("text", "") if manifest.get("sentences") else ""
-    log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", fb_beats)
+    log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", healed_fb)
 
     return manifest
 

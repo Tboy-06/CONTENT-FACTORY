@@ -23,6 +23,7 @@ import backend.engine.visual_cortex as visual_cortex
 import backend.engine.forensic_canvas as forensic_canvas
 import backend.engine.depth_cortex as depth_cortex
 import backend.engine.zero_gpu_hook as zero_gpu_hook
+from backend.engine.reflexion import audit_and_heal_beats, log_system_fallback
 
 logger = logging.getLogger("engine.assembler")
 
@@ -40,6 +41,16 @@ def _fetch_archival_image(prompt: str, target_path: str, width: int = 720, heigh
             return True
     except Exception as e:
         logger.warning(f"[assembler] Cloud image fetch skipped ({e}), using archival fallback")
+        try:
+            log_system_fallback(
+                service_name="pollinations_flux",
+                context_topic=clean_prompt[:30],
+                failed_params={"prompt": clean_prompt[:60], "width": width, "height": height},
+                fallback_used="local_cinematic_gradient",
+                error_message=str(e)
+            )
+        except Exception:
+            pass
     return False
 
 
@@ -392,6 +403,12 @@ async def assemble_final_pass2(
     else:
         for s in manifest.get("sentences", []):
             all_beats.extend(s.get("beats", []))
+
+    # Pre-render Reflexion self-critic pass (heals text clipping, sluggish durations, pacing duplicate templates)
+    topic = manifest.get("topic", "Documentary")
+    all_beats, logged_heals = audit_and_heal_beats(all_beats, topic)
+    if logged_heals:
+        logger.info(f"[assembler] Reflexion pre-render pass auto-healed {len(logged_heals)} beat defect(s).")
 
     # Auto-render any missing beat clips from their preserved plates (resilient to post-render cleanup)
     for b in all_beats:

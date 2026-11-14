@@ -435,6 +435,19 @@ async def reroll_visual(job_id: int, req: RerollVisualRequest):
     )
     sc["image_path"] = img_path
     if req.custom_prompt:
+        try:
+            from backend.engine.reflexion import log_editorial_mistake
+            topic = meta.get("title", job.niche)
+            old_p = sc.get("prompt", "")
+            log_editorial_mistake(
+                category="user_prompt_edit",
+                context_topic=topic,
+                bad_state={"scene_index": req.scene_index, "old_prompt": old_p},
+                fixed_state={"scene_index": req.scene_index, "new_prompt": req.custom_prompt},
+                lesson_rule=f"Scene visual prompt revised: prefer '{req.custom_prompt[:60]}' for authentic archival atmosphere."
+            )
+        except Exception:
+            pass
         sc["prompt"] = req.custom_prompt
     
     audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)

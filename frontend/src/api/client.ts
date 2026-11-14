@@ -453,3 +453,29 @@ export function useSliceViralShorts() {
     }
   });
 }
+
+export interface LearnedRule {
+  file: string;
+  category: string;
+  occurrences: number;
+  lesson: string;
+  context_topic?: string;
+  score?: number;
+}
+
+export interface LearnedRulesResponse {
+  status: string;
+  total_rules: number;
+  rules: LearnedRule[];
+}
+
+export function useLearnedRules(topic?: string) {
+  return useQuery({
+    queryKey: ['learned-rules', topic],
+    queryFn: async (): Promise<LearnedRulesResponse> => {
+      const url = topic ? `/api/copilot/learned-rules?topic=${encodeURIComponent(topic)}` : '/api/copilot/learned-rules';
+      return await api.get(url);
+    },
+    refetchInterval: 15000,
+  });
+}

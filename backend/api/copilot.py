@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 
 from backend.engine.assembler import assemble_final_pass2, cleanup_job_temp_files, render_beat_pass1
 from backend.engine.brain import ask_brain
+from backend.engine.reflexion import log_editorial_mistake, get_learned_mistakes
 from backend.vault import repository
 from backend.vault.models import JobStatus
 
@@ -448,6 +449,8 @@ async def execute_modify_timeline_beats(job_id: int, beat_mods: List[Dict[str, A
         b_idx = int(mod.get("beat_index", -1))
         if 0 <= b_idx < len(beats):
             beat = beats[b_idx]
+            old_beat = dict(beat)
+
             if "type" in mod and mod["type"]:
                 beat["type"] = mod["type"]
             if "template" in mod and mod["template"]:
@@ -472,6 +475,33 @@ async def execute_modify_timeline_beats(job_id: int, beat_mods: List[Dict[str, A
                     os.remove(old_plate)
                 except Exception:
                     pass
+
+            # Reflexion: Distill user editorial correction rule & log permanently
+            try:
+                topic = manifest.get("topic", f"Job {job_id}")
+                old_t = old_beat.get("type", "unknown")
+                new_t = beat.get("type", "unknown")
+                old_tmpl = old_beat.get("template")
+                new_tmpl = beat.get("template")
+
+                if old_t != new_t:
+                    lesson = f"On beat #{b_idx + 1}, user switched from '{old_t}' to '{new_t}'; prefer dynamic card variety over static shots."
+                elif old_tmpl and new_tmpl and old_tmpl != new_tmpl:
+                    lesson = f"On beat #{b_idx + 1}, user rotated motion template from '{old_tmpl}' to '{new_tmpl}' for superior data retention."
+                elif mod.get("headline"):
+                    lesson = f"On beat #{b_idx + 1}, user refined headline to '{beat.get('headline')}'; keep typography punchy and concise."
+                else:
+                    lesson = f"On beat #{b_idx + 1}, user manually optimized beat parameters to enhance visual momentum."
+
+                log_editorial_mistake(
+                    category="user_correction",
+                    context_topic=topic,
+                    bad_state=old_beat,
+                    fixed_state=dict(beat),
+                    lesson_rule=lesson
+                )
+            except Exception as e:
+                logger.warning(f"[copilot] Error logging user correction mistake: {e}")
 
             # Re-render beat pass 1 plate & video
             rendered_clip = await render_beat_pass1(beat, job_dir)
@@ -1054,3 +1084,38 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
         "video_url": updated_video_url,
         "job_id": target_job_id
     }
+
+
+class LogMistakeRequest(BaseModel):
+    category: str = "user_correction"
+    context_topic: str = "Documentary"
+    bad_state: Any = None
+    fixed_state: Any = None
+    lesson_rule: str
+
+
+@router.get("/learned-rules")
+async def get_learned_rules_endpoint(topic: Optional[str] = None, limit: int = 25):
+    """
+    Returns active learned editorial rules and mistake patterns from director_vault/mistakes/
+    powered by Reflexion Reinforcement Learning.
+    """
+    rules = get_learned_mistakes(query_topic=topic or "", limit=limit)
+    return {
+        "status": "success",
+        "total_rules": len(rules),
+        "rules": rules
+    }
+
+
+@router.post("/log-mistake")
+async def log_mistake_endpoint(req: LogMistakeRequest):
+    """Logs an editorial mistake into director_vault/mistakes/ and dataset.jsonl."""
+    res = log_editorial_mistake(
+        category=req.category,
+        context_topic=req.context_topic,
+        bad_state=req.bad_state,
+        fixed_state=req.fixed_state,
+        lesson_rule=req.lesson_rule
+    )
+    return {"status": "success", "mistake": res}

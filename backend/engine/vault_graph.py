@@ -130,7 +130,7 @@ def get_vault_corpus() -> BM25Corpus:
 
     # 1. Ingest Markdown notes from director_vault/
     if os.path.exists(VAULT_DIR):
-        for sub in ["hooks", "techniques", "styles", "sfx"]:
+        for sub in ["hooks", "techniques", "styles", "sfx", "mistakes"]:
             sub_dir = os.path.join(VAULT_DIR, sub)
             if not os.path.exists(sub_dir):
                 continue
@@ -258,6 +258,20 @@ def query_director_vault(topic: str, style_preset: str = "Dark Documentary") -> 
         score, doc = top_styles[0]
         sections.append(f"• NARRATIVE ARCHITECTURE (Source: {doc['title']}):")
         sections.append("  - Structure: 4 Acts (1: Inciting Anomaly -> 2: Hidden Catalyst -> 3: Breakthrough -> 4: Modern Takeaway).")
+
+    # 4. Learned Editorial Mistakes (Reflexion Reinforcement Learning)
+    try:
+        from backend.engine.reflexion import get_learned_mistakes
+        learned_mistakes = get_learned_mistakes(query_topic=topic, limit=5)
+        if learned_mistakes:
+            sections.append("• LEARNED EDITORIAL MISTAKES — NEVER REPEAT THESE:")
+            for mr in learned_mistakes:
+                occ = mr.get("occurrences", 1)
+                lesson = mr.get("lesson", "")
+                cat = mr.get("category", "editorial")
+                sections.append(f"  - [AVOID ({cat}, caught {occ}x)]: {lesson}")
+    except Exception as e:
+        pass
 
     return "\n".join(sections) + "\n"
 

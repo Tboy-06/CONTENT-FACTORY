@@ -1,18 +1,20 @@
 # How to Do advance animations IN CAPCUT
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 113
-- Viewer Praise Comments: 4
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 706.0s (11.8 min)
+- Cut Frequency: 2.61s per cut (~23.0 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
-- Use dynamic cosine zoom-in (1.1x to 1.2x) on key emphasis nouns and data points.
-- Apply paper-texture border overlays and photo cutouts with drop shadows for documentary feel.
+## Core Pacing & Cutting Rules
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
+- Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
+- Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "how are you able to use capcut?" — @xen0076
-
-> "Where is the alight motion editor 🤔 👀" — @abbastabrez
-
-> "What I can't do is rotate the icons 360°, or from side to side like the logos were done. How do you do that rotation? Or is it not possible through CapCut?" — @somosadiplix
-
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `VERIFIED METRIC`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `DIRECTOR PRINCIPLE`, SFX: `click.wav`, Grade: `hard_bw`)
