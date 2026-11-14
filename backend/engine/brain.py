@@ -290,11 +290,11 @@ async def ask_brain(
                     full_prompt += "\nOutput strictly a valid JSON object or array."
 
                 candidate_models = [
-                    cfg.gemini_model if cfg.gemini_model and "2.5" not in cfg.gemini_model else "models/gemini-3.1-flash-lite",
+                    cfg.gemini_model if cfg.gemini_model and "2.5" not in cfg.gemini_model else "models/gemini-flash-latest",
+                    "models/gemini-flash-latest",
+                    "models/gemini-flash-lite-latest",
                     "models/gemini-3.1-flash-lite",
                     "models/gemini-3.5-flash",
-                    "gemini-2.5-flash",
-                    "gemini-2.5-flash-lite",
                 ]
                 seen_models = set()
                 models_to_try = []
