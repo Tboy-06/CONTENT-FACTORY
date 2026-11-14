@@ -253,17 +253,18 @@ async def run_instant_pipeline(
     voice: str = "en-US-AriaNeural",
     style_preset: str = "Dark Documentary",
     aspect_ratio: str = "9:16",
-    duration: str = "45s"
+    duration: str = "45s",
+    genre: str = "auto"
 ) -> Dict[str, Any]:
     """
     Unified Documentary Engine Pipeline:
-    1. Plan documentary beat sheet with rapid visual cuts (planner.py, supports 9:16 Shorts & 16:9 Long-Form)
+    1. Plan documentary beat sheet with rapid visual cuts (planner.py, supports 9:16 Shorts & 16:9 Long-Form, 5 Genres)
     2. Edge-TTS narration + word-level timestamps + karaoke .ASS subtitle generation (audio_subs.py)
     3. Render rapid beats with Ken Burns zoom, archival treatments, and transition SFX (assembler.py)
     4. 2-Pass FFmpeg master assembly with ducked BGM, SFX audio mixing, and subtitle burn
     5. Save OpenCut timeline & register SQLite Vault assets -> Route to QC1
     """
-    logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}' ({aspect_ratio}, {duration})")
+    logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}' ({aspect_ratio}, {duration}, genre={genre})")
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     output_dir = os.path.join(repo_root, "output")
     job_dir = os.path.join(repo_root, "jobs", str(job_id))
@@ -291,7 +292,8 @@ async def run_instant_pipeline(
             topic=topic,
             job_id=job_id,
             aspect_ratio=aspect_ratio,
-            duration_target=duration_target
+            duration_target=duration_target,
+            genre=genre
         )
         save_manifest(manifest, job_dir)
 

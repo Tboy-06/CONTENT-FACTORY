@@ -22,6 +22,7 @@ class InstantJobRequest(BaseModel):
     style_preset: Optional[str] = "Dark Documentary"
     aspect_ratio: Optional[str] = "9:16"
     duration: Optional[str] = "45s"
+    genre: Optional[str] = "auto"
 
 class BrainstormRequest(BaseModel):
     topic: str
@@ -155,7 +156,8 @@ async def create_instant_job(req: InstantJobRequest):
         "premium": False,
         "mode": "Instant 1-Click",
         "voice": req.voice or "en-US-AriaNeural",
-        "style_preset": req.style_preset or "Dark Documentary"
+        "style_preset": req.style_preset or "Dark Documentary",
+        "genre": req.genre or "auto"
     }
     job = await repository.create_job(niche=req.topic, config=config, priority=1)
     await repository.update_job_status(job.id, JobStatus.RUNNING, "SCRIPT")
@@ -167,7 +169,8 @@ async def create_instant_job(req: InstantJobRequest):
         req.voice or "en-US-AriaNeural",
         req.style_preset or "Dark Documentary",
         aspect_ratio,
-        duration
+        duration,
+        genre=req.genre or "auto"
     ))
     
     return {

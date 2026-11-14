@@ -184,20 +184,23 @@ export function useCreateInstantJob() {
       voice,
       style_preset,
       aspect_ratio,
-      duration
+      duration,
+      genre
     }: {
       topic: string;
       voice?: string;
       style_preset?: string;
       aspect_ratio?: string;
       duration?: string;
+      genre?: string;
     }) => {
       const data = await api.post('/api/jobs/instant', {
         topic,
         voice,
         style_preset,
         aspect_ratio,
-        duration
+        duration,
+        genre
       });
       return data;
     }
@@ -477,5 +480,50 @@ export function useLearnedRules(topic?: string) {
       return await api.get(url);
     },
     refetchInterval: 15000,
+  });
+}
+
+export interface SubRoomQuota {
+  count: number;
+  target: number;
+  status: 'OPEN' | 'FULL';
+}
+
+export interface HouseQuota {
+  count: number;
+  target: number;
+  status: 'OPEN' | 'FULL';
+  sub_rooms: Record<string, SubRoomQuota>;
+}
+
+export interface HouseQuotasResponse {
+  status: string;
+  data: {
+    total_records: number;
+    target_total: number;
+    houses: Record<string, HouseQuota>;
+    last_updated?: string;
+  };
+}
+
+export function useHouseQuotas() {
+  return useQuery({
+    queryKey: ['house-quotas'],
+    queryFn: async (): Promise<HouseQuotasResponse> => {
+      return await api.get('/api/copilot/house-quotas');
+    },
+    refetchInterval: 8000,
+  });
+}
+
+export function useRecutGenre() {
+  return useMutation({
+    mutationFn: async ({ jobId, genre }: { jobId: number; genre: string }) => {
+      return await api.post('/api/copilot/recut-genre', { job_id: jobId, genre });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['job', variables.jobId] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
   });
 }

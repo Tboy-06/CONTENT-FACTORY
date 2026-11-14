@@ -17,7 +17,13 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional
 
-from backend.engine.ev1_treat import apply_color_grade, build_cosine_zoompan_filter
+from backend.engine.ev1_treat import (
+    apply_color_grade,
+    build_cosine_zoompan_filter,
+    build_snap_zoom_filter,
+    build_camera_shake_filter,
+    build_cinema_anamorphic_bars
+)
 from backend.engine.motion_cards import render_motion_card
 import backend.engine.visual_cortex as visual_cortex
 import backend.engine.forensic_canvas as forensic_canvas
@@ -236,8 +242,14 @@ async def render_beat_pass1(
 
     # 2. Build Video / Image Filter & Transition SFX
     total_frames = max(30, int(duration * fps))
+    genre_type = (beat.get("genre") or "crime_doc").lower()
     cam_mov = (beat.get("camera_movement") or "push_in").lower()
-    if "dolly" in cam_mov or "vertigo" in cam_mov:
+
+    if "snap" in cam_mov or "punchline" in cam_mov or (genre_type == "comedy_skit" and beat.get("snap_zoom")):
+        zoom_filter = f"{build_snap_zoom_filter(duration, zoom_factor=1.35, fps=fps, out_w=out_w, out_h=out_h)},trim=duration={duration}"
+    elif "shake" in cam_mov or (genre_type == "action_hype" and beat.get("camera_shake")):
+        zoom_filter = f"zoompan=z=1.08:d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps},{build_camera_shake_filter(out_w=out_w, out_h=out_h, intensity=10)},trim=duration={duration}"
+    elif "dolly" in cam_mov or "vertigo" in cam_mov:
         zoom_filter = f"zoompan=z='min(zoom+0.0020,1.24)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps},trim=duration={duration}"
     elif "orbit" in cam_mov or "rotation" in cam_mov:
         zoom_filter = f"zoompan=z='1.15':d={total_frames}:x='(iw/2-(iw/zoom/2)) + sin(in/{total_frames}*3.14159)*50':y='(ih/2-(ih/zoom/2)) + cos(in/{total_frames}*3.14159)*25':s={out_w}x{out_h}:fps={fps},trim=duration={duration}"
@@ -245,6 +257,11 @@ async def render_beat_pass1(
         zoom_filter = f"zoompan=z='min(zoom+0.0014,1.16)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps},unsharp=5:5:0.8:5:5:0.0,trim=duration={duration}"
     else:
         zoom_filter = f"zoompan=z='min(zoom+0.0012,1.20)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps},trim=duration={duration}"
+
+    # Movie/Cinema 2.35:1 anamorphic letterbox bars
+    if genre_type == "movie_cinema" or beat.get("anamorphic_bars"):
+        cinema_bars = build_cinema_anamorphic_bars(width=out_w, height=out_h, target_aspect=2.35)
+        zoom_filter = f"{zoom_filter},{cinema_bars}"
 
     sfx_name = beat.get("sfx", "whoosh.wav")
     sfx_path = os.path.abspath(os.path.join("assets", "sfx", sfx_name))

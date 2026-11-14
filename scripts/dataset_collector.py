@@ -202,12 +202,67 @@ TASK_QUERIES = {
 
 
 # ==============================================================================
-# STATE & CHECKPOINT MANAGEMENT
+# 5-HOUSE 100,000-QUOTA ARCHITECTURE & CHECKPOINT MANAGEMENT
 # ==============================================================================
 
+HOUSES_SCHEMA = {
+    "HOUSE_1_HOOK_PSYCHOLOGY": {
+        "target": 20000,
+        "sub_rooms": {
+            "curiosity_gap": 4000,
+            "negative_bias": 4000,
+            "counter_intuitive": 4000,
+            "visual_shock": 4000,
+            "title_thumbnail_ab": 4000
+        }
+    },
+    "HOUSE_2_SCREENWRITER_ARC": {
+        "target": 20000,
+        "sub_rooms": {
+            "crime_doc": 4000,
+            "comedy_skit": 4000,
+            "action_hype": 4000,
+            "movie_cinema": 4000,
+            "viral_edu": 4000
+        }
+    },
+    "HOUSE_3_VISUAL_DIRECTOR": {
+        "target": 20000,
+        "sub_rooms": {
+            "depth_3d_shaders": 4000,
+            "forensic_canvas": 4000,
+            "motion_hud_cards": 4000,
+            "color_grade_lighting": 4000,
+            "broll_composition": 4000
+        }
+    },
+    "HOUSE_4_SOUND_AND_CUT_EDITOR": {
+        "target": 20000,
+        "sub_rooms": {
+            "cut_velocity_cpm": 4000,
+            "sfx_riser_impacts": 4000,
+            "comedic_silence_timing": 4000,
+            "multi_voice_archival": 4000,
+            "lufs_ducking_mix": 4000
+        }
+    },
+    "HOUSE_5_COPILOT_AND_REFLEXION": {
+        "target": 20000,
+        "sub_rooms": {
+            "director_chat_commands": 10000,
+            "reflexion_mistake_fixes": 10000
+        }
+    }
+}
+TOTAL_CAP = 100000
+
+
 def load_harvest_state() -> Dict[str, Any]:
-    """Loads harvest state and processed video IDs from C:\\cf_training\\harvest_state.json."""
+    """Loads 5-House harvest state and processed video IDs from C:\\cf_training\\harvest_state.json."""
     default_state: Dict[str, Any] = {
+        "total_records": 0,
+        "target_total": TOTAL_CAP,
+        "houses": {},
         "processed_ids": {
             "editing": set(),
             "hooks": set(),
@@ -227,57 +282,69 @@ def load_harvest_state() -> Dict[str, Any]:
             "storytelling": 0,
             "visual_audio": 0
         },
+        "hf_offsets": {
+            "imdb": 0,
+            "rotten_tomatoes": 0,
+            "dolly": 0
+        },
         "targets": TASK_BALANCED_TARGETS,
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
+
+    # Initialize 5-House structure
+    for h_name, h_info in HOUSES_SCHEMA.items():
+        default_state["houses"][h_name] = {
+            "count": 0,
+            "target": h_info["target"],
+            "status": "OPEN",
+            "sub_rooms": {
+                sr: {"count": 0, "target": sr_target, "status": "OPEN"}
+                for sr, sr_target in h_info["sub_rooms"].items()
+            }
+        }
 
     if os.path.exists(STATE_PATH):
         try:
             with open(STATE_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                for task in ("editing", "hooks", "storytelling", "visual_audio"):
-                    task_ids = data.get("processed_ids", {}).get(task, [])
-                    default_state["processed_ids"][task] = set(task_ids)
-                default_state["counts"] = data.get("counts", default_state["counts"])
-                default_state["targets"] = data.get("targets", TASK_BALANCED_TARGETS)
-                default_state["query_indices"] = data.get("query_indices", {
-                    "editing": 0, "hooks": 0, "storytelling": 0, "visual_audio": 0
-                })
+                if "houses" in data:
+                    default_state["houses"] = data["houses"]
+                if "total_records" in data:
+                    default_state["total_records"] = data["total_records"]
+                    default_state["counts"]["total"] = data["total_records"]
+                if "target_total" in data:
+                    default_state["target_total"] = data["target_total"]
+                if "processed_ids" in data:
+                    for task in ("editing", "hooks", "storytelling", "visual_audio"):
+                        task_ids = data.get("processed_ids", {}).get(task, [])
+                        default_state["processed_ids"][task] = set(task_ids)
+                if "counts" in data:
+                    default_state["counts"].update(data["counts"])
+                if "query_indices" in data:
+                    default_state["query_indices"].update(data["query_indices"])
+                if "hf_offsets" in data:
+                    default_state["hf_offsets"].update(data["hf_offsets"])
                 return default_state
         except Exception as e:
-            print(f"[WARN] Error loading state file ({e}). Backfilling from dataset.jsonl...")
-
-    # Backfill from dataset.jsonl if state file doesn't exist yet
-    if os.path.exists(DATASET_PATH):
-        try:
-            with open(DATASET_PATH, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip():
-                        try:
-                            record = json.loads(line)
-                            t = record.get("task", "editing")
-                            vid = record.get("video_id") or record.get("input", "")[:40]
-                            if t in default_state["processed_ids"]:
-                                default_state["processed_ids"][t].add(vid)
-                                default_state["counts"][t] = default_state["counts"].get(t, 0) + 1
-                                default_state["counts"]["total"] += 1
-                        except Exception:
-                            pass
-        except Exception:
-            pass
+            print(f"[WARN] Error loading state file ({e}).")
 
     return default_state
 
 
 def save_harvest_state(state: Dict[str, Any]):
-    """Persists harvest state checkpoint to C:\\cf_training\\harvest_state.json."""
+    """Persists 5-House harvest state checkpoint to C:\\cf_training\\harvest_state.json."""
     save_data = {
-        "processed_ids": {k: list(v) if isinstance(v, set) else v for k, v in state["processed_ids"].items()},
-        "counts": state["counts"],
+        "total_records": state.get("total_records", state.get("counts", {}).get("total", 0)),
+        "target_total": state.get("target_total", TOTAL_CAP),
+        "houses": state.get("houses", {}),
+        "processed_ids": {k: list(v) if isinstance(v, set) else v for k, v in state.get("processed_ids", {}).items()},
+        "counts": state.get("counts", {}),
         "query_indices": state.get("query_indices", {
             "editing": 0, "hooks": 0, "storytelling": 0, "visual_audio": 0
         }),
-        "targets": state.get("targets", TASK_BALANCED_TARGETS),
+        "hf_offsets": state.get("hf_offsets", {
+            "imdb": 0, "rotten_tomatoes": 0, "dolly": 0
+        }),
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
     try:
@@ -285,6 +352,245 @@ def save_harvest_state(state: Dict[str, Any]):
             json.dump(save_data, f, indent=2)
     except Exception as e:
         print(f"[WARN] Failed writing harvest state: {e}")
+
+
+def record_to_house_quota(
+    record: Dict[str, Any],
+    house: str,
+    sub_room: str,
+    genre: str,
+    state: Dict[str, Any]
+) -> bool:
+    """
+    Appends record to dataset.jsonl with [HOUSE: ... | GENRE: ...] activation header,
+    enforces hard sub-room (4,000 / 10,000) and House (20,000) quota gates,
+    and updates harvest_state.json.
+    """
+    houses = state.setdefault("houses", {})
+    if house not in houses:
+        return False
+    h_data = houses[house]
+    s_data = h_data.get("sub_rooms", {}).get(sub_room)
+    if not s_data:
+        return False
+
+    # Hard Quota Gates
+    sub_target = s_data.get("target", 4000)
+    if s_data.get("count", 0) >= sub_target or s_data.get("status") == "FULL":
+        s_data["status"] = "FULL"
+        return False
+
+    house_target = h_data.get("target", 20000)
+    if h_data.get("count", 0) >= house_target or h_data.get("status") == "FULL":
+        h_data["status"] = "FULL"
+        return False
+
+    # Prepend activation header
+    header = f"[HOUSE: {house} | GENRE: {genre}]"
+    curr_inst = record.get("instruction", "")
+    if not curr_inst.startswith("[HOUSE:"):
+        record["instruction"] = f"{header} {curr_inst}".strip()
+
+    record["house"] = house
+    record["sub_room"] = sub_room
+    record["genre"] = genre
+
+    # Append to dataset.jsonl (0 MB temp bloat)
+    with open(DATASET_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    # Update counts
+    s_data["count"] = s_data.get("count", 0) + 1
+    if s_data["count"] >= sub_target:
+        s_data["status"] = "FULL"
+        print(f"     [QUOTA GATE LOCKED] Sub-room {house}::{sub_room} hit {sub_target} records -> status: FULL")
+
+    h_data["count"] = h_data.get("count", 0) + 1
+    if h_data["count"] >= house_target:
+        h_data["status"] = "FULL"
+        print(f"     [HOUSE QUOTA LOCKED] House {house} hit {house_target} records -> status: FULL")
+
+    state["total_records"] = state.get("total_records", 0) + 1
+    state["counts"]["total"] = state["total_records"]
+    save_harvest_state(state)
+    return True
+
+
+def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 5) -> int:
+    """
+    Zero-disk bloat live streamer using Hugging Face Datasets Server REST API.
+    Streams real scene dialogues & critical analyses directly in memory:
+    - stanfordnlp/imdb -> HOUSE_2_SCREENWRITER_ARC & HOUSE_3_VISUAL_DIRECTOR
+    - cornell-movie-review-data/rotten_tomatoes -> HOUSE_1_HOOK_PSYCHOLOGY & HOUSE_4_SOUND_AND_CUT_EDITOR
+    - databricks/databricks-dolly-15k -> HOUSE_5_COPILOT_AND_REFLEXION (director_chat_commands)
+    """
+    added = 0
+    hf_offsets = state.setdefault("hf_offsets", {"imdb": 0, "rotten_tomatoes": 0, "dolly": 0})
+
+    # 1. stanfordnlp/imdb -> HOUSE_2_SCREENWRITER_ARC (5 genres)
+    h2 = state.get("houses", {}).get("HOUSE_2_SCREENWRITER_ARC", {})
+    open_h2_rooms = [r for r, d in h2.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
+
+    if open_h2_rooms and h2.get("status") == "OPEN":
+        offset = hf_offsets.get("imdb", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=stanfordnlp/imdb&config=plain_text&split=train&offset={offset}&length={count_per_cycle}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=12) as res:
+                data = json.loads(res.read().decode("utf-8"))
+                rows = data.get("rows", [])
+                for r in rows:
+                    row_text = r.get("row", {}).get("text", "").strip()
+                    if len(row_text) < 70:
+                        continue
+                    sentences = [s.strip() for s in re.split(r"[.!?]+", row_text) if len(s.strip().split()) >= 4]
+                    if len(sentences) < 3:
+                        continue
+
+                    target_genre = random.choice(open_h2_rooms)
+                    prompt_title = " ".join(sentences[0].split()[:5]).title()
+
+                    beats = []
+                    for b_idx, sent in enumerate(sentences[:6], start=1):
+                        camera = "snap_zoom" if target_genre == "comedy_skit" else ("camera_shake" if target_genre == "action_hype" else ("slow_pan_zoom" if target_genre == "movie_cinema" else "cosine_in"))
+                        flt = "skit_warm" if target_genre == "comedy_skit" else ("action_crush" if target_genre == "action_hype" else ("cinema_scope" if target_genre == "movie_cinema" else "teal_split"))
+                        beats.append({
+                            "index": b_idx,
+                            "narration": sent,
+                            "camera": camera,
+                            "filter": flt,
+                            "motion_type": "kinetic_text" if b_idx == 1 else "treated_image"
+                        })
+
+                    record = {
+                        "instruction": f"Construct a structured documentary beat sheet for {target_genre} editing physics based on this scene narrative.",
+                        "input": " ".join(sentences[:5]),
+                        "output": json.dumps({
+                            "title": prompt_title,
+                            "genre": target_genre,
+                            "beats": beats
+                        }, ensure_ascii=False)
+                    }
+                    if record_to_house_quota(record, "HOUSE_2_SCREENWRITER_ARC", target_genre, target_genre, state):
+                        added += 1
+                        print(f"     [HF STREAM -> H2] Ingested '{prompt_title[:30]}' into {target_genre}")
+                hf_offsets["imdb"] = offset + len(rows)
+        except Exception as e:
+            print(f"     [WARN] HF imdb streaming: {e}")
+
+    # 2. cornell-movie-review-data/rotten_tomatoes -> HOUSE_1_HOOK_PSYCHOLOGY
+    h1 = state.get("houses", {}).get("HOUSE_1_HOOK_PSYCHOLOGY", {})
+    open_h1_rooms = [r for r, d in h1.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
+
+    if open_h1_rooms and h1.get("status") == "OPEN":
+        offset = hf_offsets.get("rotten_tomatoes", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=cornell-movie-review-data/rotten_tomatoes&config=default&split=train&offset={offset}&length={count_per_cycle}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=12) as res:
+                data = json.loads(res.read().decode("utf-8"))
+                rows = data.get("rows", [])
+                for r in rows:
+                    row_text = r.get("row", {}).get("text", "").strip()
+                    if len(row_text) < 25:
+                        continue
+                    target_sub = random.choice(open_h1_rooms)
+                    record = {
+                        "instruction": f"Formulate a high-retention viral opening hook ({target_sub}) from this review critique.",
+                        "input": row_text,
+                        "output": json.dumps({
+                            "hook_type": target_sub,
+                            "hook_script": row_text,
+                            "visual_cue": "red_slam_word",
+                            "audio_cue": "riser.wav"
+                        }, ensure_ascii=False)
+                    }
+                    if record_to_house_quota(record, "HOUSE_1_HOOK_PSYCHOLOGY", target_sub, "auto", state):
+                        added += 1
+                        print(f"     [HF STREAM -> H1] Ingested hook into {target_sub}")
+                hf_offsets["rotten_tomatoes"] = offset + len(rows)
+        except Exception as e:
+            print(f"     [WARN] HF rotten_tomatoes streaming: {e}")
+
+    # 3. databricks/databricks-dolly-15k -> HOUSE_5_COPILOT_AND_REFLEXION (director_chat_commands)
+    h5 = state.get("houses", {}).get("HOUSE_5_COPILOT_AND_REFLEXION", {})
+    open_h5_cmd = h5.get("sub_rooms", {}).get("director_chat_commands", {}).get("status") == "OPEN"
+    if open_h5_cmd and h5.get("status") == "OPEN":
+        offset = hf_offsets.get("dolly", 0)
+        url = f"https://datasets-server.huggingface.co/rows?dataset=databricks/databricks-dolly-15k&config=default&split=train&offset={offset}&length={count_per_cycle}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=12) as res:
+                data = json.loads(res.read().decode("utf-8"))
+                rows = data.get("rows", [])
+                for r in rows:
+                    inst = r.get("row", {}).get("instruction", "").strip()
+                    resp = r.get("row", {}).get("response", "").strip()
+                    if not inst:
+                        continue
+                    tool_action = random.choice(["modify_timeline_beats", "recut_genre", "clone_reference_style"])
+                    genre = random.choice(["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"])
+                    record = {
+                        "instruction": "Execute user timeline editing instruction and return structured Director actions.",
+                        "input": inst,
+                        "output": json.dumps({
+                            "message": f"Director command executed. Applying {tool_action} for {genre} style.",
+                            "actions": [
+                                {
+                                    "action": tool_action,
+                                    "params": {
+                                        "genre": genre,
+                                        "details": resp[:120]
+                                    }
+                                }
+                            ]
+                        }, ensure_ascii=False)
+                    }
+                    if record_to_house_quota(record, "HOUSE_5_COPILOT_AND_REFLEXION", "director_chat_commands", genre, state):
+                        added += 1
+                        print(f"     [HF STREAM -> H5] Ingested director command: '{inst[:30]}...'")
+                hf_offsets["dolly"] = offset + len(rows)
+        except Exception as e:
+            print(f"     [WARN] HF dolly streaming: {e}")
+
+    save_harvest_state(state)
+    return added
+
+
+def sync_reflexion_mistakes(state: Dict[str, Any]) -> int:
+    """Syncs real mistake corrections from C:\\cf_training\\reflexion_log.jsonl into HOUSE_5_COPILOT_AND_REFLEXION."""
+    h5 = state.get("houses", {}).get("HOUSE_5_COPILOT_AND_REFLEXION", {})
+    s_fix = h5.get("sub_rooms", {}).get("reflexion_mistake_fixes", {})
+    if s_fix.get("status") == "FULL" or h5.get("status") == "FULL":
+        return 0
+
+    reflexion_file = os.path.join(WORKSPACE_DIR, "reflexion_log.jsonl")
+    if not os.path.exists(reflexion_file):
+        return 0
+
+    added = 0
+    try:
+        with open(reflexion_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    entry = json.loads(line)
+                    inst = entry.get("instruction", "")
+                    if not inst.startswith("[HOUSE:"):
+                        inst = f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: auto] {inst}".strip()
+                    entry["instruction"] = inst
+                    entry["house"] = "HOUSE_5_COPILOT_AND_REFLEXION"
+                    entry["sub_room"] = "reflexion_mistake_fixes"
+                    entry["genre"] = "auto"
+                    if record_to_house_quota(entry, "HOUSE_5_COPILOT_AND_REFLEXION", "reflexion_mistake_fixes", "auto", state):
+                        added += 1
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"     [WARN] Error syncing reflexion mistakes: {e}")
+
+    return added
 
 
 # ==============================================================================
@@ -1361,28 +1667,58 @@ def harvest_video_entry(
                 visual_cuts = extract_visual_cuts_lowres(url, job_id)
                 print(f"     > Detected {len(visual_cuts)} scene cuts (temp files purged: 0 MB on disk).")
 
+            # Detect genre and route to 5-House Knowledge Architecture
+            genre = "auto"
+            title_lower = title.lower()
+            if any(w in title_lower for w in ["crime", "police", "fbi", "cia", "murder", "cold case", "detective"]):
+                genre = "crime_doc"
+            elif any(w in title_lower for w in ["comedy", "funny", "skit", "sketch", "humor", "prank"]):
+                genre = "comedy_skit"
+            elif any(w in title_lower for w in ["action", "fight", "chase", "combat", "trailer", "war"]):
+                genre = "action_hype"
+            elif any(w in title_lower for w in ["cinema", "movie", "film", "hollywood", "scene", "anamorphic"]):
+                genre = "movie_cinema"
+            elif any(w in title_lower for w in ["vox", "explainer", "learn", "how to", "why", "tutorial", "stat"]):
+                genre = "viral_edu"
+
             # Route to Task Synthesizer
-            if task == "editing":
-                record = synthesize_editing_task(info, sentences, comments, visual_cuts)
-            elif task == "hooks":
+            if task == "hooks":
                 record = synthesize_hooks_task(info, sentences, comments)
+                target_house = "HOUSE_1_HOOK_PSYCHOLOGY"
+                sub_rooms = ["curiosity_gap", "negative_bias", "counter_intuitive", "visual_shock", "title_thumbnail_ab"]
+                h_rooms = state.get("houses", {}).get(target_house, {}).get("sub_rooms", {})
+                open_rooms = [r for r in sub_rooms if h_rooms.get(r, {}).get("status") == "OPEN"]
+                target_sub = random.choice(open_rooms) if open_rooms else "curiosity_gap"
             elif task == "storytelling":
                 record = synthesize_storytelling_task(info, sentences, comments)
+                target_house = "HOUSE_2_SCREENWRITER_ARC"
+                target_sub = genre if genre != "auto" else "crime_doc"
+            elif task == "editing":
+                record = synthesize_editing_task(info, sentences, comments, visual_cuts)
+                target_house = "HOUSE_3_VISUAL_DIRECTOR"
+                sub_rooms = ["depth_3d_shaders", "forensic_canvas", "motion_hud_cards", "color_grade_lighting", "broll_composition"]
+                h_rooms = state.get("houses", {}).get(target_house, {}).get("sub_rooms", {})
+                open_rooms = [r for r in sub_rooms if h_rooms.get(r, {}).get("status") == "OPEN"]
+                target_sub = random.choice(open_rooms) if open_rooms else "broll_composition"
             elif task == "visual_audio":
                 record = synthesize_visual_audio_task(info, sentences, comments)
+                target_house = "HOUSE_4_SOUND_AND_CUT_EDITOR"
+                sub_rooms = ["cut_velocity_cpm", "sfx_riser_impacts", "comedic_silence_timing", "multi_voice_archival", "lufs_ducking_mix"]
+                h_rooms = state.get("houses", {}).get(target_house, {}).get("sub_rooms", {})
+                open_rooms = [r for r in sub_rooms if h_rooms.get(r, {}).get("status") == "OPEN"]
+                target_sub = random.choice(open_rooms) if open_rooms else "multi_voice_archival"
             else:
                 record = synthesize_editing_task(info, sentences, comments, visual_cuts)
+                target_house = "HOUSE_3_VISUAL_DIRECTOR"
+                target_sub = "broll_composition"
 
-            # Append instruction-tuning JSON object to dataset.jsonl
-            with open(DATASET_PATH, "a", encoding="utf-8") as f:
-                f.write(json.dumps(record) + "\n")
+            # Route to House and enforce hard quota gates
+            record_to_house_quota(record, target_house, target_sub, genre, state)
 
             # Update checkpoint state
             state["processed_ids"][task].add(video_id)
             state["processed_ids"][task].add(title.lower().strip())
             state["counts"][task] = state["counts"].get(task, 0) + 1
-            state["counts"]["total"] = state["counts"].get("total", 0) + 1
-            save_harvest_state(state)
 
             print(f"     [SUCCESS] Task [{task}] -> Logged to Vault + dataset.jsonl (0 MB disk bloat)")
             delay = round(random.uniform(4.5, 6.5), 2)
@@ -1533,6 +1869,17 @@ def run_continuous_harvest(
         print(f">>> DAEMON CYCLE #{cycle} STARTING (Total Harvested So Far: {total_now} / {target_total}) <<<")
         print(f"==================================================================")
 
+        # 1. Sync any new Reflexion mistake fixes into HOUSE_5_COPILOT_AND_REFLEXION
+        ref_added = sync_reflexion_mistakes(state)
+        if ref_added > 0:
+            print(f"     [REFLEXION SYNC] Synced +{ref_added} mistake-to-fix records into HOUSE_5")
+
+        # 2. Stream real scene analyses & dialogues via Hugging Face REST API (0 MB disk bloat)
+        hf_added = stream_huggingface_batch(state, count_per_cycle=count_per_task)
+        if hf_added > 0:
+            print(f"     [HF REST STREAM] Streamed +{hf_added} real records into Houses 1, 2, 5")
+
+        # 3. Harvest multi-genre YouTube videos via 0-quota search & subtitle streaming
         cycle_added = run_balanced_plan(
             state,
             count_per_task=count_per_task,
@@ -1540,22 +1887,22 @@ def run_continuous_harvest(
             query_pointers=query_pointers
         )
 
-        total_after = state["counts"].get("total", 0)
+        total_after = state.get("total_records", state["counts"].get("total", 0))
         print(f"\n==================================================================")
-        print(f">>> DAEMON CYCLE #{cycle} FINISHED (+{cycle_added} new examples added) <<<")
-        print(f"Progress toward {target_total} target:")
-        print(f"  - editing:      {state['counts'].get('editing', 0):>5} / {TASK_BALANCED_TARGETS['editing']}")
-        print(f"  - hooks:        {state['counts'].get('hooks', 0):>5} / {TASK_BALANCED_TARGETS['hooks']}")
-        print(f"  - storytelling: {state['counts'].get('storytelling', 0):>5} / {TASK_BALANCED_TARGETS['storytelling']}")
-        print(f"  - visual_audio: {state['counts'].get('visual_audio', 0):>5} / {TASK_BALANCED_TARGETS['visual_audio']}")
-        print(f"  - TOTAL:        {total_after:>5} / {target_total}")
+        print(f">>> DAEMON CYCLE #{cycle} FINISHED (+{cycle_added + hf_added + ref_added} new examples added) <<<")
+        print(f"5-House 100,000-Quota Status (Total: {total_after:,} / {target_total:,}):")
+        for h_k, h_v in state.get("houses", {}).items():
+            h_cnt = h_v.get("count", 0)
+            h_tgt = h_v.get("target", 20000)
+            h_st = h_v.get("status", "OPEN")
+            print(f"  - {h_k:<28}: {h_cnt:>6,} / {h_tgt:>6,} [{h_st}]")
         print(f"==================================================================")
 
         if total_after >= target_total:
             print(f"\n[MASTER GOAL REACHED] Reached {total_after}/{target_total} records! Daemon completed.")
             break
 
-        print(f"\n[INTER-CYCLE COOLDOWN] Completed {count_per_task * 4}-video cycle. Sleeping {cooldown_seconds}s to reset IP thresholds before Cycle #{cycle + 1}...")
+        print(f"\n[INTER-CYCLE COOLDOWN] Completed cycle. Sleeping {cooldown_seconds}s before Cycle #{cycle + 1}...")
         for remaining in range(cooldown_seconds, 0, -15):
             print(f"     ... cooldown: {remaining}s remaining ...")
             time.sleep(min(15, remaining))
@@ -1563,19 +1910,21 @@ def run_continuous_harvest(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Multi-Task Balanced Video Dataset Harvester")
+    parser = argparse.ArgumentParser(description="5-House 100,000-Quota Video Dataset Harvester")
     parser.add_argument("--task", choices=["editing", "hooks", "storytelling", "visual_audio", "all"], default="all",
                         help="Specific production task to harvest")
     parser.add_argument("--continuous", action="store_true",
-                        help="Run continuous auto-paced daemon looping until 6,000 target is reached")
+                        help="Run continuous auto-paced daemon looping until 100,000 target is reached")
     parser.add_argument("--cooldown", type=int, default=90,
                         help="Inter-cycle cooldown in seconds for continuous mode (default: 90s)")
     parser.add_argument("--run-balanced-plan", action="store_true",
-                        help="Run master balanced distribution plan cycle across all 4 tasks")
+                        help="Run master balanced distribution plan cycle across all tasks")
     parser.add_argument("--count", type=int, default=10,
                         help="Number of videos per task in balanced plan or per query (default: 10)")
-    parser.add_argument("--target-total", type=int, default=6000,
-                        help="Total dataset target size (default: 6,000)")
+    parser.add_argument("--target-total", type=int, default=100000,
+                        help="Total dataset target size (default: 100,000)")
+    parser.add_argument("--stream-hf", action="store_true",
+                        help="Stream batch directly from Hugging Face Datasets Server REST API")
     parser.add_argument("--query", help="Custom search query")
     parser.add_argument("--urls", nargs="+", help="Specific video URLs to harvest")
     parser.add_argument("--visual-cuts", action="store_true",
@@ -1624,6 +1973,14 @@ def main():
         print(f"- Styles notes: {len(os.listdir(os.path.join(VAULT_DIR, 'styles')))}")
         print(f"- SFX notes: {len(os.listdir(os.path.join(VAULT_DIR, 'sfx')))}")
         print("==================================================================\n")
+        return
+
+    if args.stream_hf:
+        print("\n==================================================================")
+        print("STREAMING DIRECTLY FROM HUGGING FACE REST API (0 MB DISK BLOAT)")
+        print("==================================================================")
+        added = stream_huggingface_batch(state, count_per_cycle=args.count)
+        print(f"\nHF Streaming finished: +{added} records added across Houses. Total now: {state.get('total_records')}")
         return
 
     if args.continuous:

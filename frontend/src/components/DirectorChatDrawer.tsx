@@ -29,6 +29,8 @@ import {
   useAnalyzeVideo, 
   useDirectorChat, 
   useLearnedRules,
+  useHouseQuotas,
+  useRecutGenre,
   VideoContext, 
   DirectorChatResponse 
 } from '../api/client';
@@ -66,6 +68,8 @@ export default function DirectorChatDrawer({
   const [showTranscript, setShowTranscript] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [showLearnedRules, setShowLearnedRules] = useState(false);
+  const [showHouseQuotas, setShowHouseQuotas] = useState(false);
+  const [isRecutting, setIsRecutting] = useState(false);
   const [ytUrl, setYtUrl] = useState('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
@@ -75,6 +79,43 @@ export default function DirectorChatDrawer({
   const analyzeMutation = useAnalyzeVideo();
   const chatMutation = useDirectorChat();
   const { data: learnedData } = useLearnedRules();
+  const { data: houseQuotasData } = useHouseQuotas();
+  const recutMutation = useRecutGenre();
+
+  const handleRecutGenre = async (targetGenre: string) => {
+    if (!jobId || isRecutting) return;
+    setIsRecutting(true);
+    setStatusMsg(`Re-cutting Job #${jobId} with genre: ${targetGenre}...`);
+    try {
+      const res = await recutMutation.mutateAsync({ jobId, genre: targetGenre });
+      if (res?.video_url && onVideoUpdated) {
+        onVideoUpdated(res.video_url);
+      }
+      setMessages(prev => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          role: 'director',
+          content: `🎬 **Job #${jobId} Re-Cut Completed**\n\nGenre applied: \`${targetGenre}\`.\nTimeline re-rendered with new pacing physics, visual grade, and audio ducking.`,
+          videoUrl: res?.video_url,
+          timestamp: new Date()
+        }
+      ]);
+    } catch (err: any) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          role: 'director',
+          content: `⚠️ Error re-cutting job: ${err.message || err}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setIsRecutting(false);
+      setStatusMsg(null);
+    }
+  };
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -355,6 +396,25 @@ export default function DirectorChatDrawer({
             ) : null}
           </Button>
 
+          <Button
+            variant="ghost"
+            onClick={() => setShowHouseQuotas(prev => !prev)}
+            className={`!py-1 !px-2.5 text-[11px] border flex items-center gap-1.5 rounded-lg transition-colors ${
+              showHouseQuotas
+                ? 'bg-amber-950/80 border-amber-500/60 text-amber-200'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+            }`}
+            title="5-House 100,000 Brain Quota Architecture"
+          >
+            <span>🏛️</span>
+            <span>Brain Quota</span>
+            {houseQuotasData?.data?.total_records !== undefined && (
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                {houseQuotasData.data.total_records.toLocaleString()}
+              </span>
+            )}
+          </Button>
+
           {jobId && (
             <Button
               variant="ghost"
@@ -493,6 +553,85 @@ export default function DirectorChatDrawer({
               No mistakes logged yet. Every user timeline edit or auto-critic catch is recorded and injected into future scripts.
             </p>
           )}
+        </div>
+      )}
+
+      {/* 5-House Knowledge Quota Panel */}
+      {showHouseQuotas && (
+        <div className="p-3.5 bg-slate-900/90 border-b border-slate-800 text-xs space-y-2.5 max-h-72 overflow-y-auto animate-in fade-in">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+            <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px] uppercase tracking-wider">
+              <span>🏛️ 5-House Knowledge Quota (100,000 Cap)</span>
+            </div>
+            <span className="font-mono text-[10px] text-slate-400">
+              Total: {(houseQuotasData?.data?.total_records || 0).toLocaleString()} / 100,000 ({(((houseQuotasData?.data?.total_records || 0) / 100000) * 100).toFixed(1)}%)
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {Object.entries(houseQuotasData?.data?.houses || {}).map(([houseKey, houseData]: [string, any]) => {
+              const count = houseData?.count || 0;
+              const target = houseData?.target || 20000;
+              const pct = Math.min(100, (count / target) * 100);
+              const isFull = houseData?.status === 'FULL' || count >= target;
+              const label = houseKey.replace('HOUSE_', '').replace(/_/g, ' ');
+
+              return (
+                <div key={houseKey} className="bg-slate-950/70 p-2 rounded-lg border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-slate-200 truncate">{label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] text-slate-400">{count.toLocaleString()} / {target.toLocaleString()}</span>
+                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                        isFull ? 'bg-red-950 text-red-300 border border-red-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                      }`}>
+                        {isFull ? 'FULL' : 'OPEN'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        isFull ? 'bg-amber-400' : 'bg-gradient-to-r from-blue-500 to-emerald-400'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 5-Genre Re-Cut Action Bar */}
+      {jobId && (
+        <div className="px-4 py-2 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between gap-1.5 text-xs">
+          <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
+            <span>🎭</span>
+            <span>Re-Cut Genre:</span>
+          </span>
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: 'crime_doc', label: 'Crime', icon: '🕵️' },
+              { id: 'comedy_skit', label: 'Comedy', icon: '😂' },
+              { id: 'action_hype', label: 'Action', icon: '🔥' },
+              { id: 'movie_cinema', label: 'Cinema', icon: '🎬' },
+              { id: 'viral_edu', label: 'Viral Edu', icon: '⚡' },
+            ].map(g => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => handleRecutGenre(g.id)}
+                disabled={isRecutting || recutMutation.isPending}
+                className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 text-slate-300 hover:text-white text-[10px] font-medium transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                title={`Re-cut Job #${jobId} with ${g.label} editing physics`}
+              >
+                <span>{g.icon}</span>
+                <span>{g.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

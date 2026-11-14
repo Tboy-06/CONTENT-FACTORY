@@ -23,6 +23,67 @@ from backend.engine.reflexion import audit_and_heal_beats
 
 logger = logging.getLogger("engine.planner")
 
+GENRES = ["auto", "crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"]
+
+
+def detect_genre(topic: str, prompt: str = "") -> str:
+    """Auto-detects one of the 5 genre archetypes from topic/prompt."""
+    combined = f"{topic} {prompt}".lower()
+    
+    if any(k in combined for k in ["funny", "skit", "prank", "humor", "comedy", "laugh", "awkward", "parody", "roast", "joke", "meme"]):
+        return "comedy_skit"
+    if any(k in combined for k in ["action", "fight", "battle", "hype", "beast", "workout", "gym", "combat", "chase", "explosion", "speed", "anime"]):
+        return "action_hype"
+    if any(k in combined for k in ["movie", "cinema", "trailer", "film", "hollywood", "cinematic", "screenplay", "scene", "monologue", "widescreen"]):
+        return "movie_cinema"
+    if any(k in combined for k in ["crime", "cia", "kgb", "fbi", "conspiracy", "scandal", "murder", "heist", "classified", "secret", "submarine", "azorian", "espionage", "investigation"]):
+        return "crime_doc"
+    if any(k in combined for k in ["money", "how to", "why", "tech", "code", "crypto", "business", "science", "economy", "ai", "guide", "tutorial", "explain", "system", "psychology"]):
+        return "viral_edu"
+    
+    return "crime_doc"
+
+
+def get_genre_rules(genre: str) -> str:
+    """Returns strict editorial and physics rules for the active genre."""
+    g = genre.lower()
+    if g == "comedy_skit":
+        return """[GENRE EDITING PHYSICS: COMEDY / SKIT]:
+- Pacing: Rapid 25-35 CPM jump-cuts. Short punchy dialogue.
+- Visual Mechanics: Sudden 1.35x snap-zooms ("camera_movement": "snap_zoom") on punchline beats.
+- Comedic Timing: "pause_before": 0.3 comedic dead-air pause before punchline/twist lines.
+- Color Treatment: "skit_warm" (bright, punchy, high-saturation comedy lighting).
+- SFX: "pop.wav", "hit.wav", "click.wav", "whoosh.wav"."""
+    elif g == "action_hype":
+        return """[GENRE EDITING PHYSICS: ACTION / HYPE]:
+- Pacing: Ultra-rapid 40-55 CPM (1.0s-1.8s beat cuts). Maximum velocity.
+- Visual Mechanics: Handheld camera shake ("camera_movement": "camera_shake") on impact beats.
+- Typography: Kinetic bold "red_slam_word" motion cards on climactic beats.
+- Color Treatment: "action_crush" (bleach bypass, crushed darks, neon edge contrast).
+- SFX: Heavy bass "thud.wav", rapid "whoosh.wav", tension "riser.wav"."""
+    elif g == "movie_cinema":
+        return """[GENRE EDITING PHYSICS: MOVIE / CINEMA]:
+- Pacing: Measured 12-18 CPM. Elegant longer takes allowing visual immersion.
+- Visual Mechanics: 2.35:1 widescreen anamorphic cinema letterbox bars ("anamorphic_bars": true).
+- Camera Shaders: Slow 3D "rack_focus_bokeh" and "orbital" depth shifts. Minimal UI overlays on story beats.
+- Color Treatment: "cinema_scope" (35mm Kodak film emulation, teal-amber anamorphic grading).
+- SFX: Subtle cinematic room tone, dramatic low-end "thud.wav"."""
+    elif g == "viral_edu":
+        return """[GENRE EDITING PHYSICS: VIRAL EDU / EXPLAINER]:
+- Pacing: Continuous 28-38 CPM visual switches (1.8s-2.5s intervals).
+- Motion Cards: Heavy rotation of "stat_counter", "workflow_stepper", "3_item_list".
+- Camera Shaders: Constant cosine punch-ins ("cosine_zoom") to hold viewer focus.
+- Color Treatment: "teal_split" or "hard_bw".
+- SFX: Crisp interface "click.wav", "whoosh.wav", reveal "thud.wav"."""
+    else: # crime_doc
+        return """[GENRE EDITING PHYSICS: CRIME / INVESTIGATIVE DOC]:
+- Pacing: Deliberate high-tension 18-24 CPM cadence.
+- Forensic Canvas: Heavy use of "declassified_scan" (redacted highlighter), "evidence_board" (red yarn suspect pinboard), "map_flyover" (tactical vector radar).
+- Audio Texture: Archival radio voice bandpass filter (300Hz-3200Hz) on declassified quote beats.
+- Color Treatment: "teal_split" or "hard_bw" (Fincher chiaroscuro).
+- SFX: Heavy bass "thud.wav", typewriter "click.wav"."""
+
+
 PLANNER_SYSTEM_PROMPT = """You are an elite YouTube documentary director specializing in high-retention vertical shorts (Vox/Johnny Harris/Editor-V1 style).
 For any given topic, structure an 8-sentence documentary script.
 Each sentence must be split into exactly 2 rapid visual beats (each beat lasting between 1.0s and 1.8s, total 16 beats).
@@ -35,7 +96,7 @@ Strict Visual Choreography Rules:
    - "evidence_board": Dark forensic pinboard with entity suspect nodes and connecting red yarn lines.
    - "map_flyover": Tactical geopolitical vector grid with targeting reticle, coordinates, and radar beacon.
    - "motion_card" (templates: "red_slam_word", "stat_counter", "3_item_list", "quote_box", "workflow_stepper", "star_badge") with "headline", "highlight", and sfx ("thud.wav" or "whoosh.wav").
-   - "treated_image": With explicit "visual_prompt", "grade" ("hard_bw"|"teal_split"|"amber"), and "camera_movement" ("orbital"|"dolly_vertigo"|"rack_focus_bokeh").
+   - "treated_image": With explicit "visual_prompt", "grade" ("hard_bw"|"teal_split"|"amber"|"skit_warm"|"action_crush"|"cinema_scope"), and "camera_movement" ("orbital"|"dolly_vertigo"|"rack_focus_bokeh"|"snap_zoom"|"camera_shake").
    - "broll_video": Free moving B-roll with "broll_query" and "visual_prompt".
 
 Ensure high visual variety: every 2-3 beats must alternate between motion cards/highlighters and 3D treated imagery.
@@ -44,6 +105,7 @@ Return ONLY a valid JSON object matching this schema:
 {
   "topic": string,
   "style": "editor-v1",
+  "genre": "crime_doc",
   "duration_target": 45.0,
   "sentences": [
     {
@@ -80,14 +142,45 @@ def generate_fallback_manifest(
     topic: str,
     job_id: int,
     duration_target: float = 45.0,
-    fact_dossier: Optional[Dict[str, Any]] = None
+    fact_dossier: Optional[Dict[str, Any]] = None,
+    genre: str = "crime_doc"
 ) -> Dict[str, Any]:
     """
     Deterministic documentary generator that creates an authentic, topic-tailored
-    manifest based on the user's exact subject and verified FactDossier. Supports short-form (45-60s) and
-    long-form (3m-5m+) multi-act documentary narratives.
+    manifest based on the user's exact subject, verified FactDossier, and selected Genre physics.
+    Supports short-form (45-60s) and long-form (3m-5m+) multi-act narratives.
     """
+    genre_clean = (genre or "crime_doc").lower()
+    if genre_clean not in GENRES:
+        genre_clean = "crime_doc"
     topic_clean = topic.strip().title()
+
+    # Genre physics styling defaults
+    if genre_clean == "comedy_skit":
+        default_grade = "skit_warm"
+        hero_cam = "snap_zoom"
+        impact_sfx = "hit.wav"
+        whoosh_sfx = "whoosh.wav"
+    elif genre_clean == "action_hype":
+        default_grade = "action_crush"
+        hero_cam = "camera_shake"
+        impact_sfx = "thud.wav"
+        whoosh_sfx = "whoosh.wav"
+    elif genre_clean == "movie_cinema":
+        default_grade = "cinema_scope"
+        hero_cam = "rack_focus_bokeh"
+        impact_sfx = "thud.wav"
+        whoosh_sfx = "click.wav"
+    elif genre_clean == "viral_edu":
+        default_grade = "teal_split"
+        hero_cam = "dolly_vertigo"
+        impact_sfx = "thud.wav"
+        whoosh_sfx = "whoosh.wav"
+    else:  # crime_doc
+        default_grade = "hard_bw"
+        hero_cam = "dolly_vertigo"
+        impact_sfx = "thud.wav"
+        whoosh_sfx = "click.wav"
 
     # Pull real-world facts from dossier if available
     facts = fact_dossier or {}
@@ -359,6 +452,7 @@ def generate_fallback_manifest(
         "job_id": job_id,
         "topic": topic_clean,
         "style": "editor-v1",
+        "genre": genre_clean,
         "duration_target": duration_target,
         "sentences": sentences_data
     }
@@ -369,19 +463,24 @@ async def plan_documentary(
     job_id: int,
     aspect_ratio: str = "9:16",
     duration_target: float = 45.0,
-    fact_dossier: Optional[Dict[str, Any]] = None
+    fact_dossier: Optional[Dict[str, Any]] = None,
+    genre: str = "auto"
 ) -> Dict[str, Any]:
     """
-    Coordinates with brain.py to create the full documentary manifest.
-    Supports both 9:16 vertical shorts and 16:9 horizontal YouTube channel documentaries.
-    For long-form videos (>60s), generates across 4 sequential Acts to eliminate LLM token truncation.
-    Consults the Obsidian director vault & dataset.jsonl (BM25) for proven hooks and style rules.
-    Injects verified FactDossier so stat_counter, map_flyover, evidence_board, and quote_box
-    use 100% authentic real-world data.
-    Falls back gracefully if Ollama / cloud models are unreachable.
+    Coordinates with brain.py to create the full documentary manifest across 5 genre archetypes:
+    ("crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu").
+    Enforces distinct editing physics, camera movements, and color treatments for each genre.
+    Prepends [HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: <GENRE>] to prevent cross-genre confusion.
     """
+    resolved_genre = detect_genre(topic) if (not genre or genre == "auto") else genre.lower()
+    if resolved_genre not in GENRES:
+        resolved_genre = "crime_doc"
+
+    genre_rules = get_genre_rules(resolved_genre)
+    namespace_header = f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {resolved_genre.upper()}]"
+
     format_label = "16:9 horizontal YouTube documentary" if aspect_ratio == "16:9" else "9:16 vertical documentary short"
-    logger.info(f"[Planner] Generating {format_label} ({duration_target}s) beat plan for: '{topic}' (Job #{job_id})")
+    logger.info(f"[Planner] Generating {format_label} ({duration_target}s) [{resolved_genre.upper()}] for: '{topic}' (Job #{job_id})")
 
     # 1. Fact Dossier Grounding Pre-Step (zero-key research)
     if not fact_dossier:
@@ -419,7 +518,7 @@ async def plan_documentary(
     # CASE A: LONG-FORM DOCUMENTARY (>60s) - 4 SEQUENTIAL ACTS
     # -------------------------------------------------------------
     if duration_target > 60:
-        logger.info(f"[Planner] Activating 4-Act chapter generation for long-form: '{topic}'")
+        logger.info(f"[Planner] Activating 4-Act chapter generation for long-form [{resolved_genre.upper()}]: '{topic}'")
         acts_plan = [
             (1, "The Inciting Anomaly & Hook", 6),
             (2, "The Hidden Background & Catalyst", 6),
@@ -433,8 +532,10 @@ async def plan_documentary(
         try:
             for act_num, act_title, count in acts_plan:
                 act_prompt = (
+                    f"{namespace_header}\n"
                     f"Plan Act {act_num}: '{act_title}' for a long-form {format_label} on the topic: '{topic}'.\n"
-                    f"Write {count} consecutive spoken sentences. Each sentence must have 2 visual beats (motion_card or treated_image).\n"
+                    f"{genre_rules}\n"
+                    f"Write {count} consecutive spoken sentences. Each sentence must have 2 visual beats.\n"
                     f"{vault_context}\n"
                     f"{fact_context}\n"
                     f"Output strictly a JSON object with a 'sentences' array."
@@ -455,6 +556,7 @@ async def plan_documentary(
                         for b in s.get("beats", []):
                             b["id"] = f"beat_{global_beat_id:02d}"
                             b["aspect_ratio"] = aspect_ratio
+                            b["genre"] = resolved_genre
                             global_beat_id += 1
                         all_sentences.append(s)
                         global_sent_id += 1
@@ -462,11 +564,12 @@ async def plan_documentary(
             if len(all_sentences) >= 12:
                 all_beats = [b for s in all_sentences for b in s.get("beats", [])]
                 hook_txt = all_sentences[0].get("text", "")
-                log_script_to_vault(job_id, topic, hook_txt, "Long-Form Documentary", all_beats)
+                log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Documentary", all_beats)
                 return {
                     "job_id": job_id,
                     "topic": topic,
                     "style": "editor-v1",
+                    "genre": resolved_genre,
                     "aspect_ratio": aspect_ratio,
                     "duration_target": duration_target,
                     "fact_dossier": fact_dossier,
@@ -479,7 +582,10 @@ async def plan_documentary(
     # CASE B: SHORT-FORM (<=60s) OR FALLBACK
     # -------------------------------------------------------------
     prompt = (
+        f"{namespace_header}\n"
         f"Plan a {int(duration_target)}-second high-retention {format_label} on the topic: '{topic}'.\n"
+        f"Target Genre: {resolved_genre.upper()}\n"
+        f"{genre_rules}\n"
         f"{vault_context}\n"
         f"{fact_context}"
     )
@@ -498,15 +604,17 @@ async def plan_documentary(
                 parsed["job_id"] = job_id
                 parsed["topic"] = topic
                 parsed["style"] = "editor-v1"
+                parsed["genre"] = resolved_genre
                 parsed["aspect_ratio"] = aspect_ratio
                 parsed["duration_target"] = duration_target
                 parsed["fact_dossier"] = fact_dossier
 
-                # Tag all beats with aspect_ratio & run Reflexion Auto-Critic
+                # Tag all beats with aspect_ratio & genre & run Reflexion Auto-Critic
                 all_beats = []
                 for s in parsed.get("sentences", []):
                     for b in s.get("beats", []):
                         b["aspect_ratio"] = aspect_ratio
+                        b["genre"] = resolved_genre
                         all_beats.append(b)
 
                 healed_beats, logged = audit_and_heal_beats(all_beats, topic)
@@ -518,28 +626,31 @@ async def plan_documentary(
                 parsed["beats"] = healed_beats
 
                 hook_txt = parsed["sentences"][0].get("text", "")
-                log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", healed_beats)
+                log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Short", healed_beats)
 
                 return parsed
     except Exception as e:
         logger.info(f"[Planner] Brain offline/unavailable ({e}). Engaging documentary generator.")
 
-    # Generate reliable fallback manifest with fact dossier
+    # Generate reliable fallback manifest with fact dossier & genre physics
     manifest = generate_fallback_manifest(
         topic,
         job_id,
         duration_target=duration_target,
-        fact_dossier=fact_dossier
+        fact_dossier=fact_dossier,
+        genre=resolved_genre
     )
     manifest["aspect_ratio"] = aspect_ratio
     manifest["duration_target"] = duration_target
     manifest["fact_dossier"] = fact_dossier
+    manifest["genre"] = resolved_genre
 
-    # Tag all beats with aspect_ratio & run Reflexion Auto-Critic
+    # Tag all beats with aspect_ratio & genre & run Reflexion Auto-Critic
     fb_beats = []
     for s in manifest.get("sentences", []):
         for b in s.get("beats", []):
             b["aspect_ratio"] = aspect_ratio
+            b["genre"] = resolved_genre
             fb_beats.append(b)
 
     healed_fb, logged_fb = audit_and_heal_beats(fb_beats, topic)
@@ -551,7 +662,7 @@ async def plan_documentary(
     manifest["beats"] = healed_fb
 
     hook_txt = manifest["sentences"][0].get("text", "") if manifest.get("sentences") else ""
-    log_script_to_vault(job_id, topic, hook_txt, "Dark Documentary", healed_fb)
+    log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Fallback", healed_fb)
 
     return manifest
 

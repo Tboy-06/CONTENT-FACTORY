@@ -376,6 +376,77 @@ class CopilotChatRequest(BaseModel):
     video_context: Optional[Dict[str, Any]] = None
     engine_mode: str = "auto"  # "auto" | "offline_spark" | "cloud"
     history: Optional[List[Dict[str, str]]] = None
+    genre: Optional[str] = None
+
+
+async def execute_recut_genre(job_id: int, target_genre: str) -> Dict[str, Any]:
+    """
+    Re-cuts an existing video into a new genre physics profile:
+    - Updates manifest genre and rules
+    - Transforms color grades (skit_warm for comedy, action_crush for action, cinema_scope for movie, etc.)
+    - Updates camera movements (snap_zoom for comedy, camera_shake for action, anamorphic letterbox for cinema)
+    - Re-renders beats and re-stitches master video instant_<job_id>.mp4
+    """
+    from backend.engine.planner import detect_genre, GENRES
+    manifest = await get_or_create_manifest(job_id)
+    g = (target_genre or "crime_doc").lower().strip()
+    if g == "auto" or g not in GENRES:
+        g = detect_genre(manifest.get("topic", ""))
+
+    manifest["genre"] = g
+    beats = manifest.get("beats", [])
+
+    grade_map = {
+        "comedy_skit": "skit_warm",
+        "action_hype": "action_crush",
+        "movie_cinema": "cinema_scope",
+        "viral_edu": "teal_split",
+        "crime_doc": "hard_bw"
+    }
+    target_grade = grade_map.get(g, "hard_bw")
+
+    job_dir = os.path.join("jobs", str(job_id))
+    for i, b in enumerate(beats):
+        b["genre"] = g
+        b["grade"] = target_grade
+        b["_force_reroll"] = True
+
+        if g == "comedy_skit" and i % 3 == 0:
+            b["camera_movement"] = "snap_zoom"
+            b["snap_zoom"] = True
+        elif g == "action_hype" and i % 2 == 0:
+            b["camera_movement"] = "camera_shake"
+            b["camera_shake"] = True
+        elif g == "movie_cinema":
+            b["anamorphic_bars"] = True
+            b["camera_movement"] = "orbital" if i % 2 == 0 else "rack_focus_bokeh"
+
+        # Clear old plate to force re-render with new grade/physics
+        b_id = b.get("id", f"beat_{i+1:02d}")
+        old_plate = os.path.join(job_dir, "beats", f"{b_id}_plate.png")
+        if os.path.exists(old_plate):
+            try:
+                os.remove(old_plate)
+            except Exception:
+                pass
+
+        await render_beat_pass1(b, job_dir)
+
+    manifest_path = os.path.join(job_dir, "manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+
+    final_video = f"output/instant_{job_id}.mp4"
+    await assemble_final_pass2(manifest, job_dir, final_video)
+    cleanup_job_temp_files(job_dir)
+
+    ts = int(time.time())
+    return {
+        "status": "success",
+        "action": "recut_genre",
+        "genre": g,
+        "video_url": f"/output/instant_{job_id}.mp4?t={ts}"
+    }
 
 
 async def get_or_create_manifest(job_id: int) -> Dict[str, Any]:
@@ -1068,6 +1139,12 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
                 if res.get("shorts"):
                     updated_video_url = res["shorts"][0]["video_url"]
 
+            elif act_name == "recut_genre" and current_job_id:
+                target_g = act.get("genre") or req.genre or "auto"
+                res = await execute_recut_genre(current_job_id, target_g)
+                executed_actions.append(res)
+                updated_video_url = res.get("video_url")
+
         except Exception as exec_err:
             logger.error(f"[copilot] Error executing action '{act_name}': {exec_err}", exc_info=True)
             executed_actions.append({
@@ -1075,6 +1152,17 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
                 "action": act_name,
                 "error": str(exec_err)
             })
+
+    # Direct natural-language genre re-cut trigger
+    if not executed_actions and current_job_id:
+        p_lower = req.prompt.lower()
+        if any(k in p_lower for k in ["recut", "re-cut", "change genre", "as comedy", "as action", "as cinema", "as skit", "like a skit", "like comedy"]):
+            from backend.engine.planner import detect_genre
+            target_g = detect_genre("", req.prompt)
+            res = await execute_recut_genre(current_job_id, target_g)
+            executed_actions.append(res)
+            updated_video_url = res.get("video_url")
+            message = f"🎬 Timeline successfully re-cut with {target_g.upper()} editing physics and color grading!"
 
     return {
         "status": "success",
@@ -1119,3 +1207,35 @@ async def log_mistake_endpoint(req: LogMistakeRequest):
         lesson_rule=req.lesson_rule
     )
     return {"status": "success", "mistake": res}
+
+
+class RecutGenreRequest(BaseModel):
+    job_id: int
+    genre: str = "auto"
+
+
+@router.post("/recut-genre")
+async def recut_genre_endpoint(req: RecutGenreRequest):
+    """Re-cuts a video into a specific genre profile."""
+    return await execute_recut_genre(req.job_id, req.genre)
+
+
+@router.get("/house-quotas")
+async def get_house_quotas_endpoint():
+    """Returns 5-House Knowledge Quota status from C:\\cf_training\\harvest_state.json."""
+    state_file = r"C:\cf_training\harvest_state.json"
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return {"status": "success", "data": data}
+        except Exception as e:
+            logger.warning(f"Error reading harvest_state.json: {e}")
+    return {
+        "status": "success",
+        "data": {
+            "total_records": 0,
+            "target_total": 100000,
+            "houses": {}
+        }
+    }

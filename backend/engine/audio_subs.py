@@ -77,10 +77,12 @@ def get_exact_audio_duration(file_path: str) -> float:
 async def generate_sentence_audio(
     text: str,
     output_path: str,
-    voice: str = "en-US-ChristopherNeural"
+    voice: str = "en-US-ChristopherNeural",
+    pause_before: float = 0.0
 ) -> Tuple[float, List[Dict[str, Any]]]:
     """
     Synthesizes single sentence audio with edge_tts with a 30s timeout and offline fallback.
+    Supports comedic dead-air pause (pause_before) for comedy skit punchline timing.
     Returns (duration_seconds, word_boundaries).
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
@@ -95,7 +97,7 @@ async def generate_sentence_audio(
                 elif chunk["type"] == "WordBoundary":
                     words.append({
                         "text": chunk["text"],
-                        "start": chunk["offset"] / 10_000_000,
+                        "start": (chunk["offset"] / 10_000_000) + pause_before,
                         "duration": chunk["duration"] / 10_000_000
                     })
 
@@ -122,6 +124,18 @@ async def generate_sentence_audio(
         for w in clean_words:
             words.append({"text": w, "start": cur_t, "duration": step * 0.9})
             cur_t += step
+
+    if pause_before > 0 and os.path.exists(output_path):
+        delayed_tmp = output_path + ".delayed.mp3"
+        delay_ms = int(pause_before * 1000)
+        cmd_delay = [
+            "ffmpeg", "-y", "-i", output_path,
+            "-af", f"adelay={delay_ms}|{delay_ms}",
+            delayed_tmp
+        ]
+        await asyncio.to_thread(subprocess.run, cmd_delay, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if os.path.exists(delayed_tmp) and os.path.getsize(delayed_tmp) > 0:
+            os.replace(delayed_tmp, output_path)
 
     dur = get_exact_audio_duration(output_path)
     return dur, words

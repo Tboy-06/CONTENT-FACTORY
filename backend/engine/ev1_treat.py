@@ -84,6 +84,39 @@ def apply_color_grade(
             enhancer = ImageEnhance.Contrast(img)
             img = enhancer.enhance(1.25)
 
+        elif grade_clean == "skit_warm":
+            # Comedy/Skit: Bright, punchy, high-saturation comedy lighting
+            r, g, b = img.split()
+            r = r.point(lambda p: int(min(255, p * 1.15)))
+            g = g.point(lambda p: int(min(255, p * 1.05)))
+            b = b.point(lambda p: int(p * 0.90))
+            img = Image.merge("RGB", (r, g, b))
+            enhancer = ImageEnhance.Color(img)
+            img = enhancer.enhance(1.45)  # Pop colors
+            contrast = ImageEnhance.Contrast(img)
+            img = contrast.enhance(1.15)
+            brightness = ImageEnhance.Brightness(img)
+            img = brightness.enhance(1.06)
+
+        elif grade_clean == "action_crush":
+            # Action/Hype: Bleach bypass, high-contrast, crushed darks, neon edge highlights
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(1.75)
+            color = ImageEnhance.Color(img)
+            img = color.enhance(1.30)
+            brightness = ImageEnhance.Brightness(img)
+            img = brightness.enhance(0.92)
+
+        elif grade_clean == "cinema_scope":
+            # Movie/Cinema: 35mm cinematic film curve, rich cinematic teal-amber tones
+            r, g, b = img.split()
+            r = r.point(lambda p: int(min(255, p * 1.12)))
+            g = g.point(lambda p: int(p * 0.98))
+            b = b.point(lambda p: int(min(255, p * 1.18)))
+            img = Image.merge("RGB", (r, g, b))
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(1.35)
+
         # Subtle dark documentary vignette
         img.save(output_path, quality=95)
         logger.info(f"[ev1_treat] Applied grade '{grade}' -> {output_path}")
@@ -93,7 +126,9 @@ def apply_color_grade(
 def build_cosine_zoompan_filter(
     duration: float,
     zoom_in: bool = True,
-    fps: int = 30
+    fps: int = 30,
+    out_w: int = 1080,
+    out_h: int = 1920
 ) -> str:
     """
     Generates a smooth cosine zoompan filter for FFmpeg Pass 1.
@@ -101,6 +136,55 @@ def build_cosine_zoompan_filter(
     """
     total_frames = int(duration * fps)
     if zoom_in:
-        return f"zoompan=z='min(zoom+0.0012,1.25)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps={fps}"
+        return f"zoompan=z='min(zoom+0.0012,1.25)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps}"
     else:
-        return f"zoompan=z='max(1.25-0.0012*on,1.0)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps={fps}"
+        return f"zoompan=z='max(1.25-0.0012*on,1.0)':d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps}"
+
+
+def build_snap_zoom_filter(
+    duration: float,
+    zoom_factor: float = 1.35,
+    fps: int = 30,
+    out_w: int = 1080,
+    out_h: int = 1920
+) -> str:
+    """
+    Comedy/Skit: Sudden instant punch-in snap-zoom (1.35x) on comedic punchlines and reaction beats.
+    """
+    total_frames = int(duration * fps)
+    return (
+        f"zoompan=z='if(lte(on,1),1.0,{zoom_factor:.2f})':d={total_frames}:"
+        f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={out_w}x{out_h}:fps={fps}"
+    )
+
+
+def build_camera_shake_filter(
+    out_w: int = 1080,
+    out_h: int = 1920,
+    intensity: int = 12
+) -> str:
+    """
+    Action/Hype: Handheld camera shake / tremor filter on impact beats.
+    Uses dynamic sine/cosine crop displacement and scales back to target resolution.
+    """
+    margin = intensity * 2
+    return (
+        f"crop=w=iw-{margin}:h=ih-{margin}:"
+        f"x='({intensity}+sin(n*1.4)*{intensity * 0.75:.1f})':"
+        f"y='({intensity}+cos(n*1.8)*{intensity * 0.75:.1f})',"
+        f"scale={out_w}:{out_h}"
+    )
+
+
+def build_cinema_anamorphic_bars(
+    width: int = 1080,
+    height: int = 1920,
+    target_aspect: float = 2.35
+) -> str:
+    """
+    Movie/Cinema: Enforces 2.35:1 widescreen anamorphic cinema letterbox black bars.
+    """
+    # Active picture height = width / target_aspect
+    picture_h = int(width / target_aspect)
+    bar_h = max(24, (height - picture_h) // 2)
+    return f"drawbox=y=0:h={bar_h}:color=black@1:t=fill,drawbox=y=ih-{bar_h}:h={bar_h}:color=black@1:t=fill"

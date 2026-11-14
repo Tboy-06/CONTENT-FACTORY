@@ -19,6 +19,15 @@ const voices = [
   { id: 'en-US-AndrewNeural', label: 'Andrew (Male, Warm & Authoritative)' }
 ];
 
+const genres = [
+  { id: 'auto', label: 'Auto Detect', icon: '✨', desc: 'Auto-detect genre physics from topic' },
+  { id: 'crime_doc', label: 'Crime/Doc', icon: '🕵️', desc: 'Forensic canvas, 18-24 CPM, radio voice filter' },
+  { id: 'comedy_skit', label: 'Comedy/Skit', icon: '😂', desc: '25-35 CPM, 1.35x snap-zooms, 0.3s dead air' },
+  { id: 'action_hype', label: 'Action/Hype', icon: '🔥', desc: '40-55 CPM, handheld camera-shake, slam titles' },
+  { id: 'movie_cinema', label: 'Movie/Cinema', icon: '🎬', desc: '12-18 CPM, 2.35:1 letterbox, 35mm scope' },
+  { id: 'viral_edu', label: 'Viral Edu', icon: '⚡', desc: '28-38 CPM, stat counters & workflow cards' }
+];
+
 const pipelineSteps = [
   { id: 1, name: 'Writing Script', stage: 'SCRIPT' },
   { id: 2, name: 'Generating Voice & Subs', stage: 'AUDIO' },
@@ -29,6 +38,7 @@ const pipelineSteps = [
 export default function Create() {
   const navigate = useNavigate();
   const [topic, setTopic] = useState('');
+  const [genre, setGenre] = useState('auto');
   const [stylePreset, setStylePreset] = useState('Dark Documentary');
   const [voice, setVoice] = useState('en-US-AriaNeural');
   const [aspectRatio, setAspectRatio] = useState('9:16');
@@ -80,7 +90,8 @@ export default function Create() {
         voice,
         style_preset: stylePreset,
         aspect_ratio: aspectRatio,
-        duration
+        duration,
+        genre
       });
 
       const jobId = res.id;
@@ -213,13 +224,46 @@ export default function Create() {
           )}
         </div>
 
+        {/* 2. Genre Editing Physics Pill Selector */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <span>2. Genre Editing Physics</span>
+            </label>
+            <span className="text-[11px] text-amber-400/90 font-mono">
+              {genres.find(g => g.id === genre)?.desc}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {genres.map((g) => {
+              const active = genre === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGenre(g.id)}
+                  disabled={isGenerating}
+                  className={`px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                    active
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-300 shadow-md shadow-amber-500/10'
+                      : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-base">{g.icon}</span>
+                  <span className="truncate">{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Style Preset & Voice Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           
-          {/* 2. Visual Style Preset Dropdown */}
+          {/* 3. Visual Style Preset Dropdown */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              2. Visual Aesthetic Preset
+              3. Visual Aesthetic Preset
             </label>
             <select
               value={stylePreset}
@@ -235,10 +279,10 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 3. Voice Selector Dropdown */}
+          {/* 4. Voice Selector Dropdown */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              3. Voice Narration (Edge-TTS)
+              4. Voice Narration (Edge-TTS)
             </label>
             <select
               value={voice}
@@ -252,10 +296,10 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 4. Aspect Ratio & Format */}
+          {/* 5. Aspect Ratio & Format */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              4. Format & Ratio
+              5. Format & Ratio
             </label>
             <select
               value={aspectRatio}
@@ -268,10 +312,10 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 5. Target Duration */}
+          {/* 6. Target Duration */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              5. Target Duration
+              6. Target Duration
             </label>
             <select
               value={duration}
@@ -286,12 +330,12 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 6. Custom Visual Anchor (Optional Style Reference) */}
+          {/* 7. Custom Visual Anchor (Optional Style Reference) */}
           <div className="col-span-full space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                 <ImageIcon size={13} className="text-blue-400" />
-                <span>6. Visual Anchor / Reference Image (Optional)</span>
+                <span>7. Visual Anchor / Reference Image (Optional)</span>
               </label>
               {anchorFile && (
                 <span className="text-[10px] text-emerald-400 font-mono">Anchor attached</span>
