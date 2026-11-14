@@ -1,63 +1,19 @@
 # Story Structure: The Gilded Age | Full Documentary | AMERICAN EXPERIENCE | PBS
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 6791.0s
-- Hook: "♪ ♪"
-- Payoff: "Willie K.'s problem is that
-he went to Paris,"
+- Hook: "A vicious cold snap paralyzed New York in the first week of February 1897, yet nothing could halt the relentless preparations for the nation"
+- Payoff: "Ultimately, this intoxicating period of American history revealed the fragile boundary between brilliant technological progress and profound"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. ♪ ♪
-2. (kids shouting)
-3. NARRATOR:
-A vicious cold snap hit New York
-4. in the first week
-of February 1897,
-5. but nothing could slow
-the preparations
-6. for the impending revelry.
-
-### Act 2: Hidden Mechanism
-1. more than triple the number
-who had arrived
-2. in the previous five years.
-3. They came from Ireland, Italy,
-Russia, Scandinavia,
-4. Asia, and Latin America,
-5. fleeing religious persecution
-and poverty.
-6. EDWARDS:
-The U.S. is kind of a gambler's
-paradise in this era.
-
-### Act 3: Crisis/Climax
-1. The plant was the envy
-of the industry.
-2. The town that grew up around the
-mill accommodated the families
-3. of 4,000 steel workers, many of
-whom enjoyed the protection
-4. of the two labor unions
-that represented them.
-5. EDWARDS:
-People are doing pretty well
-under Carnegie.
-6. The skilled workers at Homestead
-will have pretty nice homes.
-
-### Act 4: Aftermath
-1. if you were a member
-of the elite.
-2. HOFFERT:
-The underlying assumption was
-that men of this social class
-3. were having affairs with women,
-4. and there was absolutely nothing
-their wives could do about it.
-5. It simply wasn't discussed,
-and the wives put up with it.
-6. Willie K.'s problem is that
-he went to Paris,
+### Act 1: Full Narrative Arc
+1. A vicious cold snap paralyzed New York in the first week of February 1897, yet nothing could halt the relentless preparations for the nation's most anticipated celebration.
+2. The city's elite citizens were readying themselves for an extravagant masquerade ball that would serve as the ultimate exclamation point on an era.
+3. This glittering display of wealth and opulence came to be permanently etched in history as the defining moment of the Gilded Age.
+4. Beneath the dazzling facade of jewels and silk, Americans harbored an unwavering belief that they stood as the absolute vanguard of global civilization and progress.
+5. Industrial expansion and unchecked fortunes transformed the urban landscape into a theater of staggering inequality and unprecedented ambition.
+6. The ultra-rich flaunted their newfound power with reckless abandon, hosting lavish spectacles designed to cement their social dominance.
+7. Historians would later look back at these towering monuments of excess as a fleeting golden moment before the inevitable reckoning of a new century.
+8. Ultimately, this intoxicating period of American history revealed the fragile boundary between brilliant technological progress and profound societal cost.
 

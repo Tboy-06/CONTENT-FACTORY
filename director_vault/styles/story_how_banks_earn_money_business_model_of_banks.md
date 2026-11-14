@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 680.0s
-- Hook: "We all trust banks with our hard-earned savings, but have you ever wondered how these institutions actually generate a profit?"
-- Payoff: "Ultimately, banks thrive by acting as sophisticated financial intermediaries that profit from the spread between the interest they pay out a"
+- Hook: "All of us save our money in banks, trusting them to keep our hard-earned cash secure while even paying us a modest interest."
+- Payoff: "Ultimately, the entire banking ecosystem thrives on this continuous cycle of lending and leverage rather than simple storage."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. We all trust banks with our hard-earned savings, but have you ever wondered how these institutions actually generate a profit?
-2. It is a common misconception that your money simply sits idle inside a gigantic, secure locker until you decide to withdraw it.
-3. In reality, a bank’s business model is far more dynamic and relies on the strategic movement of capital.
-4. When you deposit your funds, the bank pays you a small percentage in interest for the privilege of holding your balance.
-5. The bank then takes that same money and lends it out to other customers at a much higher interest rate.
-6. This difference, known as the net interest margin, serves as the primary engine driving their revenue.
-7. Beyond lending, they also generate significant income through service fees, transaction charges, and complex investment activities.
-8. Ultimately, banks thrive by acting as sophisticated financial intermediaries that profit from the spread between the interest they pay out and the interest they collect.
+1. All of us save our money in banks, trusting them to keep our hard-earned cash secure while even paying us a modest interest.
+2. Hollywood films love to portray these financial institutions as gigantic vaults holding stacks of physical cash behind heavy steel doors.
+3. However, that cinematic version of reality hides the actual machinery driving the modern financial world.
+4. Think about it for a moment: if your deposits just sat idly in a locker, how could these massive corporations generate billions in profit?
+5. The secret lies in the fundamental business model of banking, which transforms your idle savings into active capital.
+6. Instead of letting cash gather dust, banks strategically deploy your deposits to fuel loans and mortgages for other customers.
+7. They charge a higher interest rate to borrowers than what they pay out to you, capturing the difference as profit.
+8. Ultimately, the entire banking ecosystem thrives on this continuous cycle of lending and leverage rather than simple storage.
 

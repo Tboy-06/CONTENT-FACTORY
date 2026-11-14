@@ -1,27 +1,27 @@
 # Hook: I Studied 1,000 Hooks, Here’s How to ACTUALLY Go Viral
 
 ## Performance Telemetry
-- Views: 855,078
-- Likes: 24,685
-- View-to-Like Ratio: 34.6:1
-- Primary First Spoken Line (0:00 - 0:03): "The single most reason why your reels or short-form videos don't perform are bad hooks, and I kid you not, fixing and understanding"
+- Views: 860,378
+- Likes: 24,736
+- View-to-Like Ratio: 34.8:1
+- Primary Opening: "We dissected one thousand dead reels, and the exact same catastrophic mistake appeared in every single one."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "The single most reason why your reels or short-form videos don't perform are bad hooks, and I kid you not, fixing and un"
+> "We dissected one thousand dead reels, and the exact same catastrophic mistake appeared in every single one."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about I Studied 1,000 Hooks, Here’s How to ACT is completely backwards."
+> "Stop trying to make your hooks interesting, because the highest-performing videos do the exact opposite."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with I Studied 1,000 Hooks, Here’s How t."
+> "You are actively destroying your retention in the first two seconds, and you don't even realize it."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

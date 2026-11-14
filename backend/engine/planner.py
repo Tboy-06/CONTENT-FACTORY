@@ -512,7 +512,7 @@ async def plan_documentary(
         )
 
     # 2. Retrieve connected directing principles from Obsidian Second Brain & Harvester Dataset via BM25
-    vault_context = query_director_vault(topic)
+    vault_context = query_director_vault(topic, genre=resolved_genre, house="HOUSE_2")
 
     # -------------------------------------------------------------
     # CASE A: LONG-FORM DOCUMENTARY (>60s) - 4 SEQUENTIAL ACTS

@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field
 from backend.engine.assembler import assemble_final_pass2, cleanup_job_temp_files, render_beat_pass1
 from backend.engine.brain import ask_brain
 from backend.engine.reflexion import log_editorial_mistake, get_learned_mistakes
+from backend.engine.vault_graph import query_director_vault
 from backend.vault import repository
 from backend.vault.models import JobStatus
 
@@ -997,8 +998,13 @@ async def copilot_chat(req: CopilotChatRequest):
             f"- Spoken Narration: \"{vc.get('full_text', '')[:350]}\"\n"
         )
 
+    active_genre = req.genre or "auto"
+    vault_context = query_director_vault(req.prompt, genre=active_genre, house="HOUSE_5")
+
     system_prompt = f"""You are the elite AI Creative Director & Chief Video Editor of CONTENT-FACTORY.
 You possess full agentic power to inspect videos and execute real editing operations on the video timeline.
+
+{vault_context}
 
 {job_manifest_context}
 {video_ctx_str}

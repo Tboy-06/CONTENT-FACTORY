@@ -4,7 +4,7 @@
 - Category: CapCut & NLE Visual Techniques
 - Duration: 1109.0s (18.5 min)
 - Cut Frequency: 2.6s per cut (~23.0 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
 - Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
@@ -15,15 +15,14 @@
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `VERIFIED METRIC`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@LPARALLAX1189`, SFX: `click.wav`, Grade: `hard_bw`)
 
 ## Viewer Feedback on Pacing
-> "Become a master CapCut editor: https://mattloui.com/capcut-lab/?cl=KATJ62CE" — @MattLoui
+> "the speed ramp trick at the start is so clean, trying that tonight" — @lParallax1189
 
-> "Are you on capcut payroll , 90% of the so called tips are pro options .. nope .. next" — @RCDriftFam
-
-> "Why is he working in desktop, CapCut is a mobile app" — @korak8731
+> "love you for this video. This is really helpful. One thing I really want to learn from you is the color correction for this video. What is your file format and how do you color grade it? It is looking smooth and very balanced . please must response or make a video on it." — @osamarehmanbutt
 

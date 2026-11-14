@@ -1,31 +1,27 @@
 # Hook: MrBeast Shares His Best YouTube Advice
 
 ## Performance Telemetry
-- Views: 4,307,662
-- Likes: 145,572
+- Views: 4,313,175
+- Likes: 145,644
 - View-to-Like Ratio: 29.6:1
-- Primary First Spoken Line (0:00 - 0:03): "if you knew what I knew you could get 10
-million subscribers within 6 months your first video is not going to get views
-subscribers don't ma"
+- Primary Opening: "He knows the exact algorithmic sequence to gain ten million subscribers in six months, and elite creators are terrified he just exposed it."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "if you knew what I knew you could get 10
-million subscribers within 6 months your first video is not going to get views
-"
+> "He knows the exact algorithmic sequence to gain ten million subscribers in six months, and elite creators are terrified he just exposed it."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about MrBeast Shares His Best YouTube Advice is completely backwards."
+> "Everything you have been told about chasing views and subscribers is a complete lie designed to keep you failing."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with MrBeast Shares His Best YouTube Adv."
+> "While you waste months overthinking your next upload, the algorithm is systematically burying your channel into irrelevance."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

@@ -2,62 +2,55 @@
 
 ## Production Parameters
 - Duration: 469.0s
-- Visual Schema: treated_image + motion_card paired beats
+- Visual Schema: treated_image, forensic_doc, map_flyover, evidence_board + motion_card paired beats
 - Color Grades: hard_bw, teal_split, amber
 - Sound Effects: thud.wav, whoosh.wav, click.wav, riser.wav
 
 ## Scene Beats & Cues
 ### Scene 1
-> "Picking the right music and sound
-effects for your video can be an"
+> "Picking the right music and sound effects for your video can be an extremely time-consuming process, especially if your creative juices just"
 
-- **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `thud.wav`
+- **Beat 1 (forensic_doc):** Grade: `hard_bw`, SFX: `thud.wav`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `whoosh.wav`
 
 ### Scene 2
-> "extremely time-consuming process,
-especially if your creative juices just"
+> "don't seem to be flowing. But, what if AI could analyze your video for you,"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `whoosh.wav`
-- **Beat 2 (motion_card):** Grade: `amber`, SFX: `click.wav`
+- **Beat 1 (motion_card):** Grade: `teal_split`, SFX: `whoosh.wav`
+- **Beat 2 (treated_image):** Grade: `amber`, SFX: `click.wav`
 
 ### Scene 3
-> "don't seem to be flowing. But, what if
-AI could analyze your video for you,"
+> "generate the right music and special effects, and drop everything into a fully editable timeline?"
 
-- **Beat 1 (motion_card):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
 
 ### Scene 4
-> "generate the right music and special
-effects, and drop everything into a"
+> "What's up, everybody? Welcome back to another AI video. Today, we're going to"
 
-- **Beat 1 (treated_image):** Grade: `hard_bw`, SFX: `riser.wav`
-- **Beat 2 (motion_card):** Grade: `teal_split`, SFX: `thud.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
-> "fully editable  timeline?"
+> "be diving into A Studios' new feature, Video Composer. Video Composer actually"
 
-- **Beat 1 (motion_card):** Grade: `teal_split`, SFX: `thud.wav`
+- **Beat 1 (map_flyover):** Grade: `teal_split`, SFX: `thud.wav`
 - **Beat 2 (treated_image):** Grade: `amber`, SFX: `whoosh.wav`
 
 ### Scene 6
-> "What's up, everybody? Welcome back to
-another AI video. Today, we're going to"
+> "analyzes your video in real-time, including cuts, motion, on-screen events, the environment, and then it generates music and sound effects that"
 
-- **Beat 1 (treated_image):** Grade: `amber`, SFX: `whoosh.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
+- **Beat 1 (forensic_doc):** Grade: `amber`, SFX: `whoosh.wav`
+- **Beat 2 (treated_image):** Grade: `hard_bw`, SFX: `click.wav`
 
 ### Scene 7
-> "be diving into A Studios' new feature,
-Video Composer. Video Composer actually"
+> "actually fit. And the best part is that everything gets placed as editable clips"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
 
 ### Scene 8
-> "analyzes your video in real-time,
-including cuts, motion, on-screen"
+> "right inside the timeline. That means you can still move things around, fade"
 
 - **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`

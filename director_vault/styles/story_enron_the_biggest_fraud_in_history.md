@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 1144.0s
-- Hook: "Once the seventh largest corporation in America, Enron stood as a titan of industry that promised to revolutionize the global energy market."
-- Payoff: "Enron remains the ultimate cautionary tale, proving that even the most powerful institutions can be undone by the simple, destructive power "
+- Hook: "Enron was once the seventh largest corporation in America, celebrated as a brilliant pioneer that revolutionized the energy market."
+- Payoff: "Ultimately, the Enron scandal serves as an enduring warning about the catastrophic dangers of unchecked corporate greed and deception."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Once the seventh largest corporation in America, Enron stood as a titan of industry that promised to revolutionize the global energy market.
-2. Executives projected an image of unmatched intelligence, cultivating a business model so intricate that it appeared impenetrable to the average outsider.
-3. Behind the polished corporate facade, however, the entire empire was built upon a foundation of calculated deception and systematic fraud.
-4. What the public saw as groundbreaking innovation was actually a shell game designed to mask staggering financial losses through complex accounting tricks.
-5. The company operated in a shadowy realm of political manipulation, leveraging its influence to bypass regulations and fuel its rapid, unsustainable ascent.
-6. As the house of cards began to collapse, the sheer scale of the betrayal sent shockwaves through the foundations of the American economy.
-7. Billions of dollars vanished almost overnight, leaving thousands of employees jobless and investors facing complete financial ruin.
-8. Enron remains the ultimate cautionary tale, proving that even the most powerful institutions can be undone by the simple, destructive power of a lie.
+1. Enron was once the seventh largest corporation in America, celebrated as a brilliant pioneer that revolutionized the energy market.
+2. Their executives appeared far smarter than the competition, operating an intricate business model that seemed too complex for the average person to understand.
+3. In reality, this towering corporate empire was nothing more than an elaborate scam built on systemic lies and financial fraud.
+4. Behind closed doors, executives used complex accounting loopholes and political manipulation to hide billions in mounting debt.
+5. They projected an illusion of unstoppable growth while their actual operations were quietly bleeding capital.
+6. When the house of cards finally collapsed, it triggered the biggest corporate bankruptcy in United States history.
+7. The fallout was monumental, wiping out billions of dollars in shareholder value and destroying thousands of employee livelihoods overnight.
+8. Ultimately, the Enron scandal serves as an enduring warning about the catastrophic dangers of unchecked corporate greed and deception.
 

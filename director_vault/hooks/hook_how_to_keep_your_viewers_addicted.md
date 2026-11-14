@@ -1,31 +1,27 @@
 # Hook: How To Keep Your Viewers Addicted
 
 ## Performance Telemetry
-- Views: 221,415
-- Likes: 15,316
+- Views: 221,543
+- Likes: 15,320
 - View-to-Like Ratio: 14.5:1
-- Primary First Spoken Line (0:00 - 0:03): "Hey yo, it's 2:00 a.m. You uploaded your
-video with zero expectations and you wake up the next morning, holy 
-5,500 views. The next day come"
+- Primary Opening: "Every single time your viewer clicks away, a silent algorithm makes a permanent note to never recommend your content again."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "Hey yo, it's 2:00 a.m. You uploaded your
-video with zero expectations and you wake up the next morning, holy 
-5,500 view"
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
-
-### Counter Intuitive
-> "Everything you think you know about How To Keep Your Viewers Addicted is completely backwards."
-
-- **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
-
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How To Keep Your Viewers Addicted."
+> "Every single time your viewer clicks away, a silent algorithm makes a permanent note to never recommend your content again."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
+
+### Curiosity Gap
+> "The most addictive videos on the internet aren't built on luck; they are engineered using a hidden psychological trap that forces people to watch until the very last second."
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
+
+### Counter Intuitive
+> "Trying harder to make your videos interesting is actually the exact reason why your audience keeps getting bored and clicking off."
+
+- **Target Duration:** 3.0s
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 

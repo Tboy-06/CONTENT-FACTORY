@@ -1,31 +1,27 @@
 # Hook: How I Get Over 100,000,000 Views Per Video
 
 ## Performance Telemetry
-- Views: 8,532,679
-- Likes: 384,019
+- Views: 8,546,067
+- Likes: 384,169
 - View-to-Like Ratio: 22.2:1
-- Primary First Spoken Line (0:00 - 0:03): "in this video I'm going to be showing
-you how you can get access to all my YouTube Secrets everything I use to get
-over 100 million views a "
+- Primary Opening: "Every single video crossing the 100-million-view threshold shares one hidden digital footprint that algorithms are legally forced to process."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "in this video I'm going to be showing
-you how you can get access to all my YouTube Secrets everything I use to get
-over "
+> "Every single video crossing the 100-million-view threshold shares one hidden digital footprint that algorithms are legally forced to process."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How I Get Over 100,000,000 Views Per Vid is completely backwards."
+> "The most viral creators on earth don't guess what goes viral because they reverse-engineered the exact traffic source on a private database."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How I Get Over 100,000,000 Views Pe."
+> "If you don't know how the top percent bleed millions of views from your exact niche, your next upload is already dead."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

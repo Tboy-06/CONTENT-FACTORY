@@ -1,31 +1,27 @@
 # Hook: 18 Psychology Tricks to Get Viewers Addicted to Your Videos
 
 ## Performance Telemetry
-- Views: 262,129
-- Likes: 12,290
-- View-to-Like Ratio: 21.3:1
-- Primary First Spoken Line (0:00 - 0:03): "today we're talking about psychology
-this is the biggest secret weapon used by all of your favorite creators they
-are masters of this if you"
+- Views: 262,919
+- Likes: 12,303
+- View-to-Like Ratio: 21.4:1
+- Primary Opening: "You are not choosing to watch YouTube videos; your brain has been algorithmically hijacked by strangers who know how to exploit your neural chemistry better than you do."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "today we're talking about psychology
-this is the biggest secret weapon used by all of your favorite creators they
-are ma"
+> "You are not choosing to watch YouTube videos; your brain has been algorithmically hijacked by strangers who know how to exploit your neural chemistry better than you do."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 18 Psychology Tricks to Get Viewers Addi is completely backwards."
+> "The highest-earning creators on this platform don't understand great storytelling, they understand behavioral psychology well enough to keep your dopamine receptors firing until three in the morning."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 18 Psychology Tricks to Get Viewers."
+> "Every single time you click away from a video, a carefully engineered psychological trap just failed—and mastering those exact traps is the only way to survive on modern social media."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

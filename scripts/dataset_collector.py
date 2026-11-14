@@ -55,6 +55,297 @@ os.makedirs(os.path.join(VAULT_DIR, "hooks"), exist_ok=True)
 os.makedirs(os.path.join(VAULT_DIR, "styles"), exist_ok=True)
 os.makedirs(os.path.join(VAULT_DIR, "sfx"), exist_ok=True)
 
+# ==============================================================================
+# STRICT ENGINE ENUMS (FFMPEG & TIMELINE ARCHITECTURE)
+# ==============================================================================
+
+VALID_CAMERAS = [
+    "cosine_in", "cosine_out", "snap_zoom", "camera_shake",
+    "orbital", "dolly_vertigo", "rack_focus_bokeh", "pan_right"
+]
+VALID_FILTERS = [
+    "teal_split", "hard_bw", "amber", "skit_warm",
+    "action_crush", "cinema_scope"
+]
+VALID_MOTION_TYPES = [
+    "treated_image", "declassified_scan", "evidence_board", "map_flyover",
+    "stat_counter", "red_slam_word", "workflow_stepper", "3_item_list", "quote_box"
+]
+VALID_SFX = [
+    "thud.wav", "whoosh.wav", "click.wav", "none"
+]
+VALID_COPILOT_ACTIONS = [
+    "modify_timeline_beats", "recut_genre", "slice_viral_shorts",
+    "clone_reference_style", "edit_uploaded_video"
+]
+
+def normalize_camera(val: Any, genre: str = "auto") -> str:
+    s = str(val or "").strip().lower()
+    if s in VALID_CAMERAS:
+        return s
+    if "shake" in s:
+        return "camera_shake"
+    if "snap" in s or ("zoom" in s and genre == "comedy_skit") or "punch" in s:
+        return "snap_zoom"
+    if "orbit" in s or "circle" in s or "rotate" in s:
+        return "orbital"
+    if "dolly" in s or "vertigo" in s:
+        return "dolly_vertigo"
+    if "bokeh" in s or "focus" in s or "rack" in s:
+        return "rack_focus_bokeh"
+    if "pan" in s:
+        return "pan_right"
+    if "out" in s:
+        return "cosine_out"
+    if "in" in s or "zoom" in s:
+        return "cosine_in"
+    genre_defaults = {
+        "crime_doc": "cosine_in",
+        "comedy_skit": "snap_zoom",
+        "action_hype": "camera_shake",
+        "movie_cinema": "orbital",
+        "viral_edu": "cosine_in"
+    }
+    return genre_defaults.get(genre, "cosine_in")
+
+def normalize_filter(val: Any, genre: str = "auto") -> str:
+    s = str(val or "").strip().lower()
+    if s in VALID_FILTERS:
+        return s
+    if "bw" in s or "black" in s or "white" in s or "monochrome" in s:
+        return "hard_bw"
+    if "teal" in s or "cyan" in s or "split" in s:
+        return "teal_split"
+    if "warm" in s or "skit" in s:
+        return "skit_warm"
+    if "amber" in s or "sepia" in s:
+        return "amber"
+    if "crush" in s or "action" in s or "contrast" in s:
+        return "action_crush"
+    if "cinema" in s or "scope" in s or "letterbox" in s or "anamorphic" in s:
+        return "cinema_scope"
+    genre_defaults = {
+        "crime_doc": "teal_split",
+        "comedy_skit": "skit_warm",
+        "action_hype": "action_crush",
+        "movie_cinema": "cinema_scope",
+        "viral_edu": "teal_split"
+    }
+    return genre_defaults.get(genre, "teal_split")
+
+def normalize_motion_type(val: Any, genre: str = "auto") -> str:
+    s = str(val or "").strip().lower()
+    if s in VALID_MOTION_TYPES:
+        return s
+    if "declass" in s or "scan" in s or "dossier" in s or "document" in s:
+        return "declassified_scan"
+    if "evidence" in s or "board" in s or "cork" in s:
+        return "evidence_board"
+    if "map" in s or "flyover" in s or "globe" in s or "satellite" in s:
+        return "map_flyover"
+    if "stat" in s or "counter" in s or "metric" in s or "number" in s:
+        return "stat_counter"
+    if "slam" in s or "red" in s or "title" in s or "text" in s or "badge" in s:
+        return "red_slam_word"
+    if "step" in s or "workflow" in s or "process" in s:
+        return "workflow_stepper"
+    if "list" in s or "item" in s or "bullet" in s:
+        return "3_item_list"
+    if "quote" in s:
+        return "quote_box"
+    if "treat" in s or "image" in s or "photo" in s or "broll" in s or "plate" in s:
+        return "treated_image"
+    genre_defaults = {
+        "crime_doc": "declassified_scan",
+        "comedy_skit": "treated_image",
+        "action_hype": "red_slam_word",
+        "movie_cinema": "treated_image",
+        "viral_edu": "stat_counter"
+    }
+    return genre_defaults.get(genre, "treated_image")
+
+def normalize_sfx(val: Any, beat_idx: int = 1, total_beats: int = 6) -> str:
+    s = str(val or "").strip().lower()
+    if s in VALID_SFX:
+        return s
+    if "thud" in s or "boom" in s or "bass" in s or "slam" in s or "impact" in s or "hit" in s:
+        return "thud.wav"
+    if "whoosh" in s or "swoosh" in s or "riser" in s or "transition" in s or "swipe" in s:
+        return "whoosh.wav"
+    if "click" in s or "pop" in s or "snap" in s or "tap" in s or "ding" in s:
+        return "click.wav"
+    if "none" in s or "silent" in s or "quiet" in s or "mute" in s:
+        return "none"
+    if beat_idx == 1:
+        return "thud.wav"
+    elif beat_idx % 2 == 0:
+        return "whoosh.wav"
+    return "none"
+
+def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Dict[str, Any]]:
+    if not isinstance(beats_raw, list):
+        beats_raw = []
+    
+    cleaned_beats = []
+    for b in beats_raw:
+        if isinstance(b, dict):
+            narration = str(b.get("narration") or b.get("text") or b.get("spoken") or "").strip()
+            if narration:
+                cleaned_beats.append({
+                    "narration": narration,
+                    "camera": b.get("camera"),
+                    "filter": b.get("filter") or b.get("grade"),
+                    "motion_type": b.get("motion_type") or b.get("type"),
+                    "sfx": b.get("sfx")
+                })
+
+    # Ensure strictly 6 to 8 beats
+    if len(cleaned_beats) < 6:
+        while len(cleaned_beats) < 6:
+            idx_to_split = 0
+            max_len = 0
+            for i, beat in enumerate(cleaned_beats):
+                if len(beat["narration"]) > max_len:
+                    max_len = len(beat["narration"])
+                    idx_to_split = i
+            if max_len > 30 and " " in cleaned_beats[idx_to_split]["narration"]:
+                target_beat = cleaned_beats[idx_to_split]
+                words = target_beat["narration"].split()
+                mid = len(words) // 2
+                part1 = " ".join(words[:mid]).strip()
+                part2 = " ".join(words[mid:]).strip()
+                target_beat["narration"] = part1
+                cleaned_beats.insert(idx_to_split + 1, {
+                    "narration": part2,
+                    "camera": "cosine_out" if target_beat.get("camera") == "cosine_in" else "cosine_in",
+                    "filter": target_beat.get("filter"),
+                    "motion_type": "treated_image",
+                    "sfx": "whoosh.wav"
+                })
+            else:
+                cleaned_beats.append({
+                    "narration": "The critical consequence becomes undeniably clear.",
+                    "camera": "dolly_vertigo" if genre == "crime_doc" else "cosine_in",
+                    "filter": "teal_split",
+                    "motion_type": "stat_counter" if genre == "viral_edu" else "treated_image",
+                    "sfx": "thud.wav"
+                })
+    elif len(cleaned_beats) > 8:
+        cleaned_beats = cleaned_beats[:8]
+
+    total_beats = len(cleaned_beats)
+    final_beats = []
+    for idx, b in enumerate(cleaned_beats, 1):
+        final_beats.append({
+            "index": idx,
+            "narration": b["narration"],
+            "camera": normalize_camera(b.get("camera"), genre),
+            "filter": normalize_filter(b.get("filter"), genre),
+            "motion_type": normalize_motion_type(b.get("motion_type"), genre),
+            "sfx": normalize_sfx(b.get("sfx"), idx, total_beats)
+        })
+    return final_beats
+
+def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req: str) -> Dict[str, Any]:
+    if not isinstance(parsed_llm, dict):
+        parsed_llm = {}
+    message = str(parsed_llm.get("message") or f"Analyzing '{user_req[:60]}'. Fine-tuning timeline for {genre} pacing.").strip()
+    raw_actions = parsed_llm.get("actions", [])
+    if not isinstance(raw_actions, list):
+        raw_actions = []
+
+    valid_actions = []
+    for act in raw_actions:
+        if not isinstance(act, dict):
+            continue
+        act_name = str(act.get("action", "")).strip().lower()
+        if act_name not in VALID_COPILOT_ACTIONS:
+            if "timeline" in act_name or "beat" in act_name or "modify" in act_name or "cut" in act_name:
+                act_name = "modify_timeline_beats"
+            elif "genre" in act_name or "recut" in act_name:
+                act_name = "recut_genre"
+            elif "short" in act_name or "slice" in act_name:
+                act_name = "slice_viral_shorts"
+            elif "clone" in act_name or "style" in act_name:
+                act_name = "clone_reference_style"
+            elif "upload" in act_name or "video" in act_name:
+                act_name = "edit_uploaded_video"
+            else:
+                act_name = "modify_timeline_beats"
+
+        normalized_act = {"action": act_name}
+        if act_name == "modify_timeline_beats":
+            raw_mods = act.get("beat_modifications") or act.get("params", {}).get("beat_modifications") or [act]
+            mods = []
+            if isinstance(raw_mods, list):
+                for i, m in enumerate(raw_mods[:3]):
+                    if isinstance(m, dict):
+                        b_idx = int(m.get("beat_index", i))
+                        m_type = normalize_motion_type(m.get("type", "motion_card"), genre)
+                        mods.append({
+                            "beat_index": b_idx,
+                            "type": m_type,
+                            "template": "red_slam_word" if genre == "action_hype" else ("workflow_stepper" if genre == "viral_edu" else "3_item_list"),
+                            "headline": str(m.get("headline", "RETENTION SPIKE")).upper(),
+                            "highlight": str(m.get("highlight", "OPTIMIZED")).upper(),
+                            "grade": normalize_filter(m.get("grade", "teal_split"), genre),
+                            "sfx": normalize_sfx(m.get("sfx", "thud.wav"), 1, 1),
+                            "prompt": str(m.get("prompt", f"{genre} cinematic motion graphic visual"))[:100]
+                        })
+            if not mods:
+                mods.append({
+                    "beat_index": 0,
+                    "type": "declassified_scan" if genre == "crime_doc" else "treated_image",
+                    "template": "red_slam_word",
+                    "headline": "PACING OPTIMIZED",
+                    "highlight": "RETENTION",
+                    "grade": normalize_filter("", genre),
+                    "sfx": "thud.wav",
+                    "prompt": f"dynamic {genre} visual"
+                })
+            normalized_act["beat_modifications"] = mods
+
+        elif act_name == "recut_genre":
+            target_g = act.get("genre") or genre or "crime_doc"
+            if target_g not in ["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"]:
+                target_g = genre if genre in ["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"] else "crime_doc"
+            normalized_act["genre"] = target_g
+
+        elif act_name == "slice_viral_shorts":
+            normalized_act["target_count"] = int(act.get("target_count") or 3)
+
+        elif act_name == "clone_reference_style":
+            normalized_act["topic"] = str(act.get("topic") or user_req[:80])
+            normalized_act["style_preset"] = "Dark Documentary" if genre == "crime_doc" else ("Cyberpunk Neo-Noir" if genre == "action_hype" else "Vintage 35mm")
+            normalized_act["voice"] = "en-US-AriaNeural"
+
+        elif act_name == "edit_uploaded_video":
+            normalized_act["color_grade"] = normalize_filter(act.get("color_grade", "teal_split"), genre)
+            normalized_act["burn_subtitles"] = True
+            normalized_act["cut_silences"] = True
+
+        valid_actions.append(normalized_act)
+
+    if not valid_actions:
+        valid_actions.append({
+            "action": "modify_timeline_beats",
+            "beat_modifications": [{
+                "beat_index": 0,
+                "type": "declassified_scan" if genre == "crime_doc" else "treated_image",
+                "template": "red_slam_word",
+                "headline": "VELOCITY BOOST",
+                "highlight": "PACING",
+                "grade": normalize_filter("", genre),
+                "sfx": "thud.wav",
+                "prompt": f"high retention {genre} opening beat"
+            }]
+        })
+
+    return {
+        "message": message,
+        "actions": valid_actions
+    }
+
 
 # ==============================================================================
 # KEYWORDS & ANALYTICAL FILTERS (ANTI-SPAM / REAL-WORLD EDITING ONLY)
@@ -422,16 +713,24 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
     Streams genuine narrative prompts, stories, and dialogues directly in memory.
     MANDATORY: Every row is distilled through ask_brain_sync()—zero static template dicts!
     - euclaise/writingprompts -> HOUSE_2_SCREENWRITER_ARC (5 genres: crime_doc, comedy_skit, action_hype, movie_cinema, viral_edu)
-    - allenai/prosocial-dialog -> HOUSE_1_HOOK_PSYCHOLOGY (5 hook categories) & HOUSE_4_SOUND_AND_CUT_EDITOR
-    - alespalla/chatbot_instruction_prompts -> HOUSE_5_COPILOT_AND_REFLEXION (valid copilot actions)
+      + HOUSE_3_VISUAL_DIRECTOR (visual shot breakdowns)
+      + HOUSE_4_SOUND_AND_CUT_EDITOR (audio design & cut velocity)
+    - ajibawa-2023/Children-Stories-Collection -> HOUSE_1_HOOK_PSYCHOLOGY (5 hook categories)
+    - tatsu-lab/alpaca -> HOUSE_5_COPILOT_AND_REFLEXION (valid copilot actions)
     """
     added = 0
-    hf_offsets = state.setdefault("hf_offsets", {"writingprompts": 0, "dialog": 0, "instructions": 0})
+    hf_offsets = state.setdefault("hf_offsets", {"writingprompts": 0, "stories": 0, "alpaca": 0})
 
-    # 1. euclaise/writingprompts -> HOUSE_2_SCREENWRITER_ARC
+    # 1. euclaise/writingprompts -> HOUSE_2, HOUSE_3, HOUSE_4
     h2 = state.get("houses", {}).get("HOUSE_2_SCREENWRITER_ARC", {})
+    h3 = state.get("houses", {}).get("HOUSE_3_VISUAL_DIRECTOR", {})
+    h4 = state.get("houses", {}).get("HOUSE_4_SOUND_AND_CUT_EDITOR", {})
+    
     open_h2_rooms = [r for r, d in h2.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
-    if open_h2_rooms and h2.get("status") == "OPEN":
+    open_h3_rooms = [r for r, d in h3.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
+    open_h4_rooms = [r for r, d in h4.get("sub_rooms", {}).items() if d.get("status") == "OPEN"]
+
+    if (open_h2_rooms and h2.get("status") == "OPEN") or (open_h3_rooms and h3.get("status") == "OPEN") or (open_h4_rooms and h4.get("status") == "OPEN"):
         offset = hf_offsets.get("writingprompts", 0)
         url = f"https://datasets-server.huggingface.co/rows?dataset=euclaise/writingprompts&config=default&split=train&offset={offset}&length={count_per_cycle}"
         try:
@@ -445,33 +744,114 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                     if len(prompt_txt) < 20:
                         continue
                     clean_concept = f"{prompt_txt} {story_txt[:250]}".strip()
-                    target_genre = random.choice(open_h2_rooms)
 
-                    distill_prompt = (
-                        f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}]\n"
-                        f"Transform this story premise into a structured {target_genre} short-form video beat sheet (3 to 6 beats):\n"
-                        f"Premise: {clean_concept}\n"
-                        f"Output strictly valid JSON with keys: title, genre, target_pacing_cpm, beats (list with index, narration, camera, filter, motion_type, sfx)."
-                    )
-                    sys_prompt = f"You are a professional Hollywood scriptwriter and video editor specializing in {target_genre} pacing."
-                    raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
-                    if not raw_llm:
-                        continue
-                    try:
-                        parsed_llm = json.loads(raw_llm)
-                        record = {
-                            "instruction": f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}] Convert narrative concept into {target_genre} beat sheet.",
-                            "input": clean_concept[:300],
-                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
-                            "house": "HOUSE_2_SCREENWRITER_ARC",
-                            "sub_room": target_genre,
-                            "genre": target_genre
-                        }
-                        if record_to_house_quota(record, "HOUSE_2_SCREENWRITER_ARC", target_genre, target_genre, state):
-                            added += 1
-                            print(f"     [HF DISTILL -> H2] Ingested '{prompt_txt[:35]}...' into {target_genre}")
-                    except Exception as json_err:
-                        print(f"     [WARN] H2 LLM JSON parse failed: {json_err}")
+                    candidate_targets = []
+                    if open_h2_rooms and h2.get("status") == "OPEN":
+                        candidate_targets.append("H2")
+                    if open_h3_rooms and h3.get("status") == "OPEN":
+                        candidate_targets.append("H3")
+                    if open_h4_rooms and h4.get("status") == "OPEN":
+                        candidate_targets.append("H4")
+
+                    chosen_target = random.choice(candidate_targets) if candidate_targets else "H2"
+
+                    if chosen_target == "H2" and open_h2_rooms:
+                        target_genre = random.choice(open_h2_rooms)
+                        distill_prompt = (
+                            f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}]\n"
+                            f"Transform this story premise into a structured {target_genre} short-form video beat sheet (strictly 6 to 8 beats):\n"
+                            f"Premise: {clean_concept}\n"
+                            f"Valid camera enums: cosine_in, cosine_out, snap_zoom, camera_shake, orbital, dolly_vertigo, rack_focus_bokeh, pan_right\n"
+                            f"Valid filter enums: teal_split, hard_bw, amber, skit_warm, action_crush, cinema_scope\n"
+                            f"Valid motion_type enums: treated_image, declassified_scan, evidence_board, map_flyover, stat_counter, red_slam_word, workflow_stepper, 3_item_list, quote_box\n"
+                            f"Valid sfx enums: thud.wav, whoosh.wav, click.wav, none\n"
+                            f"Output strictly valid JSON with keys: title, genre, target_pacing_cpm, beats (list of 6 to 8 objects with index, narration, camera, filter, motion_type, sfx)."
+                        )
+                        sys_prompt = f"You are a professional Hollywood scriptwriter and video editor specializing in {target_genre} pacing. Use strictly the provided enums."
+                        raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                        if raw_llm:
+                            try:
+                                parsed_llm = json.loads(raw_llm)
+                                if isinstance(parsed_llm, dict):
+                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), target_genre)
+                                    parsed_llm["genre"] = target_genre
+                                    record = {
+                                        "instruction": f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}] Convert narrative concept into {target_genre} beat sheet.",
+                                        "input": clean_concept[:300],
+                                        "output": json.dumps(parsed_llm, ensure_ascii=False),
+                                        "house": "HOUSE_2_SCREENWRITER_ARC",
+                                        "sub_room": target_genre,
+                                        "genre": target_genre
+                                    }
+                                    if record_to_house_quota(record, "HOUSE_2_SCREENWRITER_ARC", target_genre, target_genre, state):
+                                        added += 1
+                                        print(f"     [HF DISTILL -> H2] Ingested '{prompt_txt[:35]}...' into {target_genre} (6-8 beats)")
+                            except Exception as json_err:
+                                print(f"     [WARN] H2 LLM JSON parse failed: {json_err}")
+
+                    elif chosen_target == "H3" and open_h3_rooms:
+                        target_sub = random.choice(open_h3_rooms)
+                        genre = random.choice(["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"])
+                        distill_prompt = (
+                            f"[HOUSE: HOUSE_3_VISUAL_DIRECTOR | GENRE: {genre} | SUB_ROOM: {target_sub}]\n"
+                            f"Direct camera shots, visual treatments, and motion graphics for a 6 to 8 beat video on: {clean_concept}\n"
+                            f"Valid camera enums: cosine_in, cosine_out, snap_zoom, camera_shake, orbital, dolly_vertigo, rack_focus_bokeh, pan_right\n"
+                            f"Valid filter enums: teal_split, hard_bw, amber, skit_warm, action_crush, cinema_scope\n"
+                            f"Valid motion_type enums: treated_image, declassified_scan, evidence_board, map_flyover, stat_counter, red_slam_word, workflow_stepper, 3_item_list, quote_box\n"
+                            f"Valid sfx enums: thud.wav, whoosh.wav, click.wav, none\n"
+                            f"Output strictly valid JSON with keys: title, sub_room, beats (list of 6 to 8 objects with index, narration, camera, filter, motion_type, sfx, visual_prompt)."
+                        )
+                        sys_prompt = "You are an elite Visual Director and Cinematographer. Use strictly the provided enums."
+                        raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                        if raw_llm:
+                            try:
+                                parsed_llm = json.loads(raw_llm)
+                                if isinstance(parsed_llm, dict):
+                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    record = {
+                                        "instruction": f"[HOUSE: HOUSE_3_VISUAL_DIRECTOR | GENRE: {genre}] Direct visual treatment and motion graphics for {target_sub}.",
+                                        "input": clean_concept[:300],
+                                        "output": json.dumps(parsed_llm, ensure_ascii=False),
+                                        "house": "HOUSE_3_VISUAL_DIRECTOR",
+                                        "sub_room": target_sub,
+                                        "genre": genre
+                                    }
+                                    if record_to_house_quota(record, "HOUSE_3_VISUAL_DIRECTOR", target_sub, genre, state):
+                                        added += 1
+                                        print(f"     [HF DISTILL -> H3] Ingested visual sheet into {target_sub}")
+                            except Exception as json_err:
+                                print(f"     [WARN] H3 LLM JSON parse failed: {json_err}")
+
+                    elif chosen_target == "H4" and open_h4_rooms:
+                        target_sub = random.choice(open_h4_rooms)
+                        genre = random.choice(["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"])
+                        distill_prompt = (
+                            f"[HOUSE: HOUSE_4_SOUND_AND_CUT_EDITOR | GENRE: {genre} | SUB_ROOM: {target_sub}]\n"
+                            f"Design audio design, SFX, and cut pacing for a 6 to 8 beat video on: {clean_concept}\n"
+                            f"Valid sfx enums: thud.wav, whoosh.wav, click.wav, none\n"
+                            f"Output strictly valid JSON with keys: title, sub_room, target_cpm, beats (list of 6 to 8 objects with index, narration, camera, filter, motion_type, sfx)."
+                        )
+                        sys_prompt = "You are an elite Sound Designer and Master Video Editor. Use strictly the provided enums."
+                        raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
+                        if raw_llm:
+                            try:
+                                parsed_llm = json.loads(raw_llm)
+                                if isinstance(parsed_llm, dict):
+                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    record = {
+                                        "instruction": f"[HOUSE: HOUSE_4_SOUND_AND_CUT_EDITOR | GENRE: {genre}] Design sound cues and cut velocity for {target_sub}.",
+                                        "input": clean_concept[:300],
+                                        "output": json.dumps(parsed_llm, ensure_ascii=False),
+                                        "house": "HOUSE_4_SOUND_AND_CUT_EDITOR",
+                                        "sub_room": target_sub,
+                                        "genre": genre
+                                    }
+                                    if record_to_house_quota(record, "HOUSE_4_SOUND_AND_CUT_EDITOR", target_sub, genre, state):
+                                        added += 1
+                                        print(f"     [HF DISTILL -> H4] Ingested sound design into {target_sub}")
+                            except Exception as json_err:
+                                print(f"     [WARN] H4 LLM JSON parse failed: {json_err}")
+
                 hf_offsets["writingprompts"] = offset + len(rows)
         except Exception as e:
             print(f"     [WARN] HF writingprompts streaming: {e}")
@@ -499,27 +879,31 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                         f"[HOUSE: HOUSE_1_HOOK_PSYCHOLOGY | GENRE: auto]\n"
                         f"Distill an irresistible short-form opening hook formula ({target_sub}) from this dramatic narrative conflict:\n"
                         f"{concept}\n"
+                        f"Valid visual_cue enums: treated_image, declassified_scan, evidence_board, map_flyover, stat_counter, red_slam_word, workflow_stepper, 3_item_list, quote_box\n"
+                        f"Valid audio_cue enums: thud.wav, whoosh.wav, click.wav, none\n"
                         f"Output strictly valid JSON with keys: hook_type, hook_script, visual_cue, audio_cue, retention_target_percent."
                     )
                     sys_prompt = "You are a master of audience retention psychology and viral video hooks."
                     raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
-                    if not raw_llm:
-                        continue
-                    try:
-                        parsed_llm = json.loads(raw_llm)
-                        record = {
-                            "instruction": f"[HOUSE: HOUSE_1_HOOK_PSYCHOLOGY | GENRE: auto] Formulate viral opening hook ({target_sub}) from story premise.",
-                            "input": concept[:300],
-                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
-                            "house": "HOUSE_1_HOOK_PSYCHOLOGY",
-                            "sub_room": target_sub,
-                            "genre": "auto"
-                        }
-                        if record_to_house_quota(record, "HOUSE_1_HOOK_PSYCHOLOGY", target_sub, "auto", state):
-                            added += 1
-                            print(f"     [HF DISTILL -> H1] Ingested hook into {target_sub}")
-                    except Exception as json_err:
-                        print(f"     [WARN] H1 LLM JSON parse failed: {json_err}")
+                    if raw_llm:
+                        try:
+                            parsed_llm = json.loads(raw_llm)
+                            if isinstance(parsed_llm, dict):
+                                parsed_llm["visual_cue"] = normalize_motion_type(parsed_llm.get("visual_cue"), "auto")
+                                parsed_llm["audio_cue"] = normalize_sfx(parsed_llm.get("audio_cue"), 1, 1)
+                                record = {
+                                    "instruction": f"[HOUSE: HOUSE_1_HOOK_PSYCHOLOGY | GENRE: auto] Formulate viral opening hook ({target_sub}) from story premise.",
+                                    "input": concept[:300],
+                                    "output": json.dumps(parsed_llm, ensure_ascii=False),
+                                    "house": "HOUSE_1_HOOK_PSYCHOLOGY",
+                                    "sub_room": target_sub,
+                                    "genre": "auto"
+                                }
+                                if record_to_house_quota(record, "HOUSE_1_HOOK_PSYCHOLOGY", target_sub, "auto", state):
+                                    added += 1
+                                    print(f"     [HF DISTILL -> H1] Ingested hook into {target_sub}")
+                        except Exception as json_err:
+                            print(f"     [WARN] H1 LLM JSON parse failed: {json_err}")
                 hf_offsets["stories"] = offset + len(rows)
         except Exception as e:
             print(f"     [WARN] HF stories streaming: {e}")
@@ -547,33 +931,42 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                         f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}]\n"
                         f"Act as the AI Director Assistant for CONTENT-FACTORY. The user asks in chat: \"{full_req[:150]}\".\n"
                         f"Formulate an authoritative Director response message and structured copilot actions array for {genre} editing.\n"
-                        f"Valid action names: modify_timeline_beats, recut_genre, slice_viral_shorts, clone_reference_style, regenerate_asset.\n"
-                        f"Output strictly valid JSON with keys: message, actions (list of objects with 'action' and 'params')."
+                        f"Valid action names: modify_timeline_beats, recut_genre, slice_viral_shorts, clone_reference_style, edit_uploaded_video.\n"
+                        f"Output strictly valid JSON with keys: message, actions (list of objects with 'action' and parameters)."
                     )
                     sys_prompt = "You are the AI Director Copilot. You translate user video requests into concrete copilot tool executions."
                     raw_llm = ask_brain_sync(distill_prompt, system_prompt=sys_prompt, format_json=True)
-                    if not raw_llm:
-                        continue
-                    try:
-                        parsed_llm = json.loads(raw_llm)
-                        record = {
-                            "instruction": f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}] Translate user request into structured copilot actions.",
-                            "input": full_req[:250],
-                            "output": json.dumps(parsed_llm, ensure_ascii=False) if isinstance(parsed_llm, dict) else raw_llm,
-                            "house": "HOUSE_5_COPILOT_AND_REFLEXION",
-                            "sub_room": "director_chat_commands",
-                            "genre": genre
-                        }
-                        if record_to_house_quota(record, "HOUSE_5_COPILOT_AND_REFLEXION", "director_chat_commands", genre, state):
-                            added += 1
-                            print(f"     [HF DISTILL -> H5] Ingested director command for '{full_req[:30]}...'")
-                    except Exception as json_err:
-                        print(f"     [WARN] H5 LLM JSON parse failed: {json_err}")
+                    if raw_llm:
+                        try:
+                            parsed_llm = json.loads(raw_llm)
+                            normalized_cop = normalize_and_validate_copilot_record(parsed_llm, genre, full_req)
+                            record = {
+                                "instruction": f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}] Translate user request into structured copilot actions.",
+                                "input": full_req[:250],
+                                "output": json.dumps(normalized_cop, ensure_ascii=False),
+                                "house": "HOUSE_5_COPILOT_AND_REFLEXION",
+                                "sub_room": "director_chat_commands",
+                                "genre": genre
+                            }
+                            if record_to_house_quota(record, "HOUSE_5_COPILOT_AND_REFLEXION", "director_chat_commands", genre, state):
+                                added += 1
+                                print(f"     [HF DISTILL -> H5] Ingested director command for '{full_req[:30]}...'")
+                        except Exception as json_err:
+                            print(f"     [WARN] H5 LLM JSON parse failed: {json_err}")
                 hf_offsets["alpaca"] = offset + len(rows)
         except Exception as e:
             print(f"     [WARN] HF alpaca streaming: {e}")
 
     save_harvest_state(state)
+    try:
+        import sys
+        if r"D:\CONTENT-FACTORY" not in sys.path:
+            sys.path.insert(0, r"D:\CONTENT-FACTORY")
+        from backend.engine.vault_graph import sync_obsidian_house_dashboards
+        sync_obsidian_house_dashboards()
+    except Exception as dash_err:
+        print(f"     [WARN] sync_obsidian_house_dashboards error: {dash_err}")
+
     return added
 
 
@@ -844,28 +1237,42 @@ def ask_brain_sync(
     system_prompt: Optional[str] = None,
     format_json: bool = True,
     timeout: float = 25.0,
-    engine_mode: str = "auto"
+    engine_mode: str = "auto",
+    max_retries: int = 3
 ) -> Optional[str]:
     """Synchronous Dual-Brain gateway to ask_brain() in backend/engine/brain.py.
-    Automatically and seamlessly fails over to Brain #2 (Local Ollama copilot-brain)
-    if Brain #1 (Cloud Gemini) hits 429 quota, network error, or times out.
+    Retries with exponential backoff on Gemini 429 quota errors (sleep 15s, 30s).
+    If unresolvable after max_retries, skips cleanly and returns None (zero fake fallbacks).
     """
-    try:
-        import sys
-        if r"D:\CONTENT-FACTORY" not in sys.path:
-            sys.path.insert(0, r"D:\CONTENT-FACTORY")
-        from backend.engine.brain import ask_brain
-        import asyncio
-        return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json, engine_mode=engine_mode))
-    except Exception as e:
-        print(f"     [WARN] ask_brain_sync primary route error ({e}). Engaging Brain #2 failover...")
+    import sys
+    if r"D:\CONTENT-FACTORY" not in sys.path:
+        sys.path.insert(0, r"D:\CONTENT-FACTORY")
+    from backend.engine.brain import ask_brain
+    import asyncio
+
+    for attempt in range(max_retries):
         try:
-            from backend.engine.brain import ask_brain
-            import asyncio
-            return asyncio.run(ask_brain(prompt, system_prompt=system_prompt, format_json=format_json, engine_mode="offline_spark"))
-        except Exception as failover_err:
-            print(f"     [ERROR] ask_brain_sync dual-brain failover failed: {failover_err}")
-            return None
+            return asyncio.run(ask_brain(
+                prompt,
+                system_prompt=system_prompt,
+                format_json=format_json,
+                engine_mode=engine_mode
+            ))
+        except Exception as e:
+            err_str = str(e)
+            is_quota_or_rate = "429" in err_str or "quota" in err_str.lower() or "resourceexhausted" in err_str.lower()
+            if is_quota_or_rate and attempt < max_retries - 1:
+                wait_sec = 15.0 if attempt == 0 else 30.0
+                print(f"     [WARN] ask_brain_sync quota limit (attempt {attempt+1}/{max_retries}). Sleeping {wait_sec}s backoff...")
+                time.sleep(wait_sec)
+                continue
+            elif attempt < max_retries - 1:
+                print(f"     [WARN] ask_brain_sync transient error ({e}). Retrying in 5s (attempt {attempt+1}/{max_retries})...")
+                time.sleep(5.0)
+                continue
+            else:
+                print(f"     [WARN] ask_brain_sync exhausted {max_retries} attempts ({err_str[:120]}). Returning None (zero fake fallbacks).")
+                return None
 
 
 def extract_complete_noun_phrases(text: str, max_phrases: int = 4) -> List[str]:
@@ -1379,7 +1786,7 @@ def synthesize_visual_audio_task(
 
     scene_beats = []
     grade_cycle = ["hard_bw", "teal_split", "amber"]
-    sfx_cycle = ["thud.wav", "whoosh.wav", "click.wav", "riser.wav"]
+    sfx_cycle = ["thud.wav", "whoosh.wav", "click.wav", "none"]
     visual_types = ["forensic_doc", "motion_card", "treated_image", "evidence_board", "map_flyover"]
     card_templates = ["red_slam_word", "stat_counter", "3_item_list", "workflow_stepper", "star_badge", "quote_box"]
 

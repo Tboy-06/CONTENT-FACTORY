@@ -1,31 +1,27 @@
 # Hook: How to get retention SO HIGH your shorts always go viral
 
 ## Performance Telemetry
-- Views: 373,867
-- Likes: 16,709
+- Views: 375,937
+- Likes: 16,749
 - View-to-Like Ratio: 22.4:1
-- Primary First Spoken Line (0:00 - 0:03): "91% retention 93% retention 97%
-retention one after another again and again and again through my personal
-experience in making engaging shor"
+- Primary Opening: "Every single short I publish locks viewers in for over ninety percent of the run time, and the algorithm has no choice but to break."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "91% retention 93% retention 97%
-retention one after another again and again and again through my personal
-experience in "
+> "Every single short I publish locks viewers in for over ninety percent of the run time, and the algorithm has no choice but to break."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to get retention SO HIGH your shorts is completely backwards."
+> "Trying harder to make interesting videos is actually destroying your retention, because viewer captivity has nothing to do with entertainment."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to get retention SO HIGH your s."
+> "If your audience drops off before the three-second mark, your channel is permanently trapped in an algorithmic dead zone."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

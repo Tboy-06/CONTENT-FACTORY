@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 531.0s
-- Hook: "Erangel offers no elaborate backstory, just a decaying, Soviet-era hellhole waiting to be picked clean."
-- Payoff: "In the end, ninety-nine souls will perish so that one might claim the solitary glory of the final circle."
+- Hook: "Erangel offers no elaborate backstory, presenting instead as a vaguely Soviet, post-apocalyptic, dystopian, and abandoned hellhole."
+- Payoff: "Survival demands that you scavenge every looted home before someone else hunts you down."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Erangel offers no elaborate backstory, just a decaying, Soviet-era hellhole waiting to be picked clean.
-2. The landscape is a post-apocalyptic expanse, littered with abandoned homes and the promise of lethal firepower.
-3. A cargo plane shrieks through the sky, carrying you and ninety-nine strangers toward an uncertain fate.
-4. As the hatch opens, you leap into the void, trusting a flimsy parachute to break your terminal descent.
-5. Once your boots hit the dirt, the true isolation of the island begins to set in.
-6. You are not alone, as ninety-nine ghosts of the battlefield are actively hunting for your position.
-7. Every scavenged weapon and every tactical corner turned is a desperate bid for survival in this digital slaughterhouse.
-8. In the end, ninety-nine souls will perish so that one might claim the solitary glory of the final circle.
+1. Erangel offers no elaborate backstory, presenting instead as a vaguely Soviet, post-apocalyptic, dystopian, and abandoned hellhole.
+2. The landscape is entirely defined by scattered weapons and vulnerable homes waiting to be looted.
+3. Without warning, you and ninety-nine strangers leap from the belly of a burning plane directly into the chaos.
+4. Your parachute is the only thing standing between a fatal fall and the brutal reality waiting below.
+5. Once your boots hit the dirt, it is immediately you against the entirety of the island.
+6. Ninety-nine ruthless strangers are actively on the hunt for both you and each other.
+7. Every single competitor shares the exact same desperate goal to be the last one standing and secure the win.
+8. Survival demands that you scavenge every looted home before someone else hunts you down.
 
