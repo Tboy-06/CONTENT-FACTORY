@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import shutil
 import logging
 import asyncio
 import subprocess
@@ -15,8 +16,58 @@ from backend.tools.llm import generate_script
 from backend.engine.planner import generate_documentary_plan, save_manifest
 from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
 from backend.engine.assembler import render_beat_pass1, assemble_final_pass2, cleanup_job_temp_files
+from backend.engine.thumbnail_engine import generate_job_thumbnails
 
 logger = logging.getLogger(__name__)
+
+ARCHIVE_OUTPUTS_DIR = r"C:\cf_training\archive_outputs"
+os.makedirs(ARCHIVE_OUTPUTS_DIR, exist_ok=True)
+
+
+def archive_older_job_outputs(
+    output_dir: str = "output",
+    max_kept: int = 10,
+    archive_dir: str = ARCHIVE_OUTPUTS_DIR
+) -> Dict[str, Any]:
+    """
+    Long-Term D: Drive Safeguard:
+    Moves finished instant_<id>.mp4 files older than the most recent `max_kept` jobs
+    to C:\\cf_training\\archive_outputs\\ to keep D: partition permanently above 3.5 GB free.
+    """
+    os.makedirs(archive_dir, exist_ok=True)
+    if not os.path.exists(output_dir):
+        return {"archived_count": 0, "freed_mb": 0.0}
+
+    pattern = re.compile(r"^instant_(\d+)\.mp4$")
+    job_files = []
+    for f in os.listdir(output_dir):
+        m = pattern.match(f)
+        if m:
+            j_id = int(m.group(1))
+            job_files.append((j_id, f))
+
+    job_files.sort(key=lambda x: x[0], reverse=True)
+    freed_bytes = 0
+    archived_count = 0
+
+    if len(job_files) > max_kept:
+        to_archive = job_files[max_kept:]
+        for j_id, fname in to_archive:
+            src_path = os.path.join(output_dir, fname)
+            dest_path = os.path.join(archive_dir, fname)
+            try:
+                sz = os.path.getsize(src_path)
+                shutil.move(src_path, dest_path)
+                freed_bytes += sz
+                archived_count += 1
+                logger.info(f"[archive] Moved older job video {fname} ({sz/(1024*1024):.1f} MB) -> {archive_dir}")
+            except Exception as err:
+                logger.warning(f"[archive] Error archiving {fname}: {err}")
+
+    return {
+        "archived_count": archived_count,
+        "freed_mb": round(freed_bytes / (1024 * 1024), 2)
+    }
 
 def wrap_text(text: str, max_chars: int = 34) -> List[str]:
     """Wraps text into clean lines for vertical 9:16 layout."""
@@ -299,6 +350,26 @@ async def run_instant_pipeline(
             freed = cleanup_job_temp_files(job_dir)
             logger.info(f"[Instant Pipeline] Master verified ({final_video_path}). Cleaned intermediate chunks ({freed/(1024*1024):.1f} MB freed).")
 
+        # -------------------------------------------------------------
+        # STEP 5: AUTOMATED HIGH-CTR THUMBNAIL PACKAGER (16:9 + 9:16)
+        # -------------------------------------------------------------
+        thumbnails_data = None
+        try:
+            thumbnails_data = await generate_job_thumbnails(
+                job_id=job_id,
+                manifest=manifest,
+                job_dir=job_dir,
+                output_dir=output_dir
+            )
+            logger.info(f"[Instant Pipeline] Generated 3 thumbnail variants (16:9 + 9:16) for Job {job_id}")
+        except Exception as th_err:
+            logger.warning(f"[Instant Pipeline] Automated thumbnail packager error: {th_err}")
+
+        # Long-Term D: Partition Guard: Archive jobs older than last 10
+        arch_res = archive_older_job_outputs(output_dir=output_dir, max_kept=10)
+        if arch_res.get("archived_count", 0) > 0:
+            logger.info(f"[Instant Pipeline] D: drive safeguard: Archived {arch_res['archived_count']} videos ({arch_res['freed_mb']} MB freed).")
+
         # Build OpenCut timeline for web editor scrubbing
         opencut_timeline = build_opencut_timeline(
             job_id=job_id,
@@ -328,6 +399,7 @@ async def run_instant_pipeline(
             },
             "voice": voice,
             "fact_dossier": manifest.get("fact_dossier"),
+            "thumbnails": thumbnails_data,
             "opencut_timeline": opencut_path,
             "manifest_path": os.path.join(job_dir, "manifest.json"),
         })

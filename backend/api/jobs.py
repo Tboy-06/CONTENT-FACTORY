@@ -639,6 +639,75 @@ async def delete_job_temp(job_id: int):
                     pass
     return {"status": "success", "cleaned_files": cleaned, "message": f"Cleaned {cleaned} temporary scene files"}
 
+@router.get('/{job_id}/thumbnails')
+async def get_job_thumbnails(job_id: int):
+    job = await repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    assets = await repository.get_job_assets(job_id)
+    video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
+    meta = dict(video_asset.metadata_json or {}) if video_asset else {}
+
+    if "thumbnails" in meta and meta["thumbnails"]:
+        return meta["thumbnails"]
+
+    from backend.engine.thumbnail_engine import generate_job_thumbnails
+    manifest = None
+    manifest_path = os.path.join("jobs", str(job_id), "manifest.json")
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+        except Exception:
+            pass
+
+    if not manifest:
+        manifest = {
+            "topic": meta.get("title", job.niche),
+            "fact_dossier": meta.get("fact_dossier", {})
+        }
+
+    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=f"jobs/{job_id}")
+    if video_asset:
+        meta["thumbnails"] = thumb_data
+        await repository.update_asset_metadata(video_asset.id, meta)
+
+    return thumb_data
+
+@router.post('/{job_id}/thumbnails/generate')
+async def regenerate_job_thumbnails(job_id: int):
+    job = await repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    assets = await repository.get_job_assets(job_id)
+    video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
+    meta = dict(video_asset.metadata_json or {}) if video_asset else {}
+
+    from backend.engine.thumbnail_engine import generate_job_thumbnails
+    manifest = None
+    manifest_path = os.path.join("jobs", str(job_id), "manifest.json")
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+        except Exception:
+            pass
+
+    if not manifest:
+        manifest = {
+            "topic": meta.get("title", job.niche),
+            "fact_dossier": meta.get("fact_dossier", {})
+        }
+
+    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=f"jobs/{job_id}")
+    if video_asset:
+        meta["thumbnails"] = thumb_data
+        await repository.update_asset_metadata(video_asset.id, meta)
+
+    return {"status": "success", "thumbnails": thumb_data, "message": "Thumbnails regenerated successfully"}
+
 @router.delete('/{job_id}')
 async def delete_job(job_id: int):
     success = await repository.delete_job(job_id)

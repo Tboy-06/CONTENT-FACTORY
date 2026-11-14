@@ -1,21 +1,22 @@
 # How To Edit Like Johnny Harris in Canva
 
-## Source
-- Type: Editing Tutorial / Masterclass
-- Analyzed Spoken Segments: 237
-- Viewer Praise Comments: 5
+## Editing Architecture
+- Category: CapCut & NLE Visual Techniques
+- Duration: 1483.0s (24.7 min)
+- Cut Frequency: 2.6s per cut (~23.1 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
-## Extracted Editing Rules
-- Use dynamic cosine zoom-in (1.1x to 1.2x) on key emphasis nouns and data points.
-- Layer whoosh/riser SFX 2-3 frames before every visual transition and heavy thud on fact reveals.
-- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual stimulation.
-- Render stark bold subtitles with active-word color highlights (yellow or cyan) matching spoken timing.
+## Core Pacing & Cutting Rules
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Layer whoosh/riser SFX 2-3 frames before every cut transition, with heavy thud impact on data reveals.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
+- Render stark bold kinetic subtitles with active-word yellow/cyan highlights matching spoken timing.
+- Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
-## Top Viewer Feedback
-> "I am constant trying to edit in canva like @shivanshuagrawal but failed many time but I hope from this video I will be able to make at least good maps" — @umairrchaudhary
-
-> "My god, this tutorials are a gem! I do not know how to use other editing tools since I do not have a proper pc or laptop. That's why I only use Canva and seeing that we can create this kind of editing there is a relief. Thanks!" — @CrísbelVivas
-
-> "This is the most professional and helpful Canva editing channels I have discovered on YouTube." — @tasimuddinsohan932
-
+## Motion Card Deployments
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `DIRECTOR PRINCIPLE`, SFX: `click.wav`, Grade: `hard_bw`)

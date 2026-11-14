@@ -18,7 +18,10 @@ import {
   Volume2, 
   Layers, 
   FileText,
-  Play
+  Play,
+  Download,
+  Scissors,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button, Badge, Card } from './ui';
 import { 
@@ -59,6 +62,8 @@ export default function DirectorChatDrawer({
   const [messages, setMessages] = useState<Message[]>([]);
   const [videoContext, setVideoContext] = useState<VideoContext | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [ytUrl, setYtUrl] = useState('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -204,11 +209,13 @@ export default function DirectorChatDrawer({
   };
 
   const quickPrompts = jobId ? [
+    "✂️ Extract top 3 viral shorts from this",
     "🗺️ Change Beat 3 to radar map flyover with headline TARGET DETECTED",
     "🎨 Switch Beat 5 to grade teal_split",
     "⚡ Boost pacing: tighten timeline cuts",
     "📋 Swap Beat 7 to declassified dossier with yellow highlighter"
   ] : [
+    "✂️ Extract top 3 viral shorts from this video",
     "🎬 Clone this pacing into a video about CIA Project Azorian",
     "✂️ Cut dead air pauses and burn yellow subtitles",
     "🎨 Apply 35mm hard black-and-white film grade"
@@ -312,7 +319,17 @@ export default function DirectorChatDrawer({
             title="Upload reference video (.mp4/.mov) stored safely on C:\cf_training\temp\uploads"
           >
             {analyzeMutation.isPending ? <Loader2 size={12} className="animate-spin text-amber-400" /> : <Upload size={12} className="text-amber-400" />}
-            <span>Upload Reference Video</span>
+            <span>Upload Video</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setShowUrlInput(prev => !prev)}
+            className="!py-1 !px-2.5 text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 rounded-lg"
+            title="Paste YouTube link to extract viral shorts"
+          >
+            <LinkIcon size={12} className="text-red-400" />
+            <span>YouTube URL</span>
           </Button>
 
           {jobId && (
@@ -324,7 +341,7 @@ export default function DirectorChatDrawer({
               title="Deconstruct the current active job's video pacing and speech telemetry"
             >
               <Film size={12} className="text-blue-400" />
-              <span>Deconstruct Job Video</span>
+              <span>Deconstruct Job</span>
             </Button>
           )}
         </div>
@@ -340,6 +357,40 @@ export default function DirectorChatDrawer({
           </button>
         )}
       </div>
+
+      {/* YouTube URL Quick Clipper Bar */}
+      {showUrlInput && (
+        <div className="px-4 py-2 bg-slate-900/60 border-b border-slate-800/80 flex items-center gap-2 text-xs animate-in fade-in">
+          <input
+            type="url"
+            value={ytUrl}
+            onChange={(e) => setYtUrl(e.target.value)}
+            placeholder="Paste YouTube URL: https://youtube.com/watch?v=..."
+            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-red-500 font-mono"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && ytUrl.trim()) {
+                handleSendMessage(`Extract top 3 viral shorts from this: ${ytUrl.trim()}`);
+                setYtUrl('');
+                setShowUrlInput(false);
+              }
+            }}
+          />
+          <Button
+            onClick={() => {
+              if (ytUrl.trim()) {
+                handleSendMessage(`Extract top 3 viral shorts from this: ${ytUrl.trim()}`);
+                setYtUrl('');
+                setShowUrlInput(false);
+              }
+            }}
+            disabled={!ytUrl.trim() || chatMutation.isPending}
+            className="!py-1.5 !px-3 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center gap-1 font-semibold"
+          >
+            <Scissors size={12} />
+            <span>Extract Shorts</span>
+          </Button>
+        </div>
+      )}
 
       {/* Video Telemetry Dropdown */}
       {videoContext && showTranscript && (
@@ -469,6 +520,80 @@ export default function DirectorChatDrawer({
                                 View Output
                               </a>
                             )}
+                          </div>
+                        );
+                      }
+
+                      if (act.action === 'slice_viral_shorts' || (act.shorts && act.shorts.length > 0)) {
+                        const shortsList = act.shorts || [];
+                        return (
+                          <div 
+                            key={idx}
+                            className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/40 space-y-3 text-purple-200 mt-2"
+                          >
+                            <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
+                              <div className="flex items-center gap-2 font-bold text-purple-300 text-xs">
+                                <Scissors size={14} className="text-purple-400 shrink-0" />
+                                <span>{shortsList.length} Viral Shorts Extracted (9:16 Vertical · Karaoke Subtitles)</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 pt-1">
+                              {shortsList.map((sh: any, sIdx: number) => (
+                                <div key={sIdx} className="p-2.5 rounded-lg bg-slate-950/80 border border-purple-500/30 space-y-2">
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="font-bold text-white tracking-wide truncate max-w-[220px]">
+                                      #{sh.id} · {sh.title}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-purple-300">
+                                      <span className="bg-purple-900/60 px-1.5 py-0.5 rounded border border-purple-600/40">{sh.duration}s</span>
+                                      <span className="text-slate-400">{sh.start}s - {sh.end}s</span>
+                                    </div>
+                                  </div>
+
+                                  {sh.hook_text && (
+                                    <p className="text-[10px] text-slate-300 italic line-clamp-2 border-l-2 border-purple-400 pl-2">
+                                      "{sh.hook_text}"
+                                    </p>
+                                  )}
+
+                                  {sh.video_url && (
+                                    <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-black aspect-[9/16] max-h-[200px] mx-auto shadow-inner">
+                                      <video
+                                        src={sh.video_url}
+                                        poster={sh.thumb_url}
+                                        controls
+                                        playsInline
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-end gap-2 pt-1">
+                                    {sh.video_url && onVideoUpdated && (
+                                      <button
+                                        onClick={() => onVideoUpdated(sh.video_url)}
+                                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 font-medium transition-colors"
+                                        title="Preview this short in QC1 player"
+                                      >
+                                        <Play size={10} />
+                                        Preview in QC1
+                                      </button>
+                                    )}
+                                    {sh.video_url && (
+                                      <a
+                                        href={sh.video_url}
+                                        download={`viral_short_${sh.id}.mp4`}
+                                        className="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-medium text-[10px] flex items-center gap-1 transition-colors"
+                                      >
+                                        <Download size={10} />
+                                        Download 9:16
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         );
                       }

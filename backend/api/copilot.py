@@ -585,6 +585,275 @@ async def execute_edit_uploaded_video(
     }
 
 
+class SliceViralShortsRequest(BaseModel):
+    video_path: Optional[str] = None
+    youtube_url: Optional[str] = None
+    job_id: Optional[int] = None
+    target_count: int = 3
+    min_duration: float = 30.0
+    max_duration: float = 50.0
+
+
+async def execute_slice_viral_shorts(
+    video_path: Optional[str] = None,
+    youtube_url: Optional[str] = None,
+    job_id: Optional[int] = None,
+    target_count: int = 3,
+    min_duration: float = 30.0,
+    max_duration: float = 50.0
+) -> Dict[str, Any]:
+    """
+    Extracts top 3 viral 9:16 Shorts (30s-50s) from long video or YouTube URL:
+    1. Downloads or resolves video source safely in C:\\cf_training\\temp\\uploads\\ (0 MB on D:)
+    2. Transcribes with Faster-Whisper to get timestamped sentences and words
+    3. Uses ask_brain() / heuristic pacing analysis to locate the 3 highest-retention narrative arcs
+    4. Auto-crops 16:9 to 9:16 vertical center framing
+    5. Generates synchronized .ASS karaoke captions and burns them with FFmpeg
+    6. Outputs video files to output/viral_short_{ts}_{idx}.mp4
+    """
+    ts = int(time.time())
+    source_video = None
+
+    # 1. Download YouTube URL if provided
+    if youtube_url:
+        safe_yt_dest = os.path.join(UPLOADS_DIR, f"yt_{ts}_{uuid.uuid4().hex[:6]}.mp4")
+        logger.info(f"[copilot] Downloading YouTube stream via yt-dlp -> {safe_yt_dest}")
+        cmd_dl = [
+            "yt-dlp",
+            "-f", "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+            "--merge-output-format", "mp4",
+            "-o", safe_yt_dest,
+            youtube_url
+        ]
+        res_dl = await asyncio.to_thread(subprocess.run, cmd_dl, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180)
+        if res_dl.returncode == 0 and os.path.exists(safe_yt_dest) and os.path.getsize(safe_yt_dest) > 0:
+            source_video = safe_yt_dest
+        else:
+            logger.warning(f"[copilot] yt-dlp failed: {res_dl.stderr.decode(errors='ignore')[:200]}")
+
+    # 2. Check local video_path or job_id
+    if not source_video:
+        if video_path and os.path.exists(video_path):
+            source_video = video_path
+        elif job_id:
+            cand = f"output/instant_{job_id}.mp4"
+            if os.path.exists(cand):
+                source_video = cand
+            else:
+                assets = await repository.get_job_assets(job_id)
+                video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
+                if video_asset and video_asset.path and os.path.exists(video_asset.path):
+                    source_video = video_asset.path
+
+    if not source_video or not os.path.exists(source_video):
+        raise HTTPException(status_code=400, detail="No valid source video found for viral short extraction.")
+
+    # 3. Analyze Streams & Transcribe
+    dim_info = await asyncio.to_thread(analyze_video_streams_ffprobe, source_video)
+    total_dur = float(dim_info.get("duration") or 60.0)
+    src_w = int(dim_info.get("width") or 1920)
+    src_h = int(dim_info.get("height") or 1080)
+    is_widescreen = src_w >= src_h
+
+    whisper_info = await asyncio.to_thread(transcribe_video_whisper, source_video, total_dur, job_id)
+    transcript = whisper_info.get("transcript", [])
+    full_text = whisper_info.get("full_text", "")
+
+    # 4. Find Top Retention Narrative Arcs
+    candidates = []
+    if transcript and len(transcript) >= 3 and total_dur >= 35.0:
+        analysis_prompt = f"""You are a master viral documentary director. Analyze this video transcript and identify the top {target_count} highest-retention continuous segments between {min_duration}s and {max_duration}s.
+Each segment must open with a curiosity hook, build dramatic momentum, and deliver a factual punchline.
+Transcript segments:
+{json.dumps(transcript[:60], indent=2)}
+
+Output strictly valid JSON:
+{{
+  "segments": [
+    {{
+      "title": "3-5 word high CTR title",
+      "start": 12.5,
+      "end": 45.0,
+      "hook_phrase": "opening line quote"
+    }}
+  ]
+}}"""
+        try:
+            raw = await ask_brain(
+                prompt=analysis_prompt,
+                system_prompt="You are an expert viral retention clipper.",
+                format_json=True
+            )
+            clean = re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.MULTILINE).strip()
+            parsed = json.loads(clean)
+            candidates = parsed.get("segments", [])
+        except Exception as e:
+            logger.warning(f"[copilot] ask_brain segment extraction fallback: {e}")
+
+    # Heuristic fallback if candidates empty or invalid
+    if not candidates:
+        seg_len = min(max_duration, max(min_duration, total_dur / max(1, target_count)))
+        if total_dur <= min_duration + 5:
+            candidates = [{
+                "title": "Viral Spotlight",
+                "start": 0.0,
+                "end": total_dur,
+                "hook_phrase": transcript[0].get("text", "") if transcript else "Watch this..."
+            }]
+        else:
+            step = (total_dur - seg_len) / max(1, target_count)
+            for i in range(target_count):
+                st = round(i * step, 1)
+                en = min(total_dur, round(st + seg_len, 1))
+                matching_texts = [
+                    t.get("text", "") for t in transcript
+                    if float(t.get("start", 0)) >= st and float(t.get("end", 0)) <= en
+                ]
+                hook_txt = matching_texts[0] if matching_texts else f"Segment {i+1}: The Untold Story"
+                candidates.append({
+                    "title": f"Part {i+1}: {hook_txt[:28].strip()}",
+                    "start": st,
+                    "end": en,
+                    "hook_phrase": hook_txt
+                })
+
+    # 5. Render Slices with 9:16 Crop and Karaoke Captions
+    from backend.engine.audio_subs import build_ass_subtitles
+    shorts_results = []
+    os.makedirs("output", exist_ok=True)
+    temp_dir = r"C:\cf_training\temp"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    if is_widescreen:
+        crop_filter = "crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1"
+    else:
+        crop_filter = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1"
+
+    for idx, seg in enumerate(candidates[:target_count]):
+        st = float(seg.get("start", 0.0))
+        en = float(seg.get("end", st + 35.0))
+        dur = max(2.0, en - st)
+        title = seg.get("title", f"Viral Short {idx + 1}")
+        hook_text = seg.get("hook_phrase", "")
+
+        out_filename = f"viral_short_{ts}_{idx + 1}.mp4"
+        out_path = os.path.join("output", out_filename)
+        thumb_filename = f"viral_short_{ts}_{idx + 1}_thumb.jpg"
+        thumb_path = os.path.join("output", thumb_filename)
+
+        # Build segment ASS subtitle track
+        seg_ass = os.path.join(temp_dir, f"slice_{ts}_{idx + 1}.ass")
+        seg_words = []
+        for t in transcript:
+            try:
+                t_st = float(t.get("start", 0))
+                t_en = float(t.get("end", t_st + 2.0))
+            except Exception:
+                continue
+            if (t_st >= st - 0.5 and t_st <= en) or (t_en >= st and t_en <= en + 0.5):
+                clean_words = re.sub(r"[^\w\s\$\%]", "", t.get("text", "")).split()
+                if clean_words:
+                    w_dur = max(0.2, (t_en - t_st) / len(clean_words))
+                    for wi, w in enumerate(clean_words):
+                        shifted_start = max(0.0, (t_st + (wi * w_dur)) - st)
+                        seg_words.append({
+                            "text": w,
+                            "start": shifted_start,
+                            "duration": w_dur * 0.9
+                        })
+
+        has_ass = False
+        if seg_words:
+            try:
+                build_ass_subtitles(
+                    seg_words,
+                    seg_ass,
+                    play_res_x=1080,
+                    play_res_y=1920,
+                    margin_v=380,
+                    font_size=68
+                )
+                has_ass = os.path.exists(seg_ass) and os.path.getsize(seg_ass) > 0
+            except Exception as ass_err:
+                logger.warning(f"[copilot] Error building segment ASS subtitle: {ass_err}")
+
+        # Build FFmpeg command
+        if has_ass:
+            escaped_ass = os.path.abspath(seg_ass).replace("\\", "/").replace(":", "\\:")
+            full_vf = f"{crop_filter},subtitles='{escaped_ass}'"
+        else:
+            full_vf = crop_filter
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", f"{st:.2f}",
+            "-to", f"{en:.2f}",
+            "-i", source_video,
+            "-vf", full_vf,
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "22",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-pix_fmt", "yuv420p",
+            out_path
+        ]
+
+        def _render():
+            return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=90)
+
+        res = await asyncio.to_thread(_render)
+        if res.returncode == 0 and os.path.exists(out_path):
+            # Extract thumbnail
+            cmd_th = [
+                "ffmpeg", "-y",
+                "-ss", "00:00:01",
+                "-i", out_path,
+                "-vframes", "1",
+                thumb_path
+            ]
+            await asyncio.to_thread(subprocess.run, cmd_th, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15)
+
+            shorts_results.append({
+                "id": idx + 1,
+                "title": title,
+                "start": round(st, 1),
+                "end": round(en, 1),
+                "duration": round(dur, 1),
+                "video_url": f"/output/{out_filename}",
+                "thumb_url": f"/output/{thumb_filename}" if os.path.exists(thumb_path) else None,
+                "hook_text": hook_text[:80]
+            })
+
+        # Cleanup temp ASS file immediately to maintain 0 MB disk bloat
+        if os.path.exists(seg_ass):
+            try:
+                os.remove(seg_ass)
+            except Exception:
+                pass
+
+    logger.info(f"[copilot] Extracted {len(shorts_results)} viral 9:16 shorts from {os.path.basename(source_video)}")
+    return {
+        "status": "success",
+        "action": "slice_viral_shorts",
+        "source_file": os.path.basename(source_video),
+        "shorts": shorts_results
+    }
+
+
+@router.post("/slice-viral-shorts")
+async def slice_viral_shorts_endpoint(req: SliceViralShortsRequest):
+    res = await execute_slice_viral_shorts(
+        video_path=req.video_path,
+        youtube_url=req.youtube_url,
+        job_id=req.job_id,
+        target_count=req.target_count,
+        min_duration=req.min_duration,
+        max_duration=req.max_duration
+    )
+    return res
+
+
 @router.post("/chat")
 async def copilot_chat(req: CopilotChatRequest):
     """
@@ -664,6 +933,12 @@ AVAILABLE ACTIONS YOU CAN TRIGGER:
    "burn_subtitles": true | false,
    "cut_silences": true | false
 
+4. "slice_viral_shorts":
+   Extract the top 3 viral 9:16 vertical Shorts (30s-50s) with burned kinetic karaoke subtitles from this video or a YouTube URL.
+   Parameters:
+   "target_count": 3,
+   "youtube_url": "https://..." (optional)
+
 OUTPUT FORMAT:
 Output strictly a valid JSON object with:
 {{
@@ -692,6 +967,12 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
         message = f"I analyzed your request ('{req.prompt}'). Ready to fine-tune pacing and apply visual treatments."
         actions = []
 
+    # Deterministic intent fallback: detect requests to slice/extract viral shorts
+    user_p_lower = req.prompt.lower()
+    if any(k in user_p_lower for k in ["slice", "extract", "viral short", "top 3", "make shorts", "clip shorts", "cut shorts"]) and not any(a.get("action") == "slice_viral_shorts" for a in actions):
+        actions.append({"action": "slice_viral_shorts", "target_count": 3})
+        message = "Extracting the top 3 viral 9:16 vertical shorts with synchronized karaoke captions..."
+
     executed_actions = []
     updated_video_url = None
     target_job_id = current_job_id
@@ -701,7 +982,7 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
         act = dict(raw_act) if isinstance(raw_act, dict) else {}
         # Normalize if model used action name as top-level key: e.g. {"modify_timeline_beats": {...}}
         if "action" not in act:
-            for cand_k in ["modify_timeline_beats", "clone_reference_style", "edit_uploaded_video"]:
+            for cand_k in ["modify_timeline_beats", "clone_reference_style", "edit_uploaded_video", "slice_viral_shorts"]:
                 if cand_k in act:
                     sub = act[cand_k]
                     if isinstance(sub, dict):
@@ -739,6 +1020,23 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
                     )
                     executed_actions.append(res)
                     updated_video_url = res.get("video_url")
+
+            elif act_name == "slice_viral_shorts":
+                v_path = req.video_context.get("video_path") if req.video_context else None
+                yt_url = act.get("youtube_url")
+                if not yt_url and req.prompt:
+                    url_m = re.search(r"https?://[^\s]+", req.prompt)
+                    if url_m:
+                        yt_url = url_m.group(0)
+                res = await execute_slice_viral_shorts(
+                    video_path=v_path,
+                    youtube_url=yt_url,
+                    job_id=current_job_id,
+                    target_count=int(act.get("target_count") or 3)
+                )
+                executed_actions.append(res)
+                if res.get("shorts"):
+                    updated_video_url = res["shorts"][0]["video_url"]
 
         except Exception as exec_err:
             logger.error(f"[copilot] Error executing action '{act_name}': {exec_err}", exc_info=True)

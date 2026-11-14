@@ -388,3 +388,68 @@ export function useSpend() {
     }
   });
 }
+
+export interface ThumbnailVariant {
+  id: number;
+  name: string;
+  thumb_16x9: string;
+  thumb_9x16: string;
+  style: string;
+  badge: string;
+}
+
+export interface ThumbnailPackage {
+  status: string;
+  job_id: number;
+  variants: ThumbnailVariant[];
+  ab_titles: string[];
+}
+
+export function useJobThumbnails(jobId?: string | number) {
+  return useQuery({
+    queryKey: ['job-thumbnails', jobId],
+    queryFn: async () => {
+      if (!jobId) return null;
+      return (await api.get(`/api/jobs/${jobId}/thumbnails`)) as ThumbnailPackage;
+    },
+    enabled: !!jobId,
+  });
+}
+
+export function useRegenerateThumbnails() {
+  return useMutation({
+    mutationFn: async (jobId: string | number) => {
+      return (await api.post(`/api/jobs/${jobId}/thumbnails/generate`)) as ThumbnailPackage;
+    },
+    onSuccess: (_, jobId) => {
+      queryClient.invalidateQueries({ queryKey: ['job-thumbnails', jobId] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    }
+  });
+}
+
+export interface ViralShort {
+  id: number;
+  title: string;
+  start: number;
+  end: number;
+  duration: number;
+  video_url: string;
+  thumb_url?: string;
+  hook_text?: string;
+}
+
+export function useSliceViralShorts() {
+  return useMutation({
+    mutationFn: async (payload: {
+      video_path?: string;
+      youtube_url?: string;
+      job_id?: number;
+      target_count?: number;
+      min_duration?: number;
+      max_duration?: number;
+    }) => {
+      return await api.post('/api/copilot/slice-viral-shorts', payload);
+    }
+  });
+}
