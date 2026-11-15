@@ -4,7 +4,7 @@
 - Category: CapCut & NLE Visual Techniques
 - Duration: 1784.0s (29.7 min)
 - Cut Frequency: 2.6s per cut (~23.1 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
 - Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
@@ -15,16 +15,16 @@
 - Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@PIXELVERSE-U9J`, SFX: `click.wav`, Grade: `hard_bw`)
 
 ## Viewer Feedback on Pacing
-> "iam expert in premiere pro i do not done this before i easily understand thank you i going to update myself" — @fabiancruz5973
+> "Please what music did you use 28:26" (at 28:26) — @pixelverse-u9j
 
-> "finished it after 3 days 
-i just created my first eng edit" — @arshia_rastgoo8553
+> "14 ghanty lag gy aur abi bi sara kam kharab ho gya sound effects p, smj hi ni ayi lekin bohat helpful rahi ye video love you bro" — @Mumra01
 
-> "This isn't an educational video; it's a bullshit video that just shows off editing ... F..uck you  🤮🤮" — @UnpackedOrigins
+> "hey Joseph please drop your sfx pleasee ❤" — @BunayeRank
 

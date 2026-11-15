@@ -182,6 +182,34 @@ def normalize_sfx(val: Any, beat_idx: int = 1, total_beats: int = 6) -> str:
         return "whoosh.wav"
     return "none"
 
+def enforce_beat_variety(beats: List[Dict[str, Any]], genre: str = "auto") -> List[Dict[str, Any]]:
+    """Guarantees that two consecutive beats NEVER share the same camera or motion_type."""
+    cam_pools = [
+        "cosine_in", "snap_zoom", "camera_shake", "orbital",
+        "dolly_vertigo", "rack_focus_bokeh", "cosine_out", "pan_right"
+    ]
+    motion_pools = [
+        "treated_image", "declassified_scan", "stat_counter", "red_slam_word",
+        "workflow_stepper", "quote_box", "evidence_board", "map_flyover", "3_item_list"
+    ]
+
+    for i in range(1, len(beats)):
+        # Camera variety check
+        if beats[i]["camera"] == beats[i - 1]["camera"]:
+            candidates = [c for c in cam_pools if c != beats[i - 1]["camera"]]
+            next_c = beats[i + 1]["camera"] if i + 1 < len(beats) else None
+            strict = [c for c in candidates if c != next_c] or candidates
+            beats[i]["camera"] = strict[i % len(strict)]
+
+        # Motion type variety check
+        if beats[i]["motion_type"] == beats[i - 1]["motion_type"]:
+            candidates = [m for m in motion_pools if m != beats[i - 1]["motion_type"]]
+            next_m = beats[i + 1]["motion_type"] if i + 1 < len(beats) else None
+            strict = [m for m in candidates if m != next_m] or candidates
+            beats[i]["motion_type"] = strict[i % len(strict)]
+
+    return beats
+
 def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Dict[str, Any]]:
     if not isinstance(beats_raw, list):
         beats_raw = []
@@ -244,7 +272,7 @@ def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Di
             "motion_type": normalize_motion_type(b.get("motion_type"), genre),
             "sfx": normalize_sfx(b.get("sfx"), idx, total_beats)
         })
-    return final_beats
+    return enforce_beat_variety(final_beats, genre)
 
 def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req: str) -> Dict[str, Any]:
     if not isinstance(parsed_llm, dict):
@@ -286,8 +314,8 @@ def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req:
                             "beat_index": b_idx,
                             "type": m_type,
                             "template": "red_slam_word" if genre == "action_hype" else ("workflow_stepper" if genre == "viral_edu" else "3_item_list"),
-                            "headline": str(m.get("headline", "RETENTION SPIKE")).upper(),
-                            "highlight": str(m.get("highlight", "OPTIMIZED")).upper(),
+                            "headline": str(m.get("headline", user_req.split()[-1].upper() if user_req else "KEY_DIRECTIVE")).upper(),
+                            "highlight": str(m.get("highlight", "ACTION")).upper(),
                             "grade": normalize_filter(m.get("grade", "teal_split"), genre),
                             "sfx": normalize_sfx(m.get("sfx", "thud.wav"), 1, 1),
                             "prompt": str(m.get("prompt", f"{genre} cinematic motion graphic visual"))[:100]
@@ -327,19 +355,7 @@ def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req:
         valid_actions.append(normalized_act)
 
     if not valid_actions:
-        valid_actions.append({
-            "action": "modify_timeline_beats",
-            "beat_modifications": [{
-                "beat_index": 0,
-                "type": "declassified_scan" if genre == "crime_doc" else "treated_image",
-                "template": "red_slam_word",
-                "headline": "VELOCITY BOOST",
-                "highlight": "PACING",
-                "grade": normalize_filter("", genre),
-                "sfx": "thud.wav",
-                "prompt": f"high retention {genre} opening beat"
-            }]
-        })
+        return None
 
     return {
         "message": message,
@@ -940,6 +956,8 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                         try:
                             parsed_llm = json.loads(raw_llm)
                             normalized_cop = normalize_and_validate_copilot_record(parsed_llm, genre, full_req)
+                            if not normalized_cop or not normalized_cop.get("actions"):
+                                continue
                             record = {
                                 "instruction": f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: {genre}] Translate user request into structured copilot actions.",
                                 "input": full_req[:250],

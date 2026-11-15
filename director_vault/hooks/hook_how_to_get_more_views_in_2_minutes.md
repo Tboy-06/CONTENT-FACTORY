@@ -1,31 +1,27 @@
 # Hook: How To Get More Views in 2 Minutes
 
 ## Performance Telemetry
-- Views: 2,521,164
-- Likes: 101,196
+- Views: 2,526,821
+- Likes: 101,414
 - View-to-Like Ratio: 24.9:1
-- Primary First Spoken Line (0:00 - 0:03): "On the 23rd of October, I discovered
-something that's probably changed my life. It resulted in me posting this
-video that went on to get ove"
+- Primary Opening: "For the first six hours, this video was an absolute dead failure—until one hidden metric completely inverted the algorithm."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "On the 23rd of October, I discovered
-something that's probably changed my life. It resulted in me posting this
-video tha"
+> "For the first six hours, this video was an absolute dead failure—until one hidden metric completely inverted the algorithm."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How To Get More Views in 2 Minutes is completely backwards."
+> "Everyone focuses on making better content, but the channels growing the fastest are actually exploiting a blind spot in your analytics."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How To Get More Views in 2 Minutes."
+> "If your view graph looks flatlining like this right now, you are making a fatal retention mistake that is actively killing your reach."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

@@ -4,7 +4,7 @@
 - Category: CapCut & NLE Visual Techniques
 - Duration: 348.0s (5.8 min)
 - Cut Frequency: 2.62s per cut (~22.9 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
 - Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
@@ -13,29 +13,12 @@
 - Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@JOHNAMAZONAS843`, SFX: `click.wav`, Grade: `hard_bw`)
 
 ## Viewer Feedback on Pacing
-> "🎬 Watch This CapCut Tutorial in Your Preferred Language!
-
-Hey friends! 👋 I’ve created dubbed versions of this tutorial in multiple languages. You can watch your preferred language from this playlist:
-
-🎵 Audio Tracks / Languages:
-✅ 🇺🇸 English | 🇮🇳 Hindi / हिंदी | 🇧🇩 Bangla / বাংলা
-✅ 🇮🇩 Bahasa Indonesia | 🇻🇳 Vietnamese / Tiếng Việt | 🇪🇸 Spanish / Español
-✅ 🇫🇷 French / Français | 🇵🇹 Portuguese / Português | 🇷🇺 Russian / Русский
-✅ 🇰🇷 Korean / 한국어 | 🇸🇦 Arabic / العربية | 🇵🇭 Filipino / Tagalog | 🇩🇪 German / Deutsch | Urdu
-
-
-
-💡 Tip: Use these audio tracks to create amazing CapCut edits just like in this tutorial!
-
-🔔 Don’t forget to Like, Share, and Subscribe for more CapCut tutorials in multiple languages!" — @bd-cutopia
-
-> "muchísimas gracias. Estoy empezando en Capcut y me encantan estos tutoriales. Me quedo por aquí" — @RocioLago.
-
-> "Can i get  capcut link" — @behealthyandwealthy-f4u
+> "a partir da adição dos keyframes nada funcionou. Nada aparecia na parte inferior, so a tela branca na metade de cima, segui tudo passo a passo." — @johnamazonas8436
 

@@ -2,24 +2,32 @@
 
 ## Editing Architecture
 - Category: CapCut & NLE Visual Techniques
-- Duration: 60.0s (1.0 min)
-- Cut Frequency: 2.61s per cut (~23.0 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Duration: 1171.0s (19.5 min)
+- Cut Frequency: 2.6s per cut (~23.1 cuts/min)
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
-- Maintain high-tempo visual rhythm: cut every 2.4s and align audio transitions with vocal pauses.
+- Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
+- Layer whoosh/riser SFX 2-3 frames before every cut transition, with heavy thud impact on data reveals.
+- Cut to archival or contextual B-roll every 2.0 to 2.8 seconds to maintain visual dopamine.
+- Render stark bold kinetic subtitles with active-word yellow/cyan highlights matching spoken timing.
+- Apply high-contrast desaturated grade with warm skin tones and deep obsidian shadows (#0B0F19).
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@DYLANOLSEN221`, SFX: `click.wav`, Grade: `hard_bw`)
 
 ## Viewer Feedback on Pacing
-> "Watch me edit this video in a full YouTube editing breakdown. Only in CapCut Lab: https://mattloui.com/?cl=YY2DA8BJ" — @MattLoui
+> "Hi guys - hope this comment helps. I experienced an issue with motion tracking too and found a solution.
 
-> "Thank you. I just recreated this exact edit. I'm so thrilled. ❤" — @Skinfluencer1
+Essentially what I gathered from video was the motion tracking essentially “ stuck “ the words onto the background, and when I tried it my words never stuck. 
 
-> "Great video, thank you ! 👍🙏
-One missing feature in CapCut that would be a huge time-saver is a proper alignment/snapping tool. For instance, around 05:03, it's hard to tell whether two words or elements are sitting on the exact same baseline. I frequently have to align multiple text layers and lower thirds across my projects, and eyeballing it every time is a real headache. Does anyone have a reliable workaround for this?" (at 05:03) — @dimichdimich
+So what I did was duplicate the background then select all the text layers and the “ newly duplicated “ background and make it a compound clip ( that is alternative way to “ stick “ the text onto the background) . 
+
+Then you’ll follow the same steps he does in the video , but instead of us using key frames on the background like he does , we use them on the compound clip
+
+The only downside I found to this was when adding in the per word animations , you can’t view it with the overall motion at the same time , but it’s just a little extra tweaking" — @dylanolsen221
 

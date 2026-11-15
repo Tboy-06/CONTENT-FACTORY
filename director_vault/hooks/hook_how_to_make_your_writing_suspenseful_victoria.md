@@ -1,29 +1,27 @@
 # Hook: How to make your writing suspenseful - Victoria Smith
 
 ## Performance Telemetry
-- Views: 3,422,767
-- Likes: 117,294
+- Views: 3,425,445
+- Likes: 117,316
 - View-to-Like Ratio: 29.2:1
-- Primary First Spoken Line (0:00 - 0:03): "What makes a good horror story? Sure, you could throw 
-in some hideous monsters, fountains of blood,"
+- Primary Opening: "Monsters and blood do not scare people; withholding the monster is the ultimate psychological weapon."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "What makes a good horror story? Sure, you could throw 
-in some hideous monsters, fountains of blood,"
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
-
 ### Counter Intuitive
-> "Everything you think you know about How to make your writing suspenseful - V is completely backwards."
+> "Monsters and blood do not scare people; withholding the monster is the ultimate psychological weapon."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
+
+### Curiosity Gap
+> "H.P. Lovecraft discovered a hidden psychological switch that forces readers to terrify themselves."
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to make your writing suspensefu."
+> "Every time you describe the monster too soon, you are actively destroying your reader's suspense."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

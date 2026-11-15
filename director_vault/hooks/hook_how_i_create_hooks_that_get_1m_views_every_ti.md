@@ -1,31 +1,27 @@
 # Hook: how i create hooks that get 1M+ views every time (just copy me)
 
 ## Performance Telemetry
-- Views: 134,781
-- Likes: 6,839
+- Views: 135,365
+- Likes: 6,861
 - View-to-Like Ratio: 19.7:1
-- Primary First Spoken Line (0:00 - 0:03): "A hook, very simply, is the first 3
-seconds of your video. And if you don't get people past your first 3 seconds of
-your video, your watch t"
+- Primary Opening: "Ninety-nine percent of creators fail before the third second, not because their content is bad, but because they are missing this exact psychological tripwire."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "A hook, very simply, is the first 3
-seconds of your video. And if you don't get people past your first 3 seconds of
-your"
+> "Ninety-nine percent of creators fail before the third second, not because their content is bad, but because they are missing this exact psychological tripwire."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about how i create hooks that get 1M+ views ev is completely backwards."
+> "Working harder on your videos is actually destroying your channel, while doing this one counter-intuitive tweak prints millions of views on autopilot."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with how i create hooks that get 1M+ vie."
+> "Every single second you waste on your video's introduction is actively murdering your watch time and killing your chances of ever going full-time."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

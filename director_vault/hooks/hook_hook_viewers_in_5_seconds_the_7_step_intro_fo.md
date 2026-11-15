@@ -1,31 +1,27 @@
 # Hook: Hook Viewers in 5 Seconds: The 7-Step Intro Formula
 
 ## Performance Telemetry
-- Views: 6,021
+- Views: 6,023
 - Likes: 436
 - View-to-Like Ratio: 13.8:1
-- Primary First Spoken Line (0:00 - 0:03): "If people click off your video before
-you finish your intro, it's not your topic, it's your tone. The first 30
-seconds aren't about informat"
+- Primary Opening: "Your channel isn't failing because of your topic; it's dying because of the first seven seconds you refuse to fix."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "If people click off your video before
-you finish your intro, it's not your topic, it's your tone. The first 30
-seconds a"
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
-
 ### Counter Intuitive
-> "Everything you think you know about Hook Viewers in 5 Seconds: The 7-Step In is completely backwards."
+> "Your channel isn't failing because of your topic; it's dying because of the first seven seconds you refuse to fix."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Hook Viewers in 5 Seconds: The 7-St."
+> "Every single viewer who clicked away in the opening seconds left behind a silent verdict on your entire editing career."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
+
+### Curiosity Gap
+> "What if everything you know about structuring a YouTube introduction is actively repelling the audience you built?"
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 

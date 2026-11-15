@@ -1,31 +1,27 @@
 # Hook: How to Create a Killer Hook (Impossible to Skip)
 
 ## Performance Telemetry
-- Views: 94,667
-- Likes: 3,576
+- Views: 95,097
+- Likes: 3,582
 - View-to-Like Ratio: 26.5:1
-- Primary First Spoken Line (0:00 - 0:03): "If you want your videos to perform
-better, you have to learn how to craft a winning hook. Now, I've studied
-literally thousands of videos. A"
+- Primary Opening: "Ninety-seven percent of viewers decide whether to abandon your video before you even finish your first sentence."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "If you want your videos to perform
-better, you have to learn how to craft a winning hook. Now, I've studied
-literally th"
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
-
-### Counter Intuitive
-> "Everything you think you know about How to Create a Killer Hook (Impossible  is completely backwards."
-
-- **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
-
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to Create a Killer Hook (Imposs."
+> "Ninety-seven percent of viewers decide whether to abandon your video before you even finish your first sentence."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
+
+### Counter Intuitive
+> "The absolute worst part of your video isn't the middle, it's the exact three seconds you spent the least time fixing."
+
+- **Target Duration:** 3.0s
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
+
+### Curiosity Gap
+> "There is a microscopic structural flaw hidden in your last video's introduction that quietly cost you thousands of views."
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 

@@ -1,31 +1,27 @@
 # Hook: Veritasium - why he still gets views
 
 ## Performance Telemetry
-- Views: 2,796,308
-- Likes: 92,476
-- View-to-Like Ratio: 30.2:1
-- Primary First Spoken Line (0:00 - 0:03): "This is a micro This is a robot is
-Aerogel. Shade ball. LED shoelaces mathematical rule book.
->> How does Veritasium make videos about every"
+- Views: 2,809,380
+- Likes: 92,685
+- View-to-Like Ratio: 30.3:1
+- Primary Opening: "He makes videos about abstract math and quantum physics, yet routinely beats Hollywood blockbusters in sheer viewership."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "This is a micro This is a robot is
-Aerogel. Shade ball. LED shoelaces mathematical rule book.
->> How does Veritasium mak"
+> "He makes videos about abstract math and quantum physics, yet routinely beats Hollywood blockbusters in sheer viewership."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Veritasium - why he still gets views is completely backwards."
+> "It is not because he is a good teacher, because thousands of educators explain things better and still get zero views."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Veritasium - why he still gets view."
+> "If you misunderstand the single hidden psychological trigger behind his channel, your content is doomed to remain invisible forever."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

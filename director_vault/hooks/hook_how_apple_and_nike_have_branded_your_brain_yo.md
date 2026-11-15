@@ -1,27 +1,27 @@
 # Hook: How Apple and Nike have branded your brain | Your Brain on Money | Big Think
 
 ## Performance Telemetry
-- Views: 4,913,095
-- Likes: 99,488
+- Views: 4,915,240
+- Likes: 99,503
 - View-to-Like Ratio: 49.4:1
-- Primary First Spoken Line (0:00 - 0:03): "- Coke is just soda. Tylenol is just acetaminophen. And Levi's are just jeans."
+- Primary Opening: "You think you are choosing that $200 sneaker because of the stitching, but your brain has actually been hijacked by a invisible corporate algorithm."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "- Coke is just soda. Tylenol is just acetaminophen. And Levi's are just jeans."
+> "You think you are choosing that $200 sneaker because of the stitching, but your brain has actually been hijacked by a invisible corporate algorithm."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How Apple and Nike have branded your bra is completely backwards."
+> "Paying double for the exact same chemical compound isn't a irrational mistake, it is the predictable result of billion-dollar brain engineering."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How Apple and Nike have branded you."
+> "Every time you choose your favorite logo over a generic alternative, you are surrendering a piece of your free will to a masterclass in psychological warfare."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

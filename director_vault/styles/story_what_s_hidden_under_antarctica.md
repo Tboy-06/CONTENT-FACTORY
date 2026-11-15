@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 1129.0s
-- Hook: "To the naked eye, Antarctica is a desolate, silent wasteland of endless white."
-- Payoff: "As we peer into these ancient depths, we realize that the most extreme frontier on Earth is not in space, but right beneath our feet."
+- Hook: "When you fly over Antarctica, all you see is an endless, silent expanse of white."
+- Payoff: "This pristine subglacial environment completely redefines our understanding of life thriving in the most extreme conditions on Earth."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. To the naked eye, Antarctica is a desolate, silent wasteland of endless white.
-2. Beneath this frozen surface, however, lies a world hidden from humanity for millions of years.
-3. In 1970, Soviet scientists began an ambitious drilling project that would span nearly three decades.
-4. They bored through nearly 4,000 meters of solid ice, pushing deeper into the unknown than anyone had dared before.
-5. Their relentless persistence finally paid off when they struck a secret, subterranean oasis.
-6. Beneath the crushing weight of the ice sheet sat Lake Vostok, a massive body of water sealed off from the surface for 15 million years.
-7. This isolated environment has evolved in total darkness, potentially hosting life forms unknown to modern science.
-8. As we peer into these ancient depths, we realize that the most extreme frontier on Earth is not in space, but right beneath our feet.
+1. When you fly over Antarctica, all you see is an endless, silent expanse of white.
+2. Without the presence of birds or plants, the continent appears completely empty to the naked eye.
+3. However, an extraordinary and hidden world rests far below the surface of the crushing ice sheet.
+4. In 1970, a determined group of Soviet scientists began drilling deep into the frozen crust.
+5. For twenty-eight grueling years, they kept pushing downward through thousands of meters of ice.
+6. They abruptly stopped after reaching a depth of nearly four thousand meters and encountering the unimaginable.
+7. Deep beneath the glacial ceiling, they discovered a secret lake completely sealed off from the rest of the planet for fifteen million years.
+8. This pristine subglacial environment completely redefines our understanding of life thriving in the most extreme conditions on Earth.
 

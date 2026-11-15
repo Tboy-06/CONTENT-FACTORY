@@ -31,3 +31,6 @@ dist/
 frontend_old/
 .DS_Store
 *.log
+
+# Local AI / Ollama Binaries and Model Blobs
+ollama/

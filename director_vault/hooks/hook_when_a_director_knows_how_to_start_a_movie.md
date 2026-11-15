@@ -1,26 +1,26 @@
 # Hook: when a director knows how to start a movie
 
 ## Performance Telemetry
-- Views: 2,392,845
-- Likes: 55,936
+- Views: 2,394,443
+- Likes: 55,949
 - View-to-Like Ratio: 42.8:1
-- Primary Opening: "Most directors spend their entire careers trying to master the opening minute, but David Fincher figured out how to manipulate your subconscious in the first ten seconds."
+- Primary Opening: "One of my favorite things to look for in movies is how filmmakers start their stories."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Most directors spend their entire careers trying to master the opening minute, but David Fincher figured out how to manipulate your subconscious in the first ten seconds."
+> "One of my favorite things to look for in movies is how filmmakers start their stories."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "You think you’re choosing to watch a movie, but the truth is that a master director has already forced you into a specific emotional state before you even see the title card."
+> "You need to give the audience enough information to follow along, but you shouldn't overwhelm them."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "If a film doesn't hook you within the first sixty seconds, you’ve already lost the battle, and most directors are failing because they don't understand the science of the visual handoff."
+> "And David Fincher is a true master of this."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

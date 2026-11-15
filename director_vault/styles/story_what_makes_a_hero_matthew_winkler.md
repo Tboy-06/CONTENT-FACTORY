@@ -1,54 +1,19 @@
 # Story Structure: What makes a hero? - Matthew Winkler
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 274.0s
-- Hook: "Translator: Andrea McDonough
-Reviewer: Bedirhan Cinar"
-- Payoff: ""In the cave you fear to enter
-lies the treasure you seek.""
+- Hook: "What do Harry Potter, Katniss Everdeen, and Frodo all have in common with the ancient legends of human history?"
+- Payoff: "Ultimately, every hero's path reflects our own eternal quest for growth and self-discovery."
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. Translator: Andrea McDonough
-Reviewer: Bedirhan Cinar
-2. What do Harry Potter,
-3. Katniss Everdeen, and Frodo
-4. all have in common
-with the heroes of ancient myths?
-5. (Roar)
-6. What if I told you they are all variants
-of the same hero?
-
-### Act 2: Hidden Mechanism
-1. 2:00: Assistance
-2. The hero needs some help,
-probably from someone older, wiser.
-3. 3:00: Departure
-4. The hero crosses the threshold
-from his normal, safe home,
-5. and enters the special
-world and adventure.
-6. We're not in Kansas anymore.
-
-### Act 3: Crisis/Climax
-1. This quest has changed the hero;
-he has outgrown his old life.
-2. 11:00: Resolution
-3. All the tangled plot lines
-get straightened out.
-4. 12:00: Status Quo,
-5. but upgraded to a new level.
-6. Nothing is quite the same
-once you are a hero.
-
-### Act 4: Aftermath
-1. have an experience that transforms you,
-2. and then you recover and do it again.
-3. You don't literally slay
-dragons or fight Voldemort,
-4. but you face problems just as scary.
-5. Joseph Campbell said,
-6. "In the cave you fear to enter
-lies the treasure you seek."
+### Act 1: Full Narrative Arc
+1. What do Harry Potter, Katniss Everdeen, and Frodo all have in common with the ancient legends of human history?
+2. Beneath their distinct worlds and modern struggles, these iconic figures are actually variants of the exact same timeless protagonist.
+3. Centuries of global storytelling reveal a startling pattern that transcends language, culture, and time itself.
+4. Scholars studied myths from every corner of the earth to decode the hidden architecture of our greatest narratives.
+5. The resulting work introduced the concept of the monomyth, demonstrating how dozens of disparate tales share a singular foundation.
+6. This universal framework is known to writers and dreamers alike as the Hero's Journey.
+7. Far from being a rigid formula, this structure operates as an endless cycle of trial, transformation, and triumph.
+8. Ultimately, every hero's path reflects our own eternal quest for growth and self-discovery.
 

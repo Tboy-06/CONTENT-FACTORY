@@ -1,26 +1,26 @@
 # Hook: You Can Make a Netflix Style Doco About Literally Anything
 
 ## Performance Telemetry
-- Views: 7,245,709
-- Likes: 574,142
+- Views: 7,246,282
+- Likes: 574,138
 - View-to-Like Ratio: 12.6:1
-- Primary Opening: "The secret to a million-dollar Netflix documentary isn't a Hollywood budget; it's a specific shape of light hidden on your subject's cheek."
+- Primary Opening: "Hollywood is terrified that you just realized a twenty-dollar camera rig can destroy a million-dollar budget."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "The secret to a million-dollar Netflix documentary isn't a Hollywood budget; it's a specific shape of light hidden on your subject's cheek."
+> "Hollywood is terrified that you just realized a twenty-dollar camera rig can destroy a million-dollar budget."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "You don't need a film crew to create a masterpiece, because the most cinematic stories on earth are currently being ignored in your own backyard."
+> "You don't need a massive crew to make a cinematic masterpiece; you just need to exploit one simple lighting trick on a cheekbone."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "Most people spend ten thousand dollars to look amateur, while a two-lens setup and one specific lighting trick are all that separate you from a Netflix deal."
+> "Every excuse keeping you from producing your own Netflix-tier documentary is a lie designed to keep you powerless."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

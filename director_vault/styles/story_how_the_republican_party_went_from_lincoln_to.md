@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 440.0s
-- Hook: "The Republican Party was forged in the fires of the Civil War to dismantle slavery, yet today it stands as the champion of a starkly differe"
-- Payoff: "Tracing this 160-year arc reveals that the Republican Party’s transformation is not merely a change in leadership, but a total revolution in"
+- Hook: "Today’s Republican Party staunchly opposes big government, dominates the American South, and draws its strongest support from white voters."
+- Payoff: "To understand how modern politics arrived at this exact moment, one must trace the winding path from Lincoln to Trump."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. The Republican Party was forged in the fires of the Civil War to dismantle slavery, yet today it stands as the champion of a starkly different political ideology.
-2. Founded on the principles of federal authority and abolition, the party of Abraham Lincoln once stood as the beacon of progressivism in American politics.
-3. Over the next century, a profound ideological realignment slowly redrew the nation's political map.
-4. As the party pivoted toward small-government conservatism, it gradually began to absorb the voting blocs once loyal to the Democratic Party in the American South.
-5. This shift was cemented during the tumultuous civil rights era, as racial identity became a defining fault line in modern political coalition-building.
-6. The rise of a populist, nationalist movement within the GOP eventually paved the way for the ascent of Donald Trump in 2016.
-7. What was once a coalition centered on equality and centralization has been completely reinvented to prioritize nationalism and skepticism of established authority.
-8. Tracing this 160-year arc reveals that the Republican Party’s transformation is not merely a change in leadership, but a total revolution in the party's foundational soul.
+1. Today’s Republican Party staunchly opposes big government, dominates the American South, and draws its strongest support from white voters.
+2. Its recent presidential nominees have frequently faced heavy criticism for igniting racial tensions on the campaign trail.
+3. Yet things were not always this way for the political organization known as the Grand Old Party.
+4. Over the past 160 years, the institution has undergone a staggering and unprecedented transformation.
+5. The journey began with Abraham Lincoln, a leader who championed a powerful federal government to preserve the Union and end slavery.
+6. Decades of shifting demographics, economic realignments, and strategic political maneuvering gradually flipped the script.
+7. The conservative base migrated southward, adopting a populist platform that fundamentally redefined American conservatism.
+8. To understand how modern politics arrived at this exact moment, one must trace the winding path from Lincoln to Trump.
 

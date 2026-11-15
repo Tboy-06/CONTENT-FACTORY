@@ -1,31 +1,27 @@
 # Hook: The Art of Storytelling and View Retention
 
 ## Performance Telemetry
-- Views: 599,514
+- Views: 599,623
 - Likes: 18,531
 - View-to-Like Ratio: 32.4:1
-- Primary First Spoken Line (0:00 - 0:03): "i've been watching you guys videos on
-creators and interviews on the youtube landscape for a while you've been also
-andrew you've been watch"
+- Primary Opening: "Every single time you blink on screen, an algorithm quietly decides whether your viewer lives or dies."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "i've been watching you guys videos on
-creators and interviews on the youtube landscape for a while you've been also
-andr"
+> "Every single time you blink on screen, an algorithm quietly decides whether your viewer lives or dies."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The Art of Storytelling and View Retenti is completely backwards."
+> "The best retention hacks have nothing to do with flashy editing, and everything to do with psychological traps."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The Art of Storytelling and View Re."
+> "One tiny pacing error in your opening minutes is currently bleeding ninety percent of your audience dry."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

@@ -1,31 +1,27 @@
 # Hook: 15 Psychological Marketing Triggers to MAKE PEOPLE BUY From YOU!
 
 ## Performance Telemetry
-- Views: 1,073,480
-- Likes: 35,834
+- Views: 1,074,454
+- Likes: 35,842
 - View-to-Like Ratio: 30.0:1
-- Primary First Spoken Line (0:00 - 0:03): "in this episode i'm going to unpack 15
-different psychological triggers and cognitive biases that we
-as marketers use on a pretty much daily"
+- Primary Opening: "Right now, your brain is being systematically high-jacked by invisible algorithms designed to empty your bank account without your consent."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "in this episode i'm going to unpack 15
-different psychological triggers and cognitive biases that we
-as marketers use on"
+> "Right now, your brain is being systematically high-jacked by invisible algorithms designed to empty your bank account without your consent."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 15 Psychological Marketing Triggers to M is completely backwards."
+> "You think you make logical purchases, but neuroscience proves you have zero control over what you buy."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 15 Psychological Marketing Triggers."
+> "Every single day you ignore these fifteen hidden cognitive triggers is another day your competitors steal your customers."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

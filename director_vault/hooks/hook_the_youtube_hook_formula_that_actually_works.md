@@ -1,31 +1,27 @@
 # Hook: The YouTube Hook Formula That Actually Works (to blow up your channel)
 
 ## Performance Telemetry
-- Views: 55,796
-- Likes: 2,457
-- View-to-Like Ratio: 22.7:1
-- Primary First Spoken Line (0:00 - 0:03): "The average YouTube video loses 45% of
-viewers in the first 30 seconds. Most creators think better content will fix
-this problem. But here's"
+- Views: 56,044
+- Likes: 2,463
+- View-to-Like Ratio: 22.8:1
+- Primary Opening: "Almost every creator builds their videos completely backward, ensuring viewers leave before the intro even finishes."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "The average YouTube video loses 45% of
-viewers in the first 30 seconds. Most creators think better content will fix
-this"
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
-
 ### Counter Intuitive
-> "Everything you think you know about The YouTube Hook Formula That Actually W is completely backwards."
+> "Almost every creator builds their videos completely backward, ensuring viewers leave before the intro even finishes."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
+
+### Curiosity Gap
+> "What if the reason your channel is stalling isn't your editing, your lighting, or your ideas?"
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The YouTube Hook Formula That Actua."
+> "Nearly half of your audience abandons your video in the first thirty seconds, and you are handing them the remote."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

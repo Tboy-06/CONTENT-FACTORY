@@ -1,29 +1,27 @@
 # Hook: The Law of Attraction Explained
 
 ## Performance Telemetry
-- Views: 11,812,001
-- Likes: 416,108
+- Views: 11,816,734
+- Likes: 416,176
 - View-to-Like Ratio: 28.4:1
-- Primary First Spoken Line (0:00 - 0:03): "Hello there and welcome. I'm Bob Proctor. and I'm going to take you
-back a little in time."
+- Primary Opening: "Hello there and welcome."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Hello there and welcome. I'm Bob Proctor. and I'm going to take you
-back a little in time."
+> "Hello there and welcome."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The Law of Attraction Explained is completely backwards."
+> "and I'm going to take you back a little in time."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The Law of Attraction Explained."
+> "There's no PowerPoints, there's no great technology."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

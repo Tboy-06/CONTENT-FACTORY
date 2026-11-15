@@ -1,27 +1,27 @@
 # Hook: The Untold Truth About Money: How to Build Wealth From Nothing.
 
 ## Performance Telemetry
-- Views: 19,420,643
-- Likes: 978,789
-- View-to-Like Ratio: 19.8:1
-- Primary First Spoken Line (0:00 - 0:03): "Let this circle represent $1,000,000 This is what ten million dollars would look like This is what one hundred million dollars would look li"
+- Views: 19,430,795
+- Likes: 978,821
+- View-to-Like Ratio: 19.9:1
+- Primary Opening: "You are staring at a statistical dead end while billionaires play a completely different game."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Let this circle represent $1,000,000 This is what ten million dollars would look like This is what one hundred million d"
+> "You are staring at a statistical dead end while billionaires play a completely different game."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The Untold Truth About Money: How to Bui is completely backwards."
+> "Saving your hard-earned paycheck is actually the slowest way to guarantee you stay broke."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The Untold Truth About Money: How t."
+> "Every single day you spend trading hours for dollars, the financial gap widens beyond your control."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

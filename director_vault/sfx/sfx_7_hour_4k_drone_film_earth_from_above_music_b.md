@@ -23,12 +23,12 @@
 > "Banff National Park Alberta South Australia Coastline Maui, Hawaii Banff National Park, Alberta Lofoten Islands, Norway Outer Fiji Islands"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "Yasawa Islands, Fiji Eastern Iowa, USA Colorado, USA Zion National Park Area, Utah Arches National Park, Utah Utah, USA"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5

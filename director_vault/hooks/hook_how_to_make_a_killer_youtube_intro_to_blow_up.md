@@ -1,31 +1,27 @@
 # Hook: how to make a killer youtube intro (to blow up your channel)
 
 ## Performance Telemetry
-- Views: 1,731,235
-- Likes: 85,212
-- View-to-Like Ratio: 20.3:1
-- Primary First Spoken Line (0:00 - 0:03): "This is how to make a killer YouTube
-intro to blow up your channel. Watch closely because many creators got their
-big break from a single vi"
+- Views: 1,734,955
+- Likes: 85,254
+- View-to-Like Ratio: 20.4:1
+- Primary Opening: "Hundreds of thousands of creators poured their lives into masterpieces, only to watch 80 percent of their audience vanish in less than twenty seconds."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "This is how to make a killer YouTube
-intro to blow up your channel. Watch closely because many creators got their
-big br"
+> "Hundreds of thousands of creators poured their lives into masterpieces, only to watch 80 percent of their audience vanish in less than twenty seconds."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about how to make a killer youtube intro (to b is completely backwards."
+> "Making a better video is actually the fastest way to kill your channel if you get the opening seconds completely wrong."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with how to make a killer youtube intro ."
+> "Your next upload might be a viral masterpiece, but a single fatal mistake at the very beginning will guarantee nobody ever sees it."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

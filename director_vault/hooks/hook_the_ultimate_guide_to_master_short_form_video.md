@@ -1,31 +1,27 @@
 # Hook: The Ultimate Guide to Master Short-Form Video Editing! (Easy Guide)
 
 ## Performance Telemetry
-- Views: 749,442
-- Likes: 23,613
-- View-to-Like Ratio: 31.7:1
-- Primary First Spoken Line (0:00 - 0:03): "I have figured out the key tricks to
-making a short video go vir see I'm a 17-year-old with over 3 years of
-experience in editing short form"
+- Views: 750,211
+- Likes: 23,626
+- View-to-Like Ratio: 31.8:1
+- Primary Opening: "Algorithms do not care about your hard work; they only care about a microscopic editing flaw that is keeping your views at zero."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "I have figured out the key tricks to
-making a short video go vir see I'm a 17-year-old with over 3 years of
-experience i"
+> "Algorithms do not care about your hard work; they only care about a microscopic editing flaw that is keeping your views at zero."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The Ultimate Guide to Master Short-Form  is completely backwards."
+> "Everything you have been told about pacing and transitions in short-form video is actually training the audience to scroll away faster."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The Ultimate Guide to Master Short-."
+> "If you keep editing your videos the exact same way, you are guaranteed to waste years chasing a viral hit that will never come."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

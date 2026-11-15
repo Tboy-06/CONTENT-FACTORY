@@ -1,31 +1,27 @@
 # Hook: Watch This To Generate 1000s of Leads (In Any Niche)
 
 ## Performance Telemetry
-- Views: 914,638
-- Likes: 22,932
-- View-to-Like Ratio: 39.9:1
-- Primary First Spoken Line (0:00 - 0:03): "What if I told you there were a way that
-you could get more leads than you're currently  getting? Sell more of
-those leads overall without i"
+- Views: 921,437
+- Likes: 22,988
+- View-to-Like Ratio: 40.1:1
+- Primary Opening: "Every single dollar you are currently spending on ads is completely failing to capture the most profitable market sitting directly in front of you."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "What if I told you there were a way that
-you could get more leads than you're currently  getting? Sell more of
-those lea"
+> "Every single dollar you are currently spending on ads is completely failing to capture the most profitable market sitting directly in front of you."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Watch This To Generate 1000s of Leads (I is completely backwards."
+> "The fastest way to scale a $250 million portfolio has nothing to do with increasing your advertising budget and everything to do with stopping a silent leak."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Watch This To Generate 1000s of Lea."
+> "While your competitors bleed cash trying to buy cold attention, a hidden mechanism is already generating thousands of qualified leads for free."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

@@ -1,31 +1,27 @@
 # Hook: Visual Storytelling 101
 
 ## Performance Telemetry
-- Views: 2,317,124
-- Likes: 80,558
+- Views: 2,318,013
+- Likes: 80,571
 - View-to-Like Ratio: 28.8:1
-- Primary First Spoken Line (0:00 - 0:03): "every now and again we partner with our
-friends over at MZ who are awesome enough to help us bring some great
-educational deliciousness for "
+- Primary Opening: "every now and again we partner with our friends over at MZ who are awesome enough to help us bring some great educational deliciousness for free for"
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "every now and again we partner with our
-friends over at MZ who are awesome enough to help us bring some great
-educationa"
+> "every now and again we partner with our friends over at MZ who are awesome enough to help us bring some great educational deliciousness for free for"
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Visual Storytelling 101 is completely backwards."
+> "your faces and if you don't know MZ is a provider of online education with fantastic instructors and filmmakers like Philip Bloom if you don't know who"
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Visual Storytelling 101."
+> "Philip bloom is what are you doing he has been around for a long time doing some really incredible work and today we have a chunk of his class to show you"
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

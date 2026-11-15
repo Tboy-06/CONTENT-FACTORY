@@ -1,58 +1,19 @@
 # Story Structure: 3 Mistakes Screenwriters Make In Act 1 That Ruin A Screenplay - Michael Hauge
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 310.0s
-- Hook: "Film Courage: What are some common mistakes
-that writers make in the first two stages"
-- Payoff: "But you don’t rush the story."
+- Hook: "Film Courage: What are some common mistakes that writers make in the first two stages of writing a screenplay which compromises the first ac"
+- Payoff: "They’ll get so caught up in the inner journey, in the depth of dimension of the character or in the themes they want to deliver or they’ll j"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. Film Courage: What are some common mistakes
-that writers make in the first two stages
-2. of writing a screenplay which compromises
-the first act and then subsequent acts?
-3. What are the first parts that end up compromising
-the entire work?
-4. Michael Hauge: I would actually go a little
-further with your question.
-5. I would say, if you have problems in the first
-two stages, it’s impossible for your script
-6. to work.
-
-### Act 2: Hidden Mechanism
-1. ideas.
-2. Even if you take a story idea that is fairly
-complex like INCEPTION.
-3. That seems pretty complicated.
-4. I have a little trouble grasping some of that
-but at it’s very core, it’s very simple.
-5. A group of people want to penetrate a person’s
-dreams down to a layer where they can change
-6. behavior without him knowing it.
-
-### Act 3: Crisis/Climax
-1. Second thing is not showing the everyday life
-of the character before they get into the
-2. story moving forward.
-3. We have to have a set-up.
-4. It can be very brief or the character can
-be on-the-move, so to speak, action wise.
-5. They can’t have just arrived into town and
-we see them going to a meeting or going to
-6. meet with a hit man or whatever it might be.
-
-### Act 4: Aftermath
-1. The third thing I would say is jumping from
-the set-up to the outer motivation.
-2. I think because screenwriters are inundated
-with the idea that you’ve got to grab the
-3. reader right away and you’ve got to get
-things going and Hollywood moves fast and
-4. so on….all of that is true bit it doesn’t
-mean you rush the story.
-5. What it means is you start building in conflict
-as soon as you can.
-6. But you don’t rush the story.
+### Act 1: Full Narrative Arc
+1. Film Courage: What are some common mistakes that writers make in the first two stages of writing a screenplay which compromises the first act and then subsequent acts?
+2. What are the first parts that end up compromising the entire work?
+3. Michael Hauge: I would actually go a little further with your question.
+4. I would say, if you have problems in the first two stages, it’s impossible for your script to work.
+5. I have this sort of motto and that is “If you’re having story problems, all roads lead to the hero’s outer motivation.”
+6. Because one of the biggest issues, one of the most difficult things for writers to really embrace is the idea that at the foundation of any story is a visible goal that the hero
+7. wants to cross at the end of the story.
+8. They’ll get so caught up in the inner journey, in the depth of dimension of the character or in the themes they want to deliver or they’ll just think the premise is good, so they’ll
 

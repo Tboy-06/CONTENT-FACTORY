@@ -15,6 +15,7 @@ import logging
 import os
 import re
 import socket
+import subprocess
 import urllib.request
 from typing import Any, Dict, Optional
 
@@ -32,6 +33,86 @@ def clean_json_text(text: str) -> str:
     clean = re.sub(r"^```[a-zA-Z0-9_-]*\n?", "", clean)
     clean = re.sub(r"\n?```$", "", clean)
     return clean.strip()
+
+
+
+LLAMA_SERVER_BIN = r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe"
+LOCAL_GGUF_BLOB = r"D:\CONTENT-FACTORY\ollama\models\copilot-brain.gguf"
+# Fallback paths if D: drive is unmounted
+_FALLBACK_BIN = r"C:\cf_training\bin\llama-server.exe"
+_FALLBACK_BLOB = r"C:\Users\User\.ollama\models\blobs\sha256-6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff"
+_LOCAL_BRAIN_PROC: Optional[subprocess.Popen] = None
+
+
+async def ensure_local_brain(timeout_secs: int = 60) -> bool:
+    """Wakes up the local 2.01 GB GGUF model blob on demand using llama-server.exe without eating RAM when idle."""
+    global _LOCAL_BRAIN_PROC
+    if is_ollama_ready():
+        return True
+
+    # If the process isn't running at all, spawn it
+    if not is_ollama_running():
+        bin_path = LLAMA_SERVER_BIN if os.path.exists(LLAMA_SERVER_BIN) else _FALLBACK_BIN
+        blob_path = LOCAL_GGUF_BLOB if os.path.exists(LOCAL_GGUF_BLOB) else _FALLBACK_BLOB
+
+        if not os.path.exists(bin_path) or not os.path.exists(blob_path):
+            logger.warning(f"[Brain] llama-server ({bin_path}) or GGUF blob ({blob_path}) not found.")
+            return False
+
+        logger.info(f"[Brain] Waking up 2.01 GB GGUF blob on demand via llama-server.exe ({blob_path})...")
+        cmd = [
+            bin_path,
+            "-m", blob_path,
+            "--port", "11434",
+            "--host", "127.0.0.1",
+            "-c", "1024",
+            "-t", "6",
+            "--log-disable",
+            "--sleep-idle-seconds", "300"
+        ]
+        try:
+            _LOCAL_BRAIN_PROC = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        except Exception as e:
+            logger.error(f"[Brain] Failed to start llama-server.exe: {e}")
+            return False
+
+    # Wait until model is fully loaded and ready (returns HTTP 200 from /health)
+    for _ in range(timeout_secs):
+        await asyncio.sleep(1)
+        if is_ollama_ready():
+            logger.info("[Brain] Local GGUF llama-server is online, model loaded, and ready on http://127.0.0.1:11434")
+            return True
+
+    return is_ollama_ready()
+
+
+def is_ollama_ready(timeout: float = 1.0) -> bool:
+    """Checks whether local llama-server or Ollama is online AND ready to serve completions."""
+    # 1. Try llama-server /health (returns 200 when ready, 503 while loading)
+    try:
+        req = urllib.request.Request("http://127.0.0.1:11434/health")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                return True
+    except urllib.error.HTTPError:
+        return False  # e.g. 503 Service Unavailable (loading model)
+    except Exception:
+        pass
+
+    # 2. Try standard Ollama root / (returns 200 'Ollama is running')
+    try:
+        req = urllib.request.Request("http://127.0.0.1:11434/")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                return True
+    except Exception:
+        pass
+
+    return False
 
 
 def is_ollama_running(timeout: float = 0.2) -> bool:
@@ -68,8 +149,80 @@ async def call_ollama(
     num_predict: int = 2048,
     timeout: float = 60.0
 ) -> Optional[str]:
-    """Queries local Ollama instance with think=False to prevent 80s reasoning delays."""
-    if not is_ollama_running():
+    """Queries local brain instance (llama-server /v1/chat/completions or Ollama /api/chat)."""
+    if not is_ollama_ready():
+        return None
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+
+    def _sync_req():
+        import time
+        # 1. Try OpenAI-compatible endpoint (native to llama-server.exe)
+        for attempt in range(4):
+            try:
+                openai_url = "http://127.0.0.1:11434/v1/chat/completions"
+                payload = {
+                    "messages": messages,
+                    "max_tokens": min(num_predict, 1024),
+                    "temperature": 0.3
+                }
+                if format_json:
+                    payload["response_format"] = {"type": "json_object"}
+                req = urllib.request.Request(
+                    openai_url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    raw = json.loads(resp.read().decode("utf-8"))
+                    choices = raw.get("choices", [])
+                    if choices:
+                        return choices[0].get("message", {}).get("content", "")
+            except urllib.error.HTTPError as he:
+                if he.code == 503 and attempt < 3:
+                    time.sleep(2)
+                    continue
+                logger.debug(f"[Brain] llama-server HTTP error: {he}")
+                break
+            except Exception as oe:
+                logger.debug(f"[Brain] llama-server /v1/chat/completions fallback to /api/chat: {oe}")
+                break
+
+        # 2. Fallback to standard Ollama endpoint
+        try:
+            ollama_payload: Dict[str, Any] = {
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "think": False,
+                "keep_alive": "5m",
+                "options": {
+                    "temperature": 0.3,
+                    "num_predict": num_predict,
+                    "think": False,
+                }
+            }
+            if format_json:
+                ollama_payload["format"] = "json"
+            req = urllib.request.Request(
+                OLLAMA_ENDPOINT,
+                data=json.dumps(ollama_payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = json.loads(resp.read().decode("utf-8"))
+                return raw.get("message", {}).get("content", "")
+        except Exception as e:
+            logger.warning(f"[Brain] Local Ollama /api/chat query failed: {e}")
+            return None
+
+    try:
+        content = await asyncio.to_thread(_sync_req)
+        return content
+    except Exception as e:
+        logger.warning(f"Local brain inference error: {e}")
         return None
     messages = []
     if system_prompt:
@@ -257,8 +410,10 @@ async def ask_brain(
     - "auto": Online Cloud priority with automatic Ollama offline fallback.
     """
     if engine_mode == "offline_spark":
-        if is_ollama_running():
-            logger.info(f"[Brain] Explicit engine_mode='offline_spark': Engaging local Ollama ({DEFAULT_OLLAMA_MODEL})...")
+        if not is_ollama_ready():
+            await ensure_local_brain()
+        if is_ollama_ready():
+            logger.info(f"[Brain] Explicit engine_mode='offline_spark': Engaging local GGUF brain ({DEFAULT_OLLAMA_MODEL})...")
             res = await call_ollama(
                 prompt,
                 system_prompt=system_prompt,
@@ -267,7 +422,7 @@ async def ask_brain(
             )
             if res:
                 return clean_json_text(res) if format_json else res
-        raise RuntimeError(f"Offline Ollama server ({DEFAULT_OLLAMA_MODEL}) is not running on http://localhost:11434. Please start Ollama or switch to Auto / Cloud mode.")
+        raise RuntimeError(f"Offline GGUF brain server ({DEFAULT_OLLAMA_MODEL}) could not be initialized on http://localhost:11434. Please verify {LLAMA_SERVER_BIN} exists.")
 
     online = is_online() if engine_mode != "cloud" else True
     logger.info(f"[Brain] Routing query (EngineMode={engine_mode}, Online={online})")

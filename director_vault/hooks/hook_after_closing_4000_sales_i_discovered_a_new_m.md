@@ -1,26 +1,26 @@
 # Hook: After Closing 4000+ Sales, I Discovered a New Method to Close Deals Faster
 
 ## Performance Telemetry
-- Views: 1,501,569
-- Likes: 40,587
+- Views: 1,504,302
+- Likes: 40,613
 - View-to-Like Ratio: 37.0:1
-- Primary Opening: "Most sales training is a lie designed to keep you trapped in the middle of the pack, but after overseeing a quarter-billion dollars in annual revenue, I found the one psychological glitch that ends every negotiation instantly."
+- Primary Opening: "Every single thing you've been taught about overcoming objections is mathematically designed to make you lose the deal."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "Most sales training is a lie designed to keep you trapped in the middle of the pack, but after overseeing a quarter-billion dollars in annual revenue, I found the one psychological glitch that ends every negotiation instantly."
-
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
-
 ### Counter Intuitive
-> "Closing is not about persuasion or influence; in fact, the harder you try to convince your prospect, the faster you kill the deal."
+> "Every single thing you've been taught about overcoming objections is mathematically designed to make you lose the deal."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
+### Curiosity Gap
+> "We analyzed four thousand closed transactions to find the exact moment prospects stop listening, and what we found changes everything."
+
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
+
 ### Negative Bias
-> "After 4,000 closed deals, I realized that 90% of salespeople are unknowingly sabotaging their own commissions by using the exact words their prospects are trained to reject."
+> "While your competitors are burning millions on standard closing scripts, elite rainmakers are using a single hidden cognitive trigger to steal your pipeline."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

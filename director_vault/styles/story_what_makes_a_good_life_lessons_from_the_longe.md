@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 767.0s
-- Hook: "If you could invest your time and energy today to guarantee a better future self, where would you place your bets?"
-- Payoff: "Ultimately, the secret to a long, happy life is not found in wealth or status, but in the quality of our relationships."
+- Hook: "Imagine investing your entire life into a future version of yourself, only to realize you placed your bets on the wrong things."
+- Payoff: "True human longevity and happiness are rarely found in bank accounts or spotlight glare, but rather in the quiet resilience of our deepest h"
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. If you could invest your time and energy today to guarantee a better future self, where would you place your bets?
-2. A recent survey of millennials revealed that over 80 percent identify becoming rich as their primary life goal.
-3. Half of those same young adults also claimed that achieving fame is a top priority for their future.
-4. Society constantly bombards us with the message to lean into our careers and push harder for success.
-5. But the longest study on happiness ever conducted offers a starkly different perspective on what truly keeps us healthy.
-6. For decades, researchers tracked the lives of individuals to discover the hidden predictors of longevity and fulfillment.
-7. The data consistently points away from the ledger of bank accounts and the glare of public recognition.
-8. Ultimately, the secret to a long, happy life is not found in wealth or status, but in the quality of our relationships.
+1. Imagine investing your entire life into a future version of yourself, only to realize you placed your bets on the wrong things.
+2. When researchers recently asked a generation of millennials to name their ultimate life goals, the answers were overwhelmingly predictable.
+3. More than eighty percent of those young adults declared that getting rich was their primary ticket to a fulfilling existence.
+4. Another fifty percent admitted that achieving fame and widespread recognition ranked just as high on their ambition lists.
+5. Society constantly bombards us with the exact same message: lean harder into work, push past limits, and accumulate more.
+6. We are conditioned to treat our time and energy as currency meant strictly for professional achievement and status.
+7. Yet, decades of deep scientific inquiry reveal a startling disconnect between what we chase and what actually sustains us.
+8. True human longevity and happiness are rarely found in bank accounts or spotlight glare, but rather in the quiet resilience of our deepest human connections.
 
