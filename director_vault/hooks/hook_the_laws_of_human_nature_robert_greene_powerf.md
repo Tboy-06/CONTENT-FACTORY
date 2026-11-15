@@ -1,26 +1,26 @@
 # Hook: The Laws of Human Nature - Robert Greene | Powerful Lessons
 
 ## Performance Telemetry
-- Views: 1,510,644
-- Likes: 23,791
-- View-to-Like Ratio: 63.5:1
-- Primary Opening: "You are being manipulated by hidden forces you don't even know exist—and until you master the laws governing human behavior, you will always be a pawn in someone else's game."
+- Views: 1,513,406
+- Likes: 23,808
+- View-to-Like Ratio: 63.6:1
+- Primary Opening: "You are being manipulated by hidden forces in your own psyche, and until you master the laws governing them, you will remain a prisoner of your own biology."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "You are being manipulated by hidden forces you don't even know exist—and until you master the laws governing human behavior, you will always be a pawn in someone else's game."
+> "You are being manipulated by hidden forces in your own psyche, and until you master the laws governing them, you will remain a prisoner of your own biology."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Most of what you believe about your own personality is a lie designed to keep you blind to your true, darker motivations."
+> "Empathy is not a virtue; in the hands of a master strategist, it is the most lethal tool for control ever discovered."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "If you fail to decode these 18 psychological triggers, you risk losing your career, your relationships, and your autonomy to the people who already understand how to exploit them."
+> "Most people spend their entire lives sleepwalking through social patterns that are actively sabotaging their success, unaware that they are playing a rigged game."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

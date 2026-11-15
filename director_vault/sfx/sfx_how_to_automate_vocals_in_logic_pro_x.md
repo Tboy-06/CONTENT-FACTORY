@@ -23,12 +23,12 @@
 > "be taking a look at how to automate parameters in logic now you're probably asking wavy what's automation is that kind of like"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "drawing pictures and having to move it is kind of like that except that's animation this is automation automation in logic pro x is the ability to record"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "automating in logic all right so here we go hey man i want to give a big shout"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "out to mackie for sponsoring this video they make studio gear that's built like a tank and right now we have a giveaway going on that you can enter to win some"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

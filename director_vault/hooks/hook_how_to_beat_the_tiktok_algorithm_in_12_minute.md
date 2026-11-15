@@ -1,31 +1,27 @@
 # Hook: How to BEAT the TikTok Algorithm in 12 minutes
 
 ## Performance Telemetry
-- Views: 178,408
-- Likes: 4,402
-- View-to-Like Ratio: 40.5:1
-- Primary First Spoken Line (0:00 - 0:03): "There are a lot of misconceptions about
-the TikTok algorithm in 2026. You've got all these wannabe gurus out there
-telling you to use the mi"
+- Views: 179,976
+- Likes: 4,417
+- View-to-Like Ratio: 40.7:1
+- Primary Opening: "Everything you think you know about going viral on TikTok in 2026 is a calculated lie designed to keep you invisible."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "There are a lot of misconceptions about
-the TikTok algorithm in 2026. You've got all these wannabe gurus out there
-telli"
+> "Everything you think you know about going viral on TikTok in 2026 is a calculated lie designed to keep you invisible."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to BEAT the TikTok Algorithm in 12 m is completely backwards."
+> "The most effective way to rank on the algorithm isn't by chasing trends—it’s by doing the exact opposite of what the gurus tell you."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to BEAT the TikTok Algorithm in."
+> "You are actively destroying your account's reach every time you follow common viral advice, and the data is finally proving why."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

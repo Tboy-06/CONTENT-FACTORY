@@ -23,12 +23,12 @@
 > "how you can create animation same as like magnets media in a light motion so we will use only null object for this so if you are a content creator you should"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "definitely watch this video and if you have a YouTube channel or posting on social media so I want to tell you something if you ever wonder how some"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "engagement more views more shares and a bigger audience while tools like Premier Pro and cap cut are so powerful but they even don't offer audio to video"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "conversion which is very helpful feature but filora is doing that so let me show you how you can use it with filora turning your podcast or storytelling"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

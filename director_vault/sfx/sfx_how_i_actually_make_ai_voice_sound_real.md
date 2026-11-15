@@ -23,12 +23,12 @@
 > "I can’t get it right. I just don’t sound… like a youtuber."
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "Good? What’s good about that? Have you heard an advice,"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "And just like that, I went down the rabbit hole of… AI voice generators."
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "So… this is how I actually make an AI voice sound… real… Okay, look. Before we get into the technical stuff, if you wanna make a realistic voice with"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

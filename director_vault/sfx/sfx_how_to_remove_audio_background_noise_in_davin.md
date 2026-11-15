@@ -23,12 +23,12 @@
 > "using it for example on how you can remove the background noise in DaVinci Resolve. As you notice, it is having some fan audio noise background. Step"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "number one is double clicking onto dynamics, which are right here. Since my"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "ratio, which is the button on the right side of it. And you want to leave the"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "ratio about half or even a little bit more than the half. And lastly, you want"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

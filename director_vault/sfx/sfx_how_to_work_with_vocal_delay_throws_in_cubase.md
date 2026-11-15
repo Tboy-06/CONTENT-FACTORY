@@ -23,12 +23,12 @@
 > "to automate and effect send so I'm going to go to my vocal track that's a right click and add a uh plugin so say our mono delay and what I want to do is I'll"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "set this value here to quarter note and I'm going to automate just by clicking on the W button and as I move this slider the more over to the right is the"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "will just play back automatically so now that will take real time CPU processing but there's another way that we could process these files"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "offline and that would would allow us to just kind of select a portion of a file so it's listen for our spot for delay throw a day so let's say the word day so"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

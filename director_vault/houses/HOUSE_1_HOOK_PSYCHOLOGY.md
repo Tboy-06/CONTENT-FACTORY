@@ -3,7 +3,7 @@ title: House 1 - Hook Psychology
 house: HOUSE_1_HOOK_PSYCHOLOGY
 type: moc_house
 target_quota: 20000
-current_quota: 376
+current_quota: 403
 tags: [house-1, hooks, retention, second-brain]
 ---
 
@@ -16,11 +16,11 @@ House 1 specializes in the first 3 seconds of video execution. Viewers make a su
 ## 📊 Sub-Room Quota Allocation (4,000 records each)
 | Sub-Room | Focus | Quota | Status |
 |---|---|---|---|
-| `curiosity_gap` | Incomplete information gap forcing viewer closure | `196 / 4,000` | OPEN |
-| `negative_bias` | Loss aversion and existential warning openings | `43 / 4,000` | OPEN |
-| `counter_intuitive` | Challenging common sense with shocking facts | `48 / 4,000` | OPEN |
-| `visual_shock` | Bold visual anomaly shown before any speech | `45 / 4,000` | OPEN |
-| `title_thumbnail_ab` | High-CTR headline packaging and curiosity pairings | `44 / 4,000` | OPEN |
+| `curiosity_gap` | Incomplete information gap forcing viewer closure | `200 / 4,000` | OPEN |
+| `negative_bias` | Loss aversion and existential warning openings | `48 / 4,000` | OPEN |
+| `counter_intuitive` | Challenging common sense with shocking facts | `54 / 4,000` | OPEN |
+| `visual_shock` | Bold visual anomaly shown before any speech | `51 / 4,000` | OPEN |
+| `title_thumbnail_ab` | High-CTR headline packaging and curiosity pairings | `50 / 4,000` | OPEN |
 
 ## 📜 Curated Directing Rules
 - **Rule 1.1:** Never start with "In this video..." or greeting the audience.

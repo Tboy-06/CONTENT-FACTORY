@@ -37,23 +37,25 @@ def clean_json_text(text: str) -> str:
 
 
 LLAMA_SERVER_BIN = r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe"
-COPILOT_GGUF_BLOB = r"D:\CONTENT-FACTORY\ollama\models\copilot-brain.gguf"
 SPARK_GGUF_BLOB = r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf"
-# Fallback paths
+# Fallback paths on C: (zero GGUF models stored on D:)
 _FALLBACK_BIN = r"C:\cf_training\bin\llama-server.exe"
 _LOCAL_BRAIN_PROC: Optional[subprocess.Popen] = None
 
 
 def get_preferred_gguf_blob() -> str:
-    """Returns the active GGUF model blob (supports both Spark-X2.5-4B on C: and copilot-brain on D:)."""
-    model_name = os.environ.get("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL).lower()
-    if "spark" in model_name and os.path.exists(SPARK_GGUF_BLOB):
-        return SPARK_GGUF_BLOB
-    if os.path.exists(COPILOT_GGUF_BLOB):
-        return COPILOT_GGUF_BLOB
+    """Returns the active GGUF model blob from C: models (zero GGUF weights on D:)."""
     if os.path.exists(SPARK_GGUF_BLOB):
         return SPARK_GGUF_BLOB
-    return COPILOT_GGUF_BLOB
+    # Fallback to any GGUF found in C:\models or C:\Users\User\.ollama
+    for search_dir in [r"C:\models", r"C:\Users\User\.ollama\models\blobs"]:
+        if os.path.exists(search_dir):
+            for f in os.listdir(search_dir):
+                if f.lower().endswith(".gguf") or f.startswith("sha256-"):
+                    fp = os.path.join(search_dir, f)
+                    if os.path.isfile(fp) and os.path.getsize(fp) > 500 * 1024 * 1024:
+                        return fp
+    return SPARK_GGUF_BLOB
 
 
 async def ensure_local_brain(timeout_secs: int = 60) -> bool:

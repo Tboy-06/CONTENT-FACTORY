@@ -1,26 +1,26 @@
 # Hook: How to Go Insanely Viral (Almost) Every Time by Hacking Attention
 
 ## Performance Telemetry
-- Views: 61,162
-- Likes: 2,900
+- Views: 61,350
+- Likes: 2,906
 - View-to-Like Ratio: 21.1:1
-- Primary Opening: "Three billion views. Zero creative budget. One secret algorithm that forces the human brain to hit the share button."
+- Primary Opening: "Three billion views later, I realized the algorithm doesn't care about your production quality; it cares about one specific psychological trigger you're currently ignoring."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Three billion views. Zero creative budget. One secret algorithm that forces the human brain to hit the share button."
+> "Three billion views later, I realized the algorithm doesn't care about your production quality; it cares about one specific psychological trigger you're currently ignoring."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "You think your content fails because your editing is bad, but the reality is you’re accidentally boring your audience into leaving in the first two seconds."
+> "Your content is failing not because your ideas are bad, but because you are playing by the rules that the platform is actively trying to de-rank."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "If you don't master the psychological trigger I use to manipulate attention, your next video is already dead on arrival."
+> "Most creators are one minor edit away from a total channel collapse, and the fix is a blueprint so simple it feels like a glitch in the system."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

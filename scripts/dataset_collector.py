@@ -108,61 +108,76 @@ def normalize_camera(val: Any, genre: str = "auto") -> str:
     }
     return genre_defaults.get(genre, "cosine_in")
 
+GENRE_GRADE_POOLS = {
+    "crime_doc": ["teal_split", "hard_bw"],
+    "comedy_skit": ["skit_warm"],
+    "action_hype": ["action_crush"],
+    "movie_cinema": ["cinema_scope"],
+    "viral_edu": ["teal_split", "amber"],
+    "auto": ["teal_split", "amber"]
+}
+
+GENRE_MOTION_POOLS = {
+    "crime_doc": ["declassified_scan", "evidence_board", "map_flyover", "treated_image", "quote_box"],
+    "comedy_skit": ["treated_image", "quote_box", "stat_counter"],
+    "action_hype": ["red_slam_word", "treated_image", "stat_counter"],
+    "movie_cinema": ["treated_image", "quote_box"],
+    "viral_edu": ["stat_counter", "workflow_stepper", "3_item_list", "treated_image", "quote_box"],
+    "auto": ["treated_image", "quote_box", "stat_counter", "workflow_stepper"]
+}
+
+GENRE_CAMERA_POOLS = {
+    "crime_doc": ["dolly_vertigo", "cosine_in", "pan_right", "rack_focus_bokeh", "orbital"],
+    "comedy_skit": ["snap_zoom", "cosine_in", "orbital", "cosine_out"],
+    "action_hype": ["camera_shake", "snap_zoom", "cosine_in", "dolly_vertigo"],
+    "movie_cinema": ["rack_focus_bokeh", "orbital", "pan_right", "cosine_in"],
+    "viral_edu": ["cosine_in", "snap_zoom", "orbital", "pan_right"],
+    "auto": ["cosine_in", "snap_zoom", "orbital", "pan_right", "rack_focus_bokeh"]
+}
+
 def normalize_filter(val: Any, genre: str = "auto") -> str:
+    g = genre if genre in GENRE_GRADE_POOLS else "auto"
+    allowed = GENRE_GRADE_POOLS.get(g, ["teal_split"])
     s = str(val or "").strip().lower()
-    if s in VALID_FILTERS:
+    if s in allowed:
         return s
-    if "bw" in s or "black" in s or "white" in s or "monochrome" in s:
+    if ("bw" in s or "black" in s or "white" in s or "monochrome" in s) and "hard_bw" in allowed:
         return "hard_bw"
-    if "teal" in s or "cyan" in s or "split" in s:
+    if ("teal" in s or "split" in s or "cyan" in s) and "teal_split" in allowed:
         return "teal_split"
-    if "warm" in s or "skit" in s:
+    if ("warm" in s or "skit" in s or "comedy" in s) and "skit_warm" in allowed:
         return "skit_warm"
-    if "amber" in s or "sepia" in s:
+    if ("amber" in s or "sepia" in s) and "amber" in allowed:
         return "amber"
-    if "crush" in s or "action" in s or "contrast" in s:
+    if ("crush" in s or "action" in s or "contrast" in s) and "action_crush" in allowed:
         return "action_crush"
-    if "cinema" in s or "scope" in s or "letterbox" in s or "anamorphic" in s:
+    if ("cinema" in s or "scope" in s or "letterbox" in s or "anamorphic" in s) and "cinema_scope" in allowed:
         return "cinema_scope"
-    genre_defaults = {
-        "crime_doc": "teal_split",
-        "comedy_skit": "skit_warm",
-        "action_hype": "action_crush",
-        "movie_cinema": "cinema_scope",
-        "viral_edu": "teal_split"
-    }
-    return genre_defaults.get(genre, "teal_split")
+    return allowed[0]
 
 def normalize_motion_type(val: Any, genre: str = "auto") -> str:
+    g = genre if genre in GENRE_MOTION_POOLS else "auto"
+    allowed = GENRE_MOTION_POOLS.get(g, ["treated_image"])
     s = str(val or "").strip().lower()
-    if s in VALID_MOTION_TYPES:
+    if s in allowed:
         return s
-    if "declass" in s or "scan" in s or "dossier" in s or "document" in s:
+    if ("declass" in s or "scan" in s or "dossier" in s or "document" in s) and "declassified_scan" in allowed:
         return "declassified_scan"
-    if "evidence" in s or "board" in s or "cork" in s:
+    if ("evidence" in s or "board" in s or "cork" in s) and "evidence_board" in allowed:
         return "evidence_board"
-    if "map" in s or "flyover" in s or "globe" in s or "satellite" in s:
+    if ("map" in s or "flyover" in s or "globe" in s or "satellite" in s) and "map_flyover" in allowed:
         return "map_flyover"
-    if "stat" in s or "counter" in s or "metric" in s or "number" in s:
+    if ("stat" in s or "counter" in s or "metric" in s or "number" in s) and "stat_counter" in allowed:
         return "stat_counter"
-    if "slam" in s or "red" in s or "title" in s or "text" in s or "badge" in s:
+    if ("slam" in s or "red" in s or "title" in s or "text" in s or "badge" in s) and "red_slam_word" in allowed:
         return "red_slam_word"
-    if "step" in s or "workflow" in s or "process" in s:
+    if ("step" in s or "workflow" in s or "process" in s) and "workflow_stepper" in allowed:
         return "workflow_stepper"
-    if "list" in s or "item" in s or "bullet" in s:
+    if ("list" in s or "item" in s or "bullet" in s) and "3_item_list" in allowed:
         return "3_item_list"
-    if "quote" in s:
+    if "quote" in s and "quote_box" in allowed:
         return "quote_box"
-    if "treat" in s or "image" in s or "photo" in s or "broll" in s or "plate" in s:
-        return "treated_image"
-    genre_defaults = {
-        "crime_doc": "declassified_scan",
-        "comedy_skit": "treated_image",
-        "action_hype": "red_slam_word",
-        "movie_cinema": "treated_image",
-        "viral_edu": "stat_counter"
-    }
-    return genre_defaults.get(genre, "treated_image")
+    return allowed[0]
 
 def normalize_sfx(val: Any, beat_idx: int = 1, total_beats: int = 6) -> str:
     s = str(val or "").strip().lower()
@@ -183,42 +198,51 @@ def normalize_sfx(val: Any, beat_idx: int = 1, total_beats: int = 6) -> str:
     return "none"
 
 def enforce_beat_variety(beats: List[Dict[str, Any]], genre: str = "auto") -> List[Dict[str, Any]]:
-    """Guarantees that two consecutive beats NEVER share the same camera or motion_type."""
-    cam_pools = [
-        "cosine_in", "snap_zoom", "camera_shake", "orbital",
-        "dolly_vertigo", "rack_focus_bokeh", "cosine_out", "pan_right"
-    ]
-    motion_pools = [
-        "treated_image", "declassified_scan", "stat_counter", "red_slam_word",
-        "workflow_stepper", "quote_box", "evidence_board", "map_flyover", "3_item_list"
-    ]
+    """
+    Guarantees strict genre visual consistency and zero consecutive duplicate cameras/motion cards:
+    - The color grade (filter) is strictly locked to the genre across all beats (no strobe flickers).
+    - Camera and genre-appropriate motion cards rotate so adjacent beats NEVER repeat.
+    """
+    g = genre if genre in GENRE_MOTION_POOLS else "auto"
+    cam_pools = GENRE_CAMERA_POOLS.get(g, GENRE_CAMERA_POOLS["auto"])
+    motion_pools = GENRE_MOTION_POOLS.get(g, GENRE_MOTION_POOLS["auto"])
+    primary_grade = normalize_filter("", g)
 
-    for i in range(1, len(beats)):
-        # Camera variety check
-        if beats[i]["camera"] == beats[i - 1]["camera"]:
-            candidates = [c for c in cam_pools if c != beats[i - 1]["camera"]]
+    for i in range(len(beats)):
+        # 1. Color grade strictly locked to genre across the entire scene (prevents rainbow strobe)
+        beats[i]["filter"] = primary_grade
+
+        # 2. Camera variety (never repeat previous camera)
+        if i > 0 and beats[i]["camera"] == beats[i - 1]["camera"]:
+            candidates = [c for c in cam_pools if c != beats[i - 1]["camera"]] or cam_pools
             next_c = beats[i + 1]["camera"] if i + 1 < len(beats) else None
             strict = [c for c in candidates if c != next_c] or candidates
             beats[i]["camera"] = strict[i % len(strict)]
+        elif beats[i]["camera"] not in cam_pools:
+            beats[i]["camera"] = cam_pools[i % len(cam_pools)]
 
-        # Motion type variety check
-        if beats[i]["motion_type"] == beats[i - 1]["motion_type"]:
-            candidates = [m for m in motion_pools if m != beats[i - 1]["motion_type"]]
+        # 3. Motion type variety (must be genre-compatible, never repeat previous motion_type)
+        if beats[i]["motion_type"] not in motion_pools:
+            beats[i]["motion_type"] = motion_pools[i % len(motion_pools)]
+
+        if i > 0 and beats[i]["motion_type"] == beats[i - 1]["motion_type"]:
+            candidates = [m for m in motion_pools if m != beats[i - 1]["motion_type"]] or motion_pools
             next_m = beats[i + 1]["motion_type"] if i + 1 < len(beats) else None
             strict = [m for m in candidates if m != next_m] or candidates
             beats[i]["motion_type"] = strict[i % len(strict)]
 
     return beats
 
-def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Dict[str, Any]]:
+def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> Optional[List[Dict[str, Any]]]:
+    """Strictly validates 6 to 8 beats synthesized by LLM. Zero static fallback sentences."""
     if not isinstance(beats_raw, list):
-        beats_raw = []
+        return None
     
     cleaned_beats = []
     for b in beats_raw:
         if isinstance(b, dict):
             narration = str(b.get("narration") or b.get("text") or b.get("spoken") or "").strip()
-            if narration:
+            if narration and len(narration) >= 10:
                 cleaned_beats.append({
                     "narration": narration,
                     "camera": b.get("camera"),
@@ -227,38 +251,10 @@ def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Di
                     "sfx": b.get("sfx")
                 })
 
-    # Ensure strictly 6 to 8 beats
+    # Require strictly 6 to 8 genuine beats from the LLM—zero synthetic sentence appends
     if len(cleaned_beats) < 6:
-        while len(cleaned_beats) < 6:
-            idx_to_split = 0
-            max_len = 0
-            for i, beat in enumerate(cleaned_beats):
-                if len(beat["narration"]) > max_len:
-                    max_len = len(beat["narration"])
-                    idx_to_split = i
-            if max_len > 30 and " " in cleaned_beats[idx_to_split]["narration"]:
-                target_beat = cleaned_beats[idx_to_split]
-                words = target_beat["narration"].split()
-                mid = len(words) // 2
-                part1 = " ".join(words[:mid]).strip()
-                part2 = " ".join(words[mid:]).strip()
-                target_beat["narration"] = part1
-                cleaned_beats.insert(idx_to_split + 1, {
-                    "narration": part2,
-                    "camera": "cosine_out" if target_beat.get("camera") == "cosine_in" else "cosine_in",
-                    "filter": target_beat.get("filter"),
-                    "motion_type": "treated_image",
-                    "sfx": "whoosh.wav"
-                })
-            else:
-                cleaned_beats.append({
-                    "narration": "The critical consequence becomes undeniably clear.",
-                    "camera": "dolly_vertigo" if genre == "crime_doc" else "cosine_in",
-                    "filter": "teal_split",
-                    "motion_type": "stat_counter" if genre == "viral_edu" else "treated_image",
-                    "sfx": "thud.wav"
-                })
-    elif len(cleaned_beats) > 8:
+        return None
+    if len(cleaned_beats) > 8:
         cleaned_beats = cleaned_beats[:8]
 
     total_beats = len(cleaned_beats)
@@ -274,13 +270,17 @@ def normalize_and_validate_beats(beats_raw: Any, genre: str = "auto") -> List[Di
         })
     return enforce_beat_variety(final_beats, genre)
 
-def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req: str) -> Dict[str, Any]:
+def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req: str) -> Optional[Dict[str, Any]]:
+    """Strictly validates copilot action output from LLM. Zero fake fallback templates."""
     if not isinstance(parsed_llm, dict):
-        parsed_llm = {}
-    message = str(parsed_llm.get("message") or f"Analyzing '{user_req[:60]}'. Fine-tuning timeline for {genre} pacing.").strip()
-    raw_actions = parsed_llm.get("actions", [])
-    if not isinstance(raw_actions, list):
-        raw_actions = []
+        return None
+    message = str(parsed_llm.get("message") or "").strip()
+    if not message or len(message) < 15:
+        return None  # Drop if no genuine LLM message
+
+    raw_actions = parsed_llm.get("actions")
+    if not isinstance(raw_actions, list) or not raw_actions:
+        return None  # Drop if no genuine LLM actions
 
     valid_actions = []
     for act in raw_actions:
@@ -288,71 +288,71 @@ def normalize_and_validate_copilot_record(parsed_llm: Any, genre: str, user_req:
             continue
         act_name = str(act.get("action", "")).strip().lower()
         if act_name not in VALID_COPILOT_ACTIONS:
-            if "timeline" in act_name or "beat" in act_name or "modify" in act_name or "cut" in act_name:
-                act_name = "modify_timeline_beats"
-            elif "genre" in act_name or "recut" in act_name:
-                act_name = "recut_genre"
-            elif "short" in act_name or "slice" in act_name:
-                act_name = "slice_viral_shorts"
-            elif "clone" in act_name or "style" in act_name:
-                act_name = "clone_reference_style"
-            elif "upload" in act_name or "video" in act_name:
-                act_name = "edit_uploaded_video"
-            else:
-                act_name = "modify_timeline_beats"
+            continue
 
         normalized_act = {"action": act_name}
         if act_name == "modify_timeline_beats":
-            raw_mods = act.get("beat_modifications") or act.get("params", {}).get("beat_modifications") or [act]
+            raw_mods = act.get("beat_modifications") or act.get("params", {}).get("beat_modifications")
+            if not isinstance(raw_mods, list) or not raw_mods:
+                continue
             mods = []
-            if isinstance(raw_mods, list):
-                for i, m in enumerate(raw_mods[:3]):
-                    if isinstance(m, dict):
-                        b_idx = int(m.get("beat_index", i))
-                        m_type = normalize_motion_type(m.get("type", "motion_card"), genre)
-                        mods.append({
-                            "beat_index": b_idx,
-                            "type": m_type,
-                            "template": "red_slam_word" if genre == "action_hype" else ("workflow_stepper" if genre == "viral_edu" else "3_item_list"),
-                            "headline": str(m.get("headline", user_req.split()[-1].upper() if user_req else "KEY_DIRECTIVE")).upper(),
-                            "highlight": str(m.get("highlight", "ACTION")).upper(),
-                            "grade": normalize_filter(m.get("grade", "teal_split"), genre),
-                            "sfx": normalize_sfx(m.get("sfx", "thud.wav"), 1, 1),
-                            "prompt": str(m.get("prompt", f"{genre} cinematic motion graphic visual"))[:100]
-                        })
+            for i, m in enumerate(raw_mods[:3]):
+                if isinstance(m, dict):
+                    headline = str(m.get("headline") or "").strip().upper()
+                    prompt = str(m.get("prompt") or "").strip()
+                    if not headline or not prompt:
+                        continue
+                    b_idx = int(m.get("beat_index", i))
+                    m_type = normalize_motion_type(m.get("type", "treated_image"), genre)
+                    mods.append({
+                        "beat_index": b_idx,
+                        "type": m_type,
+                        "template": str(m.get("template") or m_type),
+                        "headline": headline[:30],
+                        "highlight": str(m.get("highlight") or headline.split()[-1])[:20].upper(),
+                        "grade": normalize_filter(m.get("grade", ""), genre),
+                        "sfx": normalize_sfx(m.get("sfx", "thud.wav"), 1, 1),
+                        "prompt": prompt[:120]
+                    })
             if not mods:
-                mods.append({
-                    "beat_index": 0,
-                    "type": "declassified_scan" if genre == "crime_doc" else "treated_image",
-                    "template": "red_slam_word",
-                    "headline": "PACING OPTIMIZED",
-                    "highlight": "RETENTION",
-                    "grade": normalize_filter("", genre),
-                    "sfx": "thud.wav",
-                    "prompt": f"dynamic {genre} visual"
-                })
+                continue
             normalized_act["beat_modifications"] = mods
 
         elif act_name == "recut_genre":
-            target_g = act.get("genre") or genre or "crime_doc"
+            target_g = str(act.get("genre") or "").strip().lower()
             if target_g not in ["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"]:
-                target_g = genre if genre in ["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"] else "crime_doc"
+                continue
             normalized_act["genre"] = target_g
 
         elif act_name == "slice_viral_shorts":
-            normalized_act["target_count"] = int(act.get("target_count") or 3)
+            try:
+                target_count = int(act.get("target_count") or 3)
+            except (ValueError, TypeError):
+                target_count = 3
+            normalized_act["target_count"] = max(1, min(10, target_count))
 
         elif act_name == "clone_reference_style":
-            normalized_act["topic"] = str(act.get("topic") or user_req[:80])
-            normalized_act["style_preset"] = "Dark Documentary" if genre == "crime_doc" else ("Cyberpunk Neo-Noir" if genre == "action_hype" else "Vintage 35mm")
-            normalized_act["voice"] = "en-US-AriaNeural"
+            topic = str(act.get("topic") or user_req[:80]).strip()
+            style_preset = str(act.get("style_preset") or f"{genre.replace('_', ' ').title()} Aesthetic").strip()
+            voice = str(act.get("voice") or "en-US-AriaNeural").strip()
+            normalized_act["topic"] = topic
+            normalized_act["style_preset"] = style_preset
+            normalized_act["voice"] = voice
 
         elif act_name == "edit_uploaded_video":
-            normalized_act["color_grade"] = normalize_filter(act.get("color_grade", "teal_split"), genre)
-            normalized_act["burn_subtitles"] = True
-            normalized_act["cut_silences"] = True
+            normalized_act["color_grade"] = normalize_filter(act.get("color_grade", ""), genre)
+            normalized_act["burn_subtitles"] = bool(act.get("burn_subtitles", True))
+            normalized_act["cut_silences"] = bool(act.get("cut_silences", True))
 
         valid_actions.append(normalized_act)
+
+    if not valid_actions:
+        return None
+
+    return {
+        "message": message,
+        "actions": valid_actions
+    }
 
     if not valid_actions:
         return None
@@ -789,7 +789,10 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                             try:
                                 parsed_llm = json.loads(raw_llm)
                                 if isinstance(parsed_llm, dict):
-                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), target_genre)
+                                    valid_beats = normalize_and_validate_beats(parsed_llm.get("beats", []), target_genre)
+                                    if not valid_beats:
+                                        continue
+                                    parsed_llm["beats"] = valid_beats
                                     parsed_llm["genre"] = target_genre
                                     record = {
                                         "instruction": f"[HOUSE: HOUSE_2_SCREENWRITER_ARC | GENRE: {target_genre}] Convert narrative concept into {target_genre} beat sheet.",
@@ -823,7 +826,10 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                             try:
                                 parsed_llm = json.loads(raw_llm)
                                 if isinstance(parsed_llm, dict):
-                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    valid_beats = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    if not valid_beats:
+                                        continue
+                                    parsed_llm["beats"] = valid_beats
                                     record = {
                                         "instruction": f"[HOUSE: HOUSE_3_VISUAL_DIRECTOR | GENRE: {genre}] Direct visual treatment and motion graphics for {target_sub}.",
                                         "input": clean_concept[:300],
@@ -853,7 +859,10 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
                             try:
                                 parsed_llm = json.loads(raw_llm)
                                 if isinstance(parsed_llm, dict):
-                                    parsed_llm["beats"] = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    valid_beats = normalize_and_validate_beats(parsed_llm.get("beats", []), genre)
+                                    if not valid_beats:
+                                        continue
+                                    parsed_llm["beats"] = valid_beats
                                     record = {
                                         "instruction": f"[HOUSE: HOUSE_4_SOUND_AND_CUT_EDITOR | GENRE: {genre}] Design sound cues and cut velocity for {target_sub}.",
                                         "input": clean_concept[:300],

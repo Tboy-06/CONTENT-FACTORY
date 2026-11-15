@@ -1,26 +1,26 @@
 # Hook: I Analyzed 1,000 Viral TikTok Shop Affiliate Videos, Here's What Actually Works
 
 ## Performance Telemetry
-- Views: 62,647
-- Likes: 2,157
+- Views: 62,775
+- Likes: 2,165
 - View-to-Like Ratio: 29.0:1
-- Primary Opening: "I reverse-engineered one thousand viral TikTok Shop ads, and the data proves that almost everything the gurus told you is a lie."
+- Primary Opening: "I spent six months reverse-engineering 1,000 viral TikTok Shop videos to find the one invisible variable that actually triggers the buy button."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "I reverse-engineered one thousand viral TikTok Shop ads, and the data proves that almost everything the gurus told you is a lie."
+> "I spent six months reverse-engineering 1,000 viral TikTok Shop videos to find the one invisible variable that actually triggers the buy button."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Stop chasing trends; my analysis of a thousand high-converting videos reveals that the most effective sales tactic is actually the one you’ve been told to avoid."
+> "Everything you have been told about viral affiliate marketing in 2025 is designed to keep you broke while the top 1% secretly use this counter-intuitive strategy."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are currently burning your ad budget on the wrong variables, and I have the 1,000-video dataset to prove exactly where your strategy is failing."
+> "90% of your affiliate videos are failing for the exact same reason, and if you don't fix this specific frame-rate error, the algorithm will bury you for good."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

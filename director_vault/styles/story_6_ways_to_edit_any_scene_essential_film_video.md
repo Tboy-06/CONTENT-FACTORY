@@ -1,62 +1,19 @@
 # Story Structure: 6 Ways to Edit Any Scene — Essential Film & Video Editing Techniques Explained [Shot List Ep. 10]
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 1128.0s
-- Hook: "films are made up of sequences sequences"
-- Payoff: "by using intellectual montage director
-adam mckay is able to visually reiterate"
+- Hook: "Every cinematic masterpiece is simply a collection of sequences, scenes, and individual shots stitched together through deliberate creative "
+- Payoff: "By refining these specific cut types, you gain the ability to direct the viewer’s attention and elevate a simple sequence into a gripping ci"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. films are made up of sequences sequences
-2. are made up of scenes
-and scenes are made up of shots
-3. in previous episodes we covered camera
-lenses frame rates
-4. discombobulate
-and scene transitions
-5. today we're going to look at another
-6. angle of editing by examining different
-ways we can cut within the scene
-
-### Act 2: Hidden Mechanism
-1. detail within a scene
-usually in order to emphasize a specific
-2. prop or element
-3. in tenet the protagonist looks off
-camera and we cut to this insert an
-4. example of simple and direct visual
-language
-5. the eyeline match is a great way to
-connect the dots between what the
-6. character sees
-thinks or feels
-
-### Act 3: Crisis/Climax
-1. a split edit changes either the sound or
-image before the other this is either a
-2. j cut
-or an l cut
-3. they get their names from what they look
-like in an editing timeline
-4. a j-cut is when audio from a shot begins
-to play before we see it
-5. excuse me
-is that your car in the lot yeah
-6. that's a nice ride thanks man connie's
-off hey jordan belfort nice to meet you
-
-### Act 4: Aftermath
-1. you're gonna die you're gonna die
-2. isolated these shots would have a
-neutral connotation
-3. but placed in this context we are asked
-to make the connections ourselves
-4. from massive cityscapes to microscopic
-organisms
-5. everything will be affected by the
-impending disaster
-6. by using intellectual montage director
-adam mckay is able to visually reiterate
+### Act 1: Full Narrative Arc
+1. Every cinematic masterpiece is simply a collection of sequences, scenes, and individual shots stitched together through deliberate creative choices.
+2. While we have previously mastered the technical side of frame rates and camera optics, the true art of cinema happens in the editing suite.
+3. As an editor, your entire craft boils down to three fundamental decisions: what to show, when to cut, and exactly what to cut to.
+4. The cut itself is the most powerful tool in your arsenal, acting as the invisible heartbeat that dictates the pace and emotion of a story.
+5. Today, we are moving beyond basic transitions to explore six professional techniques that will transform the way you structure every scene.
+6. Mastering these methods allows you to manipulate audience perception, build tension, and control the flow of information on screen.
+7. Whether you are cutting an action sequence or a quiet dialogue, these frameworks provide the blueprint for professional narrative flow.
+8. By refining these specific cut types, you gain the ability to direct the viewer’s attention and elevate a simple sequence into a gripping cinematic experience.
 

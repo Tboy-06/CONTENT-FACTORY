@@ -1,31 +1,27 @@
 # Hook: Documenting Andrew Huberman's Lies
 
 ## Performance Telemetry
-- Views: 1,021,891
-- Likes: 40,421
+- Views: 1,022,920
+- Likes: 40,424
 - View-to-Like Ratio: 25.3:1
-- Primary First Spoken Line (0:00 - 0:03): "this is Andrew huberman before we begin
-I'd like to emphasize that this podcast is separate from my teaching and
-research roles at Stanford "
+- Primary Opening: "The man who built an empire on science-backed optimization just spent three years contradicting his own foundational research."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "this is Andrew huberman before we begin
-I'd like to emphasize that this podcast is separate from my teaching and
-researc"
+> "The man who built an empire on science-backed optimization just spent three years contradicting his own foundational research."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Documenting Andrew Huberman's Lies is completely backwards."
+> "Andrew Huberman’s most viral health advice isn't just evolving; it’s being systematically dismantled by his own past findings."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Documenting Andrew Huberman's Lies."
+> "Millions of people are trusting their biology to a Stanford professor who is currently engaged in a dangerous game of revisionist history."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

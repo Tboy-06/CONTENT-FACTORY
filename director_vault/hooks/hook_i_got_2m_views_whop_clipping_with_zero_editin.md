@@ -1,26 +1,26 @@
 # Hook: I Got 2M+ Views Whop Clipping With Zero Editing Skills (Editing Is Overrated)
 
 ## Performance Telemetry
-- Views: 2,455
-- Likes: 61
-- View-to-Like Ratio: 40.2:1
-- Primary Opening: "I made two hundred dollars a day while editing exactly zero seconds of my footage."
+- Views: 2,511
+- Likes: 64
+- View-to-Like Ratio: 39.2:1
+- Primary Opening: "I made two hundred dollars a day while my most successful videos had literally zero editing."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "I made two hundred dollars a day while editing exactly zero seconds of my footage."
+> "I made two hundred dollars a day while my most successful videos had literally zero editing."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Stop obsessing over your timeline, because fancy editing is actually killing your viral potential."
+> "The industry tells you that high-end editing is mandatory for viral growth, but the data proves that's a lie."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "I wasted months mastering complex editing software only to realize that the most profitable clips I ever made were completely unedited."
+> "I wasted months chasing perfect transitions, only to realize the most profitable creators are doing absolutely nothing."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser
