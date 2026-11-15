@@ -37,15 +37,27 @@ def clean_json_text(text: str) -> str:
 
 
 LLAMA_SERVER_BIN = r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe"
-LOCAL_GGUF_BLOB = r"D:\CONTENT-FACTORY\ollama\models\copilot-brain.gguf"
-# Fallback paths if D: drive is unmounted
+COPILOT_GGUF_BLOB = r"D:\CONTENT-FACTORY\ollama\models\copilot-brain.gguf"
+SPARK_GGUF_BLOB = r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf"
+# Fallback paths
 _FALLBACK_BIN = r"C:\cf_training\bin\llama-server.exe"
-_FALLBACK_BLOB = r"C:\Users\User\.ollama\models\blobs\sha256-6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff"
 _LOCAL_BRAIN_PROC: Optional[subprocess.Popen] = None
 
 
+def get_preferred_gguf_blob() -> str:
+    """Returns the active GGUF model blob (supports both Spark-X2.5-4B on C: and copilot-brain on D:)."""
+    model_name = os.environ.get("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL).lower()
+    if "spark" in model_name and os.path.exists(SPARK_GGUF_BLOB):
+        return SPARK_GGUF_BLOB
+    if os.path.exists(COPILOT_GGUF_BLOB):
+        return COPILOT_GGUF_BLOB
+    if os.path.exists(SPARK_GGUF_BLOB):
+        return SPARK_GGUF_BLOB
+    return COPILOT_GGUF_BLOB
+
+
 async def ensure_local_brain(timeout_secs: int = 60) -> bool:
-    """Wakes up the local 2.01 GB GGUF model blob on demand using llama-server.exe without eating RAM when idle."""
+    """Wakes up the local GGUF model blob on demand using llama-server.exe without eating RAM when idle."""
     global _LOCAL_BRAIN_PROC
     if is_ollama_ready():
         return True
@@ -53,13 +65,14 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
     # If the process isn't running at all, spawn it
     if not is_ollama_running():
         bin_path = LLAMA_SERVER_BIN if os.path.exists(LLAMA_SERVER_BIN) else _FALLBACK_BIN
-        blob_path = LOCAL_GGUF_BLOB if os.path.exists(LOCAL_GGUF_BLOB) else _FALLBACK_BLOB
+        blob_path = get_preferred_gguf_blob()
 
         if not os.path.exists(bin_path) or not os.path.exists(blob_path):
             logger.warning(f"[Brain] llama-server ({bin_path}) or GGUF blob ({blob_path}) not found.")
             return False
 
-        logger.info(f"[Brain] Waking up 2.01 GB GGUF blob on demand via llama-server.exe ({blob_path})...")
+        model_label = "Spark-X2.5-4B" if "spark" in blob_path.lower() else "Copilot-Brain"
+        logger.info(f"[Brain] Waking up {model_label} GGUF on demand via llama-server.exe ({blob_path})...")
         cmd = [
             bin_path,
             "-m", blob_path,
