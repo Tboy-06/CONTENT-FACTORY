@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 485.0s
-- Hook: "today in order of how the story happens in San Andreas we're going to discuss all the hidden times that Rockstar Games hinted Big Smoke woul"
-- Payoff: "Invader which then turns out to be CJ but the truth is Big Smoke knows exactly who it is and has to just play this off cool the next clue is"
+- Hook: "Long before Big Smoke plunged Grove Street into chaos, Rockstar Games quietly hid the ultimate betrayal right in plain sight."
+- Payoff: "By paying close attention to these early psychological cues, we can finally decode how Rockstar exposed the snake in the grass from day one."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. today in order of how the story happens in San Andreas we're going to discuss all the hidden times that Rockstar Games hinted Big Smoke would betray you your
-2. first huge big clue that you likely missed was right there before your eyes and it happens minutes from the beginning of the game as you know Carl
-3. has returned home from Liberty City to attend the funeral of his mother Beverly Johnson and what Big Smoke is doing during this funeral is a huge clue as to
-4. what happens later on in the game and it actually turns out that Big Smoke was to kill s because during this Mission as we all know before you go to the funeral
-5. you head back to CJ's house and where is Big Smoke he's hiding inside of CJ's house now we don't question it at the time but what is he doing there why is
-6. he not at the funeral and what exactly is he doing inside the house so big smoke was waiting for site to return home from the funeral in order to kill
-7. him but when CJ arrives it completely throws his plans off track and he has to pretend he's there for an unknown reason and pret attending the house from a home
-8. Invader which then turns out to be CJ but the truth is Big Smoke knows exactly who it is and has to just play this off cool the next clue is also during this
+1. Long before Big Smoke plunged Grove Street into chaos, Rockstar Games quietly hid the ultimate betrayal right in plain sight.
+2. Today, we are tracing the chronological timeline of San Andreas to uncover every subtle clue pointing to Smoke's treason.
+3. Our investigation begins mere minutes into the game, exactly where Carl Johnson returns home from Liberty City.
+4. The occasion is the tragic funeral of Beverly Johnson, a somber gathering meant to unite grieving family and friends.
+5. However, what Big Smoke chooses to do during this very funeral serves as a monumental red flag for the entire story.
+6. While true friends mourn the loss of a matriarch, Smoke's actions foreshadow the treacherous ambition festering within him.
+7. Players racing through the opening missions completely missed this brilliant piece of environmental storytelling and character foreshadowing.
+8. By paying close attention to these early psychological cues, we can finally decode how Rockstar exposed the snake in the grass from day one.
 

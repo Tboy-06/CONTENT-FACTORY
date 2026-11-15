@@ -1,31 +1,27 @@
 # Hook: How to Get High Retention YouTube Views in Videos
 
 ## Performance Telemetry
-- Views: 1,721
+- Views: 1,722
 - Likes: 0
-- View-to-Like Ratio: 1721.0:1
-- Primary First Spoken Line (0:00 - 0:03): "our viewers watching your entire video
-getting high retention YouTube views is a must of your video marketer YouTube
-relies heavily on watch"
+- View-to-Like Ratio: 1722.0:1
+- Primary Opening: "Your titles are optimized, your tags are perfect, and yet your analytics are flatlining because you are missing the single metric the algorithm actually cares about."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "our viewers watching your entire video
-getting high retention YouTube views is a must of your video marketer YouTube
-rel"
+> "Your titles are optimized, your tags are perfect, and yet your analytics are flatlining because you are missing the single metric the algorithm actually cares about."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to Get High Retention YouTube Views  is completely backwards."
+> "Search optimization is completely dead if the viewer drops off in the first thirty seconds."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to Get High Retention YouTube V."
+> "Every second a viewer clicks away from your video is another impression buried permanently by the recommendation system."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

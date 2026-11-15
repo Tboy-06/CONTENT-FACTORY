@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 4804.0s
-- Hook: "Robert Marshall spent 44 hours clinically dead, yet he returned with a perspective that defies everything we know about the afterlife."
-- Payoff: "His testimony serves as a bridge between the clinical finality of death and the enduring promise of what lies beyond."
+- Hook: "Medical records confirmed he was clinically dead three separate times, completely brain dead, yet Robert Marshall's extraordinary journey wa"
+- Payoff: "Ultimately, dying became the single best thing that ever happened to him, unlocking secrets of the universe meant to be shared with the worl"
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Robert Marshall spent 44 hours clinically dead, yet he returned with a perspective that defies everything we know about the afterlife.
-2. Declared brain dead three separate times, his journey beyond the veil lasted nearly two full days.
-3. He describes the experience not as a tragedy, but as the most profound blessing of his entire existence.
-4. Deep within the realms of heaven, Marshall claims he came face-to-face with Jesus, who unveiled long-guarded mysteries of the universe.
-5. Among the most startling revelations was the sight of his own departed pets, who he insists were not only present but actively communicating with him.
-6. This life-altering encounter happened just last year, leaving him with medical proof that continues to baffle his physicians.
-7. He now speaks openly about a dimension where consciousness persists and animal spirits find their place in eternity.
-8. His testimony serves as a bridge between the clinical finality of death and the enduring promise of what lies beyond.
+1. Medical records confirmed he was clinically dead three separate times, completely brain dead, yet Robert Marshall's extraordinary journey was only just beginning.
+2. For forty-four profound hours, his consciousness traversed the veil into the unimaginable depths of heaven.
+3. During this sacred threshold, Jesus Himself appeared to reveal ancient mysteries hidden from mortal eyes.
+4. To his absolute astonishment, the familiar warmth of his beloved departed pets greeted him in paradise, communicating with astonishing clarity.
+5. Although experiencing clinical death terrifies most, Robert considers this catastrophic ordeal the greatest blessing of his entire existence.
+6. The divine revelations bestowed upon him challenged everything humanity understands about life, death, and the afterlife.
+7. Every breathtaking detail from that celestial realm forever transformed his perspective on the eternal soul.
+8. Ultimately, dying became the single best thing that ever happened to him, unlocking secrets of the universe meant to be shared with the world.
 

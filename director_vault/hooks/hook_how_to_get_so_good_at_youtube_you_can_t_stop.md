@@ -1,26 +1,26 @@
 # Hook: How to get SO good at YouTube you can't stop going viral
 
 ## Performance Telemetry
-- Views: 904,203
-- Likes: 41,742
+- Views: 905,264
+- Likes: 41,769
 - View-to-Like Ratio: 21.7:1
-- Primary Opening: "I broke the YouTube algorithm with just two videos, and the craziest part is that I didn't even try."
+- Primary Opening: "Most creators spend years trying to figure out the algorithm when the real cheat code is posting just two videos and walking away."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "I broke the YouTube algorithm with just two videos, and the craziest part is that I didn't even try."
+> "Most creators spend years trying to figure out the algorithm when the real cheat code is posting just two videos and walking away."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you've been told about YouTube growth is a lie designed to keep you invisible."
+> "Growing a massive channel doesn't require daily uploads, forum spam, or begging for shoutouts because the system is designed to reward absolute silence."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "Most creators quit because they're stuck in a loop of failure, but this one shift turns viral growth into an inevitable output."
+> "Every day you spend tweaking your tags and thumbnails is actively pushing your channel further away from accidental algorithmic dominance."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

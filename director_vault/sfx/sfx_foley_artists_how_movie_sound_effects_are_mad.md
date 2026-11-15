@@ -23,12 +23,12 @@
 > "Hecker: EVERYTHING THAT I CREATE ON THE STAGE IS ORGANIC, USING PROPS, AND RECORDED PRECISELY FOR THAT FILM."
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "Stevenson: FOLEY IS THE ART OF PUTTING SOUND EFFECTS TO PICTURE AFTER A FILM HAS ALREADY BEEN SHOT."
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "NOW IT'S CUT TO A HUGE CLOSE-UP."
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "WHEN THEY SHOOT A FILM, THE SOUND IS CONCENTRATED ON THE ACTORS' DIALOGUE, SO WE GO BACK AND RE-CREATE ALL THESE SOUNDS FOR DRAMA"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

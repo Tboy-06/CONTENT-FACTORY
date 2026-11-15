@@ -4,7 +4,7 @@
 - Category: CapCut & NLE Visual Techniques
 - Duration: 629.0s (10.5 min)
 - Cut Frequency: 2.61s per cut (~23.0 cuts/min)
-- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, quote_box
+- Motion Card Integration: red_slam_word, stat_counter, 3_item_list, workflow_stepper, quote_box
 
 ## Core Pacing & Cutting Rules
 - Trigger dynamic cosine zoom-in (1.1x to 1.25x scale) on key emphasis nouns and critical statistics.
@@ -14,16 +14,12 @@
 - Apply paper-texture border overlays and photo cutouts with drop shadows for tactile documentary aesthetic.
 
 ## Motion Card Deployments
-- **red_slam_word**: Critical inflection point or classified revelation (SFX: `thud.wav`, Grade: `hard_bw`)
-- **stat_counter**: Numeric metrics, retention spikes, or financial percentages (SFX: `whoosh.wav`, Grade: `amber`)
-- **3_item_list**: Structured 3-part editing frameworks or procedural rules (SFX: `click.wav`, Grade: `teal_split`)
-- **quote_box**: Authority statements, director rules, or memorable viewer feedback (SFX: `click.wav`, Grade: `hard_bw`)
+- **red_slam_word**: Critical inflection point or pivotal narrative turn (Headline: `CORE REVELATION`, SFX: `thud.wav`, Grade: `hard_bw`)
+- **stat_counter**: Numeric metrics, retention spikes, or quantified documentary evidence (Headline: `QUANTIFIED EVIDENCE`, SFX: `whoosh.wav`, Grade: `amber`)
+- **3_item_list**: Structured 3-part editing frameworks or procedural rules (Headline: `TACTICAL PILLARS`, SFX: `click.wav`, Grade: `teal_split`)
+- **workflow_stepper**: Step-by-step editing phase progression or technical tutorial execution (Headline: `PRODUCTION PIPELINE`, SFX: `click.wav`, Grade: `amber`)
+- **quote_box**: Authority statements, creator directives, or verified feedback (Headline: `VIEWER @@MIDNIGHTANIMEGU`, SFX: `click.wav`, Grade: `hard_bw`)
 
 ## Viewer Feedback on Pacing
-> "Join Ultimate Editors (My Online Video Editing Community)
-Click Here: https://www.skool.com/ultimate-editors-5412/about" — @josephvideoediting
-
-> "Thanks for the in depth video. It's honestly so sad to see how bad the attention spans of modern audiences have gotten. I've been an editor now for over 11 years and creating fast-paced content like this is super hard." — @Kaythefilmmaker
-
-> "You know I wouldn't take is as a tutorial but rather a "hey, come watch me edit a video" but it's fire though can't lie✍️" — @FreddyKtrades
+> "That is enough sfx bro" — @midnightanimeguy5255
 

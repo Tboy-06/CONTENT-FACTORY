@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 766.0s
-- Hook: "The vibrant city of Medina, a sanctuary of peace, was suddenly shadowed by a mysterious affliction that befell the Prophet Muhammad (peace b"
-- Payoff: "Surah An-Nas remains a timeless refuge for every believer, offering divine protection against the whisperings of the seen and the unseen wor"
+- Hook: "Beneath the peaceful morning light of Medina, a quiet shadow fell over the home of the Prophet."
+- Payoff: "Through these final verses, humanity was gifted an eternal shield against the whispers of unseen darkness."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. The vibrant city of Medina, a sanctuary of peace, was suddenly shadowed by a mysterious affliction that befell the Prophet Muhammad (peace be upon him).
-2. Morning light spilled through the narrow, bustling streets, yet inside the quiet home of Aisha (may Allah be pleased with her), an unsettling change had taken root.
-3. Though the Prophet remained his quintessentially kind and patient self, a profound exhaustion began to weigh upon his noble frame.
-4. He would rise in the dark of the night to offer prayers, only to pause, his strength seemingly drained by an unseen struggle.
-5. Unbeknownst to the community, a dark plot had been orchestrated by a sorcerer seeking to cast a spell upon the Messenger of Allah.
-6. In response to this spiritual assault, the Angel Jibreel descended with two powerful chapters of the Quran, the Mu'awwidhatayn, to serve as a divine shield.
-7. As these verses were recited, the influence of the black magic began to unravel, liberating the Prophet from the invisible chains that had bound him.
-8. Surah An-Nas remains a timeless refuge for every believer, offering divine protection against the whisperings of the seen and the unseen world.
+1. Beneath the peaceful morning light of Medina, a quiet shadow fell over the home of the Prophet.
+2. Merchants opened their stalls and children played in the courtyards while life moved on as it always did.
+3. Inside the small dwelling of Aisha, the Messenger of Allah remained as kind and patient as ever.
+4. Yet a subtle exhaustion lingered, hinting at a hidden trial orchestrated by unseen forces.
+5. A Jewish man named Labid ibn al-A'sam had woven a dark spell of black magic against the Prophet.
+6. Day by day, the affliction grew heavier, clouding his blessed days and restless nights.
+7. Seeking divine refuge, the Angel Gabriel descended with the ultimate words of spiritual defense: Surah An-Nas.
+8. Through these final verses, humanity was gifted an eternal shield against the whispers of unseen darkness.
 

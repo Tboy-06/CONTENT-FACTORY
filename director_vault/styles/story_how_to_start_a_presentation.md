@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 207.0s
-- Hook: "Most speakers start their presentations in the worst possible way: they open their laptops before they open their mouths."
-- Payoff: "True influence starts not with your design, but with the deliberate, powerful choice of your very first sentence."
+- Hook: "The moment a presentation begins, the room either leans in or tunes out."
+- Payoff: "True engagement begins the second you abandon the slides and master the opening sentence."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Most speakers start their presentations in the worst possible way: they open their laptops before they open their mouths.
-2. We obsess over our PowerPoint slides, carefully curating every bullet point and transition, yet we treat our actual spoken words as an afterthought.
-3. This screen-first approach creates a massive disconnect between you and your audience from the very first second.
-4. You are relying on your slides to do the heavy lifting, effectively hiding your message behind a wall of text.
-5. But the most impactful communicators do not begin by thinking about what they will show; they begin by thinking about what they will say.
-6. Your opening lines determine whether your audience leans in with curiosity or tunes out in boredom.
-7. If you cannot captivate a room without a single slide on the wall, your presentation is already failing.
-8. True influence starts not with your design, but with the deliberate, powerful choice of your very first sentence.
+1. The moment a presentation begins, the room either leans in or tunes out.
+2. Most speakers immediately default to what feels safe, opening PowerPoint and staring at a blank slide.
+3. They map out their talking points visual by visual, entirely consumed by the software in front of them.
+4. This slide-first mentality fundamentally misses the true psychology of capturing human attention.
+5. Audiences do not remember bullet points, but they always remember how a speaker starts.
+6. The real challenge lies in crafting the precise opening sentences before a single graphic is ever designed.
+7. Remarkably few people ever stop to script their exact first words with intentional precision.
+8. True engagement begins the second you abandon the slides and master the opening sentence.
 

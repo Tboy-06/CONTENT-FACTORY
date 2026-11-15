@@ -1,26 +1,26 @@
 # Hook: 4 Frameworks To Write Follow-Worthy Content (+ Kortex Template)
 
 ## Performance Telemetry
-- Views: 101,558
-- Likes: 4,178
+- Views: 101,562
+- Likes: 4,177
 - View-to-Like Ratio: 24.3:1
-- Primary Opening: "You are currently manipulating everyone around you without realizing it, and the only difference between a parasite and a leader is the framework you use to justify it."
+- Primary Opening: "Every word you publish is subconsciously triggering your audience, but only four hidden frameworks force them to hit follow."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "You are currently manipulating everyone around you without realizing it, and the only difference between a parasite and a leader is the framework you use to justify it."
+> "Every word you publish is subconsciously triggering your audience, but only four hidden frameworks force them to hit follow."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Persuasion is not a soft skill; it is the single most dangerous weapon in the 21st century, and most people are dying to be disarmed by it."
+> "You practice persuasion every single day without realizing it, yet avoiding it in your writing is why your content dies."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "If you don't master these four writing frameworks, you are effectively leaving your entire professional future to the mercy of people who have already mastered them."
+> "Publishing online without mastering invisible psychological persuasion is guaranteeing your ideas remain completely invisible."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

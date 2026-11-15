@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 310.0s
-- Hook: "Before she was the best-selling novelist in history, Agatha Christie was a discouraged amateur being mocked by her own sister."
-- Payoff: "Ultimately, Christie’s entire career was built on the secret formula of staying three steps ahead of the reader, starting with the person sh"
+- Hook: "Agatha Christie reigns as the best-selling novelist in history, yet her legendary career began with a crushing family insult."
+- Payoff: "Ultimately, the greatest detective stories of all time were born not from divine inspiration, but from a sibling rivalry and a stubborn desi"
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Before she was the best-selling novelist in history, Agatha Christie was a discouraged amateur being mocked by her own sister.
-2. In 1916, her sister Madge was the established writer of the family and openly doubted Agatha's ability to craft a clever puzzle.
-3. Madge boldly bet that Agatha couldn't write a mystery novel that would actually manage to stump her.
-4. That condescending challenge became the unlikely spark for a literary revolution.
-5. Agatha retreated to her desk, determined to prove that she could weave a web of deception even the sharpest mind couldn't unravel.
-6. The resulting manuscript transformed from a simple family wager into a cornerstone of the mystery genre.
-7. Today, that first book stands as a testament to the power of spite in fueling creative genius.
-8. Ultimately, Christie’s entire career was built on the secret formula of staying three steps ahead of the reader, starting with the person she knew best.
+1. Agatha Christie reigns as the best-selling novelist in history, yet her legendary career began with a crushing family insult.
+2. Back in 1916, she was merely the unproven younger sister to Madge, a published writer who already dominated the household's literary ambitions.
+3. When Agatha timidly declared her dream of writing a murder mystery, Madge openly scoffed at the very notion.
+4. Her sister laid down a definitive challenge, betting that Agatha lacked the ingenuity to craft a puzzle sophisticated enough to baffle an experienced reader.
+5. Fueled by pure spite and determination, Agatha accepted the wager and set out to construct the ultimate literary trap.
+6. That single defiant bet birthed a masterpiece that would completely redefine the detective genre forever.
+7. The resulting novel launched a staggering empire spanning nearly one hundred timeless mysteries that continue to captivate the world.
+8. Ultimately, the greatest detective stories of all time were born not from divine inspiration, but from a sibling rivalry and a stubborn desire to prove the doubters wrong.
 

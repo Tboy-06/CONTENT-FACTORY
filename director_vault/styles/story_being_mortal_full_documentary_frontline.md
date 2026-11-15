@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 3242.0s
-- Hook: "For all the years spent in medical school, doctors are rarely prepared for the most inevitable truth of their profession: how to handle deat"
-- Payoff: "Ultimately, being mortal requires us to bridge the divide between medical intervention and the quality of life we choose to define for ourse"
+- Hook: "For so many people, the reality of death comes as a complete and devastating surprise."
+- Payoff: "True medical excellence requires confronting our own mortality with honesty and grace."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. For all the years spent in medical school, doctors are rarely prepared for the most inevitable truth of their profession: how to handle death.
-2. Dr. Atul Gawande challenges the status quo of modern medicine by exposing the critical gap between clinical expertise and human compassion.
-3. Far too many patients face their final moments in total shock, completely unprepared for the reality of their prognosis.
-4. The disconnect is profound, as the words spoken by physicians are frequently misinterpreted or ignored by the families sitting across from them.
-5. In a deeply personal journey, Gawande confronts his own family’s grief when faced with the limitations of life-sustaining technology.
-6. His father’s explicit desire to avoid a ventilator serves as a stark reminder of the importance of clear, honest end-of-life planning.
-7. True medical excellence is not just found in the mastery of procedures, but in the courage to engage in honest conversations about what matters most.
-8. Ultimately, being mortal requires us to bridge the divide between medical intervention and the quality of life we choose to define for ourselves.
+1. For so many people, the reality of death comes as a complete and devastating surprise.
+2. Everything learned in medical school represents only a fraction of what it truly means to be good at the job.
+3. Dr. Atul Gawande takes us inside the difficult conversations happening between doctors and patients about dying.
+4. Oftentimes, what physicians intend to say is entirely different from what the patient actually hears.
+5. This profound disconnect transforms into a deeply personal journey when illness strikes close to home.
+6. Tears flow freely among family members facing the unimaginable limits of modern medicine.
+7. Facing a ventilator, a beloved father makes his final wishes undeniably clear.
+8. True medical excellence requires confronting our own mortality with honesty and grace.
 

@@ -1,31 +1,27 @@
 # Hook: How to Make VIRAL Commentary Shorts with AI (Full Tutorial)
 
 ## Performance Telemetry
-- Views: 203,941
-- Likes: 6,863
-- View-to-Like Ratio: 29.7:1
-- Primary First Spoken Line (0:00 - 0:03): "This short made me $755
-and this one made me $492. Both took me just a few minutes to
-create and are within the viral commentary niche. You'"
+- Views: 205,028
+- Likes: 6,876
+- View-to-Like Ratio: 29.8:1
+- Primary Opening: "While everyone else spends weeks editing commentary videos, a silent group of creators is generating thousands of dollars using completely automated AI clips."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "This short made me $755
-and this one made me $492. Both took me just a few minutes to
-create and are within the viral co"
+> "While everyone else spends weeks editing commentary videos, a silent group of creators is generating thousands of dollars using completely automated AI clips."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to Make VIRAL Commentary Shorts with is completely backwards."
+> "Working harder on your YouTube shorts is actually destroying your growth, because the most profitable accounts upload content they didn't even make."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to Make VIRAL Commentary Shorts."
+> "If you keep ignoring the hidden AI commentary loophole taking over your feed right now, you are literally leaving hundreds of dollars on the table every single day."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

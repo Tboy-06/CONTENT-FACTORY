@@ -1,27 +1,27 @@
 # Hook: 7 YouTube Editing Tips to Instantly Boost Retention
 
 ## Performance Telemetry
-- Views: 129,277
-- Likes: 4,972
+- Views: 129,423
+- Likes: 4,973
 - View-to-Like Ratio: 26.0:1
-- Primary Opening: "Most creators lose 80 percent of their audience in the first thirty seconds, but these seven hidden edits turn that freefall into a viral surge."
+- Primary Opening: "Most creators spend fifty hours filming masterpieces, only for viewers to abandon ship in the first ten seconds because of one invisible editing mistake."
 
 ## High-Retention Hook Variations
-### Curiosity Gap
-> "Most creators lose 80 percent of their audience in the first thirty seconds, but these seven hidden edits turn that freefall into a viral surge."
+### Negative Bias
+> "Most creators spend fifty hours filming masterpieces, only for viewers to abandon ship in the first ten seconds because of one invisible editing mistake."
 
-- **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
+- **Target Duration:** 3.4s
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 
 ### Counter Intuitive
-> "Retention isn't about keeping people entertained; it’s about weaponizing a specific editing pattern that forces the human brain to ignore the skip button."
+> "Retention is not an accident of algorithm algorithms; it is a weaponized psychological architecture engineered frame by frame."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
-### Negative Bias
-> "Every second you leave unedited is a catastrophic leak in your channel's growth that kills your reach before the algorithm even notices you exist."
+### Curiosity Gap
+> "What separates a video that bleeds ninety percent of its audience from one that locks millions of eyes to the glass?"
 
-- **Target Duration:** 3.4s
-- **Visual Pacing:** Dynamic stat counter with whoosh riser
+- **Target Duration:** 3.2s
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 

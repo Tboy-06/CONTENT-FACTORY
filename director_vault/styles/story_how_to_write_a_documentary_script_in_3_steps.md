@@ -1,66 +1,19 @@
 # Story Structure: How to Write a Documentary Script in 3 Steps
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 632.0s
-- Hook: "starting a new documentary project can
-be incredibly daunting especially when"
-- Payoff: "shooting and you might have to write and
-throw away dozens of potential scene"
+- Hook: "Starting a new documentary project can feel completely overwhelming when you lack experience."
+- Payoff: "Mastering these three essential steps transforms raw chaos into a compelling cinematic story."
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. starting a new documentary project can
-be incredibly daunting especially when
-2. you don't have a ton of experience doing
-it luckily just like in hollywood as
-3. documentary filmmakers we can use
-scripts to help guide us and give our
-4. stories structure as we shoot it might
-sound a little weird to think about
-5. writing a script for a doc because after
-all how do you script the real world
-6. when you don't know what's gonna happen
-but trust me taking the time to do this
-
-### Act 2: Hidden Mechanism
-1. restore freedom to the galaxy and that's
-step one in making your own script you
-2. need to define your story in the same
-way now if i were making the luke
-3. skywalker doc when i started scripting i
-wouldn't know how things end so i
-4. wouldn't be able to predict he'd destroy
-the death star on day one of shooting
-5. but i'd still start out by giving my
-best guess as to how the story would
-6. play out to do this for yourself you
-need to make sure you can define your
-
-### Act 3: Crisis/Climax
-1. structure like the hero's journey
-imagine you're making a film about
-2. an athlete maybe an athlete that has a
-dream to make it to the olympics
-3. if it were my project i'd try then to
-4. plot out rough outlines for key beats
-along that hero's journey maybe you
-5. start out with them as an amateur
-looking at photos of themselves as a kid
-6. getting into the sport
-this would be a good way to establish
-
-### Act 4: Aftermath
-1. for sure but it's the name of the game
-in documentaries unfortunately when you
-2. learn partway shooting that your
-olympian fails their drug test or
-3. crashes their car or whatever might
-happen you need to go back and repeat
-4. step two and reimagine all those
-different plot points with new
-5. information that you know now step three
-continues all the way to the end of
-6. shooting and you might have to write and
-throw away dozens of potential scene
+### Act 1: Full Narrative Arc
+1. Starting a new documentary project can feel completely overwhelming when you lack experience.
+2. Fortunately, documentary filmmakers can borrow techniques from Hollywood to establish structure.
+3. It might sound counterintuitive to script a film about the unpredictable real world.
+4. However, taking the time to outline your vision upfront will save you countless headaches in post-production.
+5. The first step is mapping out your core narrative arc before you ever pick up a camera.
+6. Next, you must craft an interview strategy that targets the emotional heartbeat of your subject.
+7. Finally, you assemble a flexible shooting blueprint that adapts to real-world developments.
+8. Mastering these three essential steps transforms raw chaos into a compelling cinematic story.
 

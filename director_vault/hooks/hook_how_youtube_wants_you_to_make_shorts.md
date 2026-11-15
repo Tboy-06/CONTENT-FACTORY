@@ -1,26 +1,26 @@
 # Hook: How YouTube Wants You to Make Shorts
 
 ## Performance Telemetry
-- Views: 61,507
-- Likes: 1,495
-- View-to-Like Ratio: 41.1:1
-- Primary Opening: "The algorithm isn't choosing your Shorts at random; it’s running a secret internal calculation that determines if you deserve to go viral."
+- Views: 61,809
+- Likes: 1,499
+- View-to-Like Ratio: 41.2:1
+- Primary Opening: "Every single viral YouTube Short you have ever seen was engineered by an algorithm that only rewards two hidden numbers."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "The algorithm isn't choosing your Shorts at random; it’s running a secret internal calculation that determines if you deserve to go viral."
+> "Every single viral YouTube Short you have ever seen was engineered by an algorithm that only rewards two hidden numbers."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Most creators believe watch time is the king of YouTube, but obsessing over it is exactly why your Shorts are stuck at three hundred views."
+> "Trying to go viral with luck on YouTube Shorts is a guaranteed way to keep your channel buried forever."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are losing thousands of subscribers every single day because you are optimizing for the wrong metric while the data sits right in front of you."
+> "If you are ignoring these two exact metrics right now, YouTube is actively killing your channel's reach."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

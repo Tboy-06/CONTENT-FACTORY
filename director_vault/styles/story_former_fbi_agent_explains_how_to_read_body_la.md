@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 884.0s
-- Hook: "Every movement you make is a silent message that reveals exactly what is happening inside your mind."
-- Payoff: "Ultimately, the way you carry yourself acts as a blueprint of your thoughts, providing a window into your true character for those trained t"
+- Hook: "For a quarter of a century inside the FBI's national security division, catching spies was a high-stakes game of decoding the human body."
+- Payoff: "True tradecraft teaches us that the human body never stops talking, provided you know how to listen."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Every movement you make is a silent message that reveals exactly what is happening inside your mind.
-2. Known to the public as body language, nonverbals encompass everything from how we dress to the rhythm of our walk.
-3. For twenty-five years, Joe Navarro served as a special agent for the FBI, where he mastered the art of reading these hidden signals.
-4. Tasked with catching spies, his work within the national security division required deep psychological insight.
-5. Navarro spent his career analyzing specific targets, learning to decode the subtle cues that others ignore.
-6. His primary objective was always the same: to get inside the heads of those who sought to hide their true intentions.
-7. By mastering the science of nonverbal communication, he developed the ability to neutralize threats before they could unfold.
-8. Ultimately, the way you carry yourself acts as a blueprint of your thoughts, providing a window into your true character for those trained to see it.
+1. For a quarter of a century inside the FBI's national security division, catching spies was a high-stakes game of decoding the human body.
+2. Nonverbal communication encompasses everything that transmits meaning without relying on spoken words.
+3. From the way individuals dress to how they walk, every physical nuance offers a window into their internal state.
+4. Elite counterintelligence operatives use these subtle behavioral cues to interpret what targets are truly thinking.
+5. The primary challenge in high-level espionage investigations is finding a way to get inside the minds of dangerous adversaries.
+6. Mastering this craft ultimately allowed agents to effectively neutralize threats before they could compromise national security.
+7. Strip away the deception of spoken language, and the physical form will invariably reveal the absolute truth.
+8. True tradecraft teaches us that the human body never stops talking, provided you know how to listen.
 

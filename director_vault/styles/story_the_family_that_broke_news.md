@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 3388.0s
-- Hook: "Inside a silent Reno courtroom, the world’s most influential media dynasty is tearing itself apart."
-- Payoff: "Ultimately, this is a story of how a family that built an empire by breaking the news is now being broken by its own legacy."
+- Hook: "Inside the walls of the Reno courthouse, the world’s most influential media dynasty is currently tearing itself apart."
+- Payoff: "In the battle for the Murdoch crown, the family that once dictated the news has now become the headline they cannot control."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Inside a silent Reno courtroom, the world’s most influential media dynasty is tearing itself apart.
-2. Rupert Murdoch stands alongside his four children, marking the first time the fractured family has occupied the same room in two years.
-3. What was once a unified empire is now a battlefield, split into two warring factions vying for absolute control.
-4. The stakes are nothing less than the future of the most powerful media conglomerate on the planet.
-5. As lawyers swarm, the private tensions of a global titan have finally erupted into a public crusade.
-6. At the heart of the conflict lies Rupert’s ambition, a driving force that has defined his life and shaped modern history.
-7. Every legal motion filed is a strategic strike in a high-stakes war for the keys to a kingdom that influences what the world sees, reads, and hears.
-8. Ultimately, this is a story of how a family that built an empire by breaking the news is now being broken by its own legacy.
+1. Inside the walls of the Reno courthouse, the world’s most influential media dynasty is currently tearing itself apart.
+2. For the first time in two years, Rupert Murdoch and his four children have gathered under one roof, not for a celebration, but for a bitter legal battle.
+3. The family has split into two warring factions, each fighting for control over a sprawling empire that shapes global public opinion.
+4. At the center of this storm is Rupert Murdoch himself, a man whose insatiable drive to remain the world's preeminent media mogul defines the conflict.
+5. What was once a unified business titan has devolved into a high-stakes power struggle between siblings and their aging father.
+6. The stakes are nothing less than the future of Fox, News Corp, and the massive political influence that comes with them.
+7. Lawyers swarm the halls as decades of unspoken grievances are finally dragged into the light of public record.
+8. In the battle for the Murdoch crown, the family that once dictated the news has now become the headline they cannot control.
 

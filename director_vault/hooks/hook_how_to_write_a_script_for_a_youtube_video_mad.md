@@ -1,26 +1,26 @@
 # Hook: How to Write a Script for a YouTube Video (Made Easy!)
 
 ## Performance Telemetry
-- Views: 1,177,311
-- Likes: 42,459
+- Views: 1,177,731
+- Likes: 42,465
 - View-to-Like Ratio: 27.7:1
-- Primary Opening: "Most creators are drowning in unfinished drafts because they are writing scripts like novels instead of roadmaps."
+- Primary Opening: "The exact moment a YouTuber stops winging it is the exact moment their channel either explodes or flatlines."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Most creators are drowning in unfinished drafts because they are writing scripts like novels instead of roadmaps."
+> "The exact moment a YouTuber stops winging it is the exact moment their channel either explodes or flatlines."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "The secret to a viral video isn't writing more words; it’s actually deleting eighty percent of what you’ve already typed."
+> "Writing a great video script has nothing to do with writing and everything to do with psychological manipulation."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "If you don't structure your script for the first thirty seconds, you have already guaranteed that your audience will abandon you before you make a point."
+> "Ninety percent of creators quit because they spend four hours staring at a blank page instead of hitting record."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

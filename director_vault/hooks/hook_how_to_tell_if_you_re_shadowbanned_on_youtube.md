@@ -1,26 +1,26 @@
 # Hook: How to Tell If You’re Shadowbanned on YouTube (1-Minute Check)
 
 ## Performance Telemetry
-- Views: 5,633
+- Views: 5,635
 - Likes: 211
 - View-to-Like Ratio: 26.7:1
-- Primary Opening: "Your channel isn't broken, but the algorithm might have decided you don't exist."
+- Primary Opening: "YouTube isn't just ignoring your videos; a hidden suppression protocol might be quietly deleting your reach in real time."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Your channel isn't broken, but the algorithm might have decided you don't exist."
+> "YouTube isn't just ignoring your videos; a hidden suppression protocol might be quietly deleting your reach in real time."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "The biggest lie in content creation is that shadowbanning isn't real."
+> "You assume the algorithm simply hates your content, but the actual metric proving you are shadowbanned hides in plain sight."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are losing thousands of views to a silent restriction you can't see in your analytics."
+> "Hundreds of hours of work vanish overnight while creators mistakenly blame bad thumbnails for a silent algorithmic exile."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

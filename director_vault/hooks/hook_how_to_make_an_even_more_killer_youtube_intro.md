@@ -1,31 +1,27 @@
 # Hook: how to make an EVEN MORE killer youtube intro (to blow up your channel)
 
 ## Performance Telemetry
-- Views: 503,435
-- Likes: 16,394
-- View-to-Like Ratio: 30.7:1
-- Primary First Spoken Line (0:00 - 0:03): "This is a video timeline. And this tiny
-section might be the reason your channel hasn't blown up yet. It's called the
-intro. It's where most"
+- Views: 506,314
+- Likes: 16,444
+- View-to-Like Ratio: 30.8:1
+- Primary Opening: "Every single creator you worship is actively deleting the exact first five seconds of their videos, and you are the only one still walking into the trap."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "This is a video timeline. And this tiny
-section might be the reason your channel hasn't blown up yet. It's called the
-in"
+> "Every single creator you worship is actively deleting the exact first five seconds of their videos, and you are the only one still walking into the trap."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about how to make an EVEN MORE killer youtube  is completely backwards."
+> "Adding a cinematic intro to your YouTube channel is the fastest way to guarantee nobody watches past your opening hook."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with how to make an EVEN MORE killer you."
+> "Half of the people clicking on your latest video are already gone before you even finish saying your own name."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

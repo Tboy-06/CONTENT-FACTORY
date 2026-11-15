@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 1112.0s
-- Hook: "Why do the most intelligent and driven people often find themselves paralyzed by procrastination and self-sabotage?"
-- Payoff: "Once you master the power of your unconscious mind, the self-imposed limits on your potential dissolve forever."
+- Hook: "Brilliant minds constantly battle a silent internal force that keeps their true potential locked away behind an invisible ceiling."
+- Payoff: "True liberation begins the moment we stop fighting our own habits and instead align our unconscious mind with our highest ambitions."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Why do the most intelligent and driven people often find themselves paralyzed by procrastination and self-sabotage?
-2. We accumulate new skills and chase endless opportunities, yet many of us remain trapped in an invisible cycle of stagnation.
-3. It feels as though a psychological glass ceiling is holding us back, capping our success no matter how hard we push.
-4. This phenomenon suggests that our conscious desire for growth is constantly being undermined by a deeper, hidden force.
-5. To break this pattern, we must look past our habits and examine the architecture of the unconscious mind.
-6. Your brain is wired to maintain your current identity, even when that identity is the very thing preventing your evolution.
-7. True transformation begins only when you align your deep-seated unconscious beliefs with your external ambitions.
-8. Once you master the power of your unconscious mind, the self-imposed limits on your potential dissolve forever.
+1. Brilliant minds constantly battle a silent internal force that keeps their true potential locked away behind an invisible ceiling.
+2. Highly intelligent people routinely fall into the crippling traps of procrastination and self-sabotage despite their best intentions.
+3. New business opportunities arrive and fresh skills are mastered, yet financial growth mysteriously stalls at the exact same threshold.
+4. This invisible barrier acts as a psychological glass ceiling that dictates the maximum level of success we permit ourselves to achieve.
+5. Conventional effort and sheer willpower fail to shatter this limit because they operate purely on the conscious level.
+6. Deep inside the unconscious mind lie the foundational blueprints and hidden beliefs that quietly govern our daily behaviors.
+7. By learning to reprogram these deeply ingrained mental patterns, we can permanently eliminate self-doubt and unlock unprecedented growth.
+8. True liberation begins the moment we stop fighting our own habits and instead align our unconscious mind with our highest ambitions.
 

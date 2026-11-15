@@ -1,26 +1,26 @@
 # Hook: Alex Hormozi's Lead Generation Strategy for 2026
 
 ## Performance Telemetry
-- Views: 511,253
-- Likes: 9,916
+- Views: 511,857
+- Likes: 9,921
 - View-to-Like Ratio: 51.6:1
-- Primary Opening: "Alex Hormozi has spent years leaking his multi-million dollar lead generation blueprint for free, yet 99 percent of entrepreneurs are still failing to capture a single lead."
+- Primary Opening: "While every digital marketer burns cash on paid ads, Alex Hormozi quietly engineered a multi-brand lead machine extracting millions in revenue without spending a single dollar on traditional traffic."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Alex Hormozi has spent years leaking his multi-million dollar lead generation blueprint for free, yet 99 percent of entrepreneurs are still failing to capture a single lead."
+> "While every digital marketer burns cash on paid ads, Alex Hormozi quietly engineered a multi-brand lead machine extracting millions in revenue without spending a single dollar on traditional traffic."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "The most effective lead generation strategy for 2026 isn't a new AI tool or a paid ad hack—it is a brutal, low-tech psychological pivot that Hormozi refuses to stop talking about."
+> "Everything you know about modern lead generation is entirely backwards, because the man generating two hundred million dollars a year actually tells you to stop chasing clients altogether."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are currently burning through thousands of dollars in wasted ad spend because you are ignoring the exact lead capture mechanism powering Hormozi’s 200-million-dollar portfolio."
+> "If you are still filtering through hundreds of hours of fragmented podcast clips to find Hormozi's secret playbook, your competitors are already weaponizing his exact 2026 framework against you."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

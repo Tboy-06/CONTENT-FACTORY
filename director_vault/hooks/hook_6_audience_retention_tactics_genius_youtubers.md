@@ -1,27 +1,27 @@
 # Hook: 6 Audience Retention Tactics Genius YouTubers Use
 
 ## Performance Telemetry
-- Views: 292,894
-- Likes: 14,567
-- View-to-Like Ratio: 20.1:1
-- Primary First Spoken Line (0:00 - 0:03): "Intro Average audience retention rate of top creators What is audience retention rate?"
+- Views: 294,325
+- Likes: 14,585
+- View-to-Like Ratio: 20.2:1
+- Primary Opening: "Every single second you are not holding a seventy percent retention rate, the algorithm quietly buries your life's work."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Intro Average audience retention rate of top creators What is audience retention rate?"
+> "Every single second you are not holding a seventy percent retention rate, the algorithm quietly buries your life's work."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 6 Audience Retention Tactics Genius YouT is completely backwards."
+> "Hollywood blockbusters would kill for a seventy percent completion rate, yet top creators demand it effortlessly on Tuesday mornings."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 6 Audience Retention Tactics Genius."
+> "If your audience graph dips below the danger line, you have already lost the attention war before the first act even begins."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

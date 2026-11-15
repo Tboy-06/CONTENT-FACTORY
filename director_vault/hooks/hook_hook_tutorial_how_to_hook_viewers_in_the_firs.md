@@ -4,28 +4,24 @@
 - Views: 787
 - Likes: 20
 - View-to-Like Ratio: 39.4:1
-- Primary First Spoken Line (0:00 - 0:03): "So, everyone knows that a hook is
-supposed to keep the viewer watching, but almost no one understands that
-retention isn't created by a phra"
+- Primary Opening: "You have exactly three seconds before the algorithm deletes your existence, and your current opening is the reason why."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "So, everyone knows that a hook is
-supposed to keep the viewer watching, but almost no one understands that
-retention isn"
+> "You have exactly three seconds before the algorithm deletes your existence, and your current opening is the reason why."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Hook Tutorial: How to Hook Viewers in th is completely backwards."
+> "Everything you have been told about viral hooks is a lie designed to keep your retention at zero."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Hook Tutorial: How to Hook Viewers ."
+> "Most creators lose 90 percent of their audience in the first five words, and it is a mistake that is costing you your entire channel."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

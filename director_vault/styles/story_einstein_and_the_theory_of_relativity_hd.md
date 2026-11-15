@@ -1,56 +1,19 @@
 # Story Structure: Einstein and the Theory of Relativity | HD |
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 2984.0s
-- Hook: "(dark ambient music)"
-- Payoff: "into two zones, each with
-different properties."
+- Hook: "Who would have believed that one day humanity would actually gaze upon the impossible reality of a black hole?"
+- Payoff: "Ultimately, Einstein's revolutionary framework unlocked the deepest secrets of the universe and forever changed how we perceive reality."
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. (dark ambient music)
-2. -  Who would've believed
-3. that one day we'd be
-able to see this image?
-4. A black hole in the universe,
-5. a strange star from which no
-light or person can escape.
-6. This image was calculated
-
-### Act 2: Hidden Mechanism
-1. Even at this level of precision,
-2. my theory still works.
-3. The effect is true everywhere.
-4. The universe does not tick
-to a huge universal clock
-5. as Newton thought.
-6. Each region of the
-universe has its own time.
-
-### Act 3: Crisis/Climax
-1. He thought there must be
-something wrong in the calculation
-2. but if not, there had to be
-something wrong in the physics.
-3. So he thought, nature
-shouldn't behave like this
-4. but then it is a strange
-way for nature to behave,
-5. it's just very different
-6. from the sorts of things
-that one is used to.
-
-### Act 4: Aftermath
-1. an impenetrable sphere,
-2. actually represented the
-edge of a black hole.
-3. But what actually happens
-if we try to cross it?
-4. -  This surface
-has an extraordinary property.
-5. It isn't material and yet
-it separates space-time
-6. into two zones, each with
-different properties.
+### Act 1: Full Narrative Arc
+1. Who would have believed that one day humanity would actually gaze upon the impossible reality of a black hole?
+2. This cosmic abyss, a strange star from which no light or person can escape, was mapped using equations formulated a century ago.
+3. Albert Einstein developed the theory of general relativity to fundamentally redefine our understanding of space and time.
+4. Yet, this monumental scientific breakthrough was not immediately embraced by the world.
+5. Over the decades, the theory was alternately praised, rejected, forgotten, and ultimately rediscovered.
+6. It endured intense skepticism and nearly met its demise at the very phenomenon it predicted.
+7. Despite surviving the crucible of scientific debate, the theory of relativity remains famously difficult to comprehend.
+8. Ultimately, Einstein's revolutionary framework unlocked the deepest secrets of the universe and forever changed how we perceive reality.
 

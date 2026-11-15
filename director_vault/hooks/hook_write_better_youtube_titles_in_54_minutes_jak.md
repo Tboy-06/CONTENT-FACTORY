@@ -1,30 +1,27 @@
 # Hook: Write Better YouTube Titles In 54 Minutes (Jake Thomas | Creator Hooks)
 
 ## Performance Telemetry
-- Views: 139,402
-- Likes: 4,906
+- Views: 139,437
+- Likes: 4,905
 - View-to-Like Ratio: 28.4:1
-- Primary First Spoken Line (0:00 - 0:03): "no one's going to click on our video if
-you don't write a good title what if the only reason that people weren't watching
-your videos was th"
+- Primary Opening: "You could spend a thousand hours editing a masterpiece, and nobody will ever see a single frame of it if you make this one fatal mistake."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "no one's going to click on our video if
-you don't write a good title what if the only reason that people weren't watchin"
+> "You could spend a thousand hours editing a masterpiece, and nobody will ever see a single frame of it if you make this one fatal mistake."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about Write Better YouTube Titles In 54 Minute is completely backwards."
+> "The greatest content on the internet is dying in obscurity, not because it lacks quality, but because of a single sentence you wrote at the very end."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with Write Better YouTube Titles In 54 M."
+> "Every single time you hit publish without mastering this psychological trigger, you are deliberately handing your audience to your competitors."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

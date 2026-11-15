@@ -1,31 +1,27 @@
 # Hook: 2-Hour Youtube Masterclass From The World's Highest-Paid Strategist
 
 ## Performance Telemetry
-- Views: 364,094
-- Likes: 6,549
+- Views: 367,900
+- Likes: 6,613
 - View-to-Like Ratio: 55.6:1
-- Primary First Spoken Line (0:00 - 0:03): "Within a day of changing the thumbnail,
-that video went from  getting a,000 views a day to 40,000 views a day.
->> That's Patty Galloway. He'"
+- Primary Opening: "A single swapped image took a dying video from one thousand views a day to forty thousand, proving the most expensive production means nothing if the packaging fails."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Within a day of changing the thumbnail,
-that video went from  getting a,000 views a day to 40,000 views a day.
->> That's"
+> "A single swapped image took a dying video from one thousand views a day to forty thousand, proving the most expensive production means nothing if the packaging fails."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 2-Hour Youtube Masterclass From The Worl is completely backwards."
+> "MrBeast and Red Bull didn't dominate fifty billion views by working harder, but by answering one psychological question before a single frame was ever shot."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 2-Hour Youtube Masterclass From The."
+> "You are wasting months editing videos that are doomed to fail from the second you pick the topic, unless you steal the exact blueprint of the world's highest-paid strategist."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

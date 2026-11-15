@@ -1,26 +1,26 @@
 # Hook: The Beast Of Colombia That Literally Sold His Soul To The Devil & Sacrificed 221 Boys
 
 ## Performance Telemetry
-- Views: 3,842,660
-- Likes: 95,348
+- Views: 3,845,270
+- Likes: 95,374
 - View-to-Like Ratio: 40.3:1
-- Primary Opening: "He didn't just kill 221 children; he believed he was performing a dark religious sacrament for the devil himself."
+- Primary Opening: "Deep beneath the gold-leafed altars of Colombia's holiest cathedrals, a deal was struck in blood for the souls of over two hundred children."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "He didn't just kill 221 children; he believed he was performing a dark religious sacrament for the devil himself."
+> "Deep beneath the gold-leafed altars of Colombia's holiest cathedrals, a deal was struck in blood for the souls of over two hundred children."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "The most feared serial killer in history didn't operate in the shadows—he walked through the front doors of Colombia’s holiest cathedrals."
+> "You would expect a monster who sacrificed two hundred and twenty-one boys to hide in the shadows, not build monuments right beside the house of God."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "Authorities were terrified to look under the floorboards of these gold-leafed churches, where 221 bodies waited to be discovered."
+> "The most terrifying serial killer in human history didn't just murder the innocent; he walked free because the justice system refused to believe what he traded his soul for."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

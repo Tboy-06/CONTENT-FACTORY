@@ -2,7 +2,7 @@
 title: CONTENT-FACTORY Second Brain Master Index
 type: map_of_content
 tags: [second-brain, moc, knowledge-architecture, director-vault]
-total_records: 1879
+total_records: 2314
 target_total: 100000
 ---
 
@@ -15,11 +15,11 @@ This vault contains the curated directing physics, viral hooks, pacing rules, an
 
 | House | Focus | Live Quota | Status | Dashboard |
 |---|---|---|---|---|
-| **HOUSE_1_HOOK_PSYCHOLOGY** | First 3-Second Viral Retention Formulas (Curiosity, Negative Bias, Shock) | `277 / 20,000` | 🟢 OPEN | [[HOUSE_1_HOOK_PSYCHOLOGY]] |
-| **HOUSE_2_SCREENWRITER_ARC** | 5-Genre Screenplay Arcs, CPM Cadence, and Multi-Act Narrative Structure | `599 / 20,000` | 🟢 OPEN | [[HOUSE_2_SCREENWRITER_ARC]] |
-| **HOUSE_3_VISUAL_DIRECTOR** | Motion HUD Cards, 3D Shaders, Color Grades, and Dynamic Camera Moves | `404 / 20,000` | 🟢 OPEN | [[HOUSE_3_VISUAL_DIRECTOR]] |
-| **HOUSE_4_SOUND_AND_CUT_EDITOR** | Multi-Voice Dialogue, SFX Placement, Cut Velocity, and LUFS Mastering | `383 / 20,000` | 🟢 OPEN | [[HOUSE_4_SOUND_AND_CUT_EDITOR]] |
-| **HOUSE_5_COPILOT_AND_REFLEXION** | AI Director Studio Chat Commands, Reflexion Auto-Healing, and Mistake Logs | `216 / 20,000` | 🟢 OPEN | [[HOUSE_5_COPILOT_AND_REFLEXION]] |
+| **HOUSE_1_HOOK_PSYCHOLOGY** | First 3-Second Viral Retention Formulas (Curiosity, Negative Bias, Shock) | `376 / 20,000` | 🟢 OPEN | [[HOUSE_1_HOOK_PSYCHOLOGY]] |
+| **HOUSE_2_SCREENWRITER_ARC** | 5-Genre Screenplay Arcs, CPM Cadence, and Multi-Act Narrative Structure | `678 / 20,000` | 🟢 OPEN | [[HOUSE_2_SCREENWRITER_ARC]] |
+| **HOUSE_3_VISUAL_DIRECTOR** | Motion HUD Cards, 3D Shaders, Color Grades, and Dynamic Camera Moves | `479 / 20,000` | 🟢 OPEN | [[HOUSE_3_VISUAL_DIRECTOR]] |
+| **HOUSE_4_SOUND_AND_CUT_EDITOR** | Multi-Voice Dialogue, SFX Placement, Cut Velocity, and LUFS Mastering | `456 / 20,000` | 🟢 OPEN | [[HOUSE_4_SOUND_AND_CUT_EDITOR]] |
+| **HOUSE_5_COPILOT_AND_REFLEXION** | AI Director Studio Chat Commands, Reflexion Auto-Healing, and Mistake Logs | `325 / 20,000` | 🟢 OPEN | [[HOUSE_5_COPILOT_AND_REFLEXION]] |
 
 ---
 

@@ -1,26 +1,26 @@
 # Hook: How to edit 10x faster in 5 minutes
 
 ## Performance Telemetry
-- Views: 673,140
-- Likes: 37,902
+- Views: 674,923
+- Likes: 37,939
 - View-to-Like Ratio: 17.8:1
-- Primary Opening: "Most editors spend ten hours on a project that should take them sixty minutes, and I found the secret to why."
+- Primary Opening: "He discovered a bizarre workflow flaw that cut his rendering time to zero, and the editing industry tried to bury it."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Most editors spend ten hours on a project that should take them sixty minutes, and I found the secret to why."
+> "He discovered a bizarre workflow flaw that cut his rendering time to zero, and the editing industry tried to bury it."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "I stopped trying to edit perfectly, and that is exactly how I doubled my income overnight."
+> "Working harder on your timeline is actually destroying your output, because the world's fastest editors deliberately embrace garbage."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "If you are still using a traditional editing timeline, you are effectively paying your clients to work for them."
+> "Every single hour you spend manually cutting clips is directly stealing money from your bank account while your competitors lap you."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

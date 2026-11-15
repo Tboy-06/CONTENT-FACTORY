@@ -1,29 +1,27 @@
 # Hook: 7 Video Editing Tips to Get 1,000,000+ Views on Shorts & Reels | CapCut Tutorial
 
 ## Performance Telemetry
-- Views: 602,526
-- Likes: 19,535
-- View-to-Like Ratio: 30.8:1
-- Primary First Spoken Line (0:00 - 0:03): "okay so I'm definitely not saying that editing 
-is everything because content will always be king but great content and great editing that's"
+- Views: 603,089
+- Likes: 19,538
+- View-to-Like Ratio: 30.9:1
+- Primary Opening: "The algorithm does not reward your content; it rewards the exact millisecond you choose to cut."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "okay so I'm definitely not saying that editing 
-is everything because content will always be king but great content and "
+> "The algorithm does not reward your content; it rewards the exact millisecond you choose to cut."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about 7 Video Editing Tips to Get 1,000,000+ V is completely backwards."
+> "Great ideas fail every single day because creators refuse to master a simple timeline trick."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with 7 Video Editing Tips to Get 1,000,0."
+> "Every second of dead air in your edit is actively destroying your chances at a million views."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

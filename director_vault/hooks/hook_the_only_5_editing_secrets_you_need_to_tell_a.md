@@ -1,31 +1,27 @@
 # Hook: The ONLY 5 Editing Secrets You Need to Tell Any Story
 
 ## Performance Telemetry
-- Views: 352,310
-- Likes: 18,838
-- View-to-Like Ratio: 18.7:1
-- Primary First Spoken Line (0:00 - 0:03): "So, you had this great idea for a video.
-You wrote your script, planned your shots, and actually got out in the wild
-filming those shots.  A"
+- Views: 353,851
+- Likes: 18,865
+- View-to-Like Ratio: 18.8:1
+- Primary Opening: "You didn't ruin your video in the production phase, you murdered it in the timeline."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "So, you had this great idea for a video.
-You wrote your script, planned your shots, and actually got out in the wild
-fil"
+> "You didn't ruin your video in the production phase, you murdered it in the timeline."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The ONLY 5 Editing Secrets You Need to T is completely backwards."
+> "The best editors in the world actually throw away ninety percent of their footage to make a masterpiece."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The ONLY 5 Editing Secrets You Need."
+> "Every single time you hesitate on a cut, you are actively driving your audience to click away forever."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

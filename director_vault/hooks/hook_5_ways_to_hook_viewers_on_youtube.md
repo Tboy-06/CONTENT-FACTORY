@@ -4,23 +4,23 @@
 - Views: 1,977
 - Likes: 44
 - View-to-Like Ratio: 44.9:1
-- Primary Opening: "You are currently losing 60 percent of your audience before they even see your title sequence, and it has nothing to do with your editing."
+- Primary Opening: "Every second you waste on your intro is a viewer hitting the back button, and I’m going to show you exactly why your current strategy is killing your channel's growth."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "You are currently losing 60 percent of your audience before they even see your title sequence, and it has nothing to do with your editing."
+> "Every second you waste on your intro is a viewer hitting the back button, and I’m going to show you exactly why your current strategy is killing your channel's growth."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "The biggest lie in content creation is that your content needs to be good; it only needs to be impossible to click away from."
+> "You’ve been told to start your video with a warm welcome, but that single piece of advice is the fastest way to ensure your audience clicks away before the meat of your content."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "Every second you waste on an introduction is a direct financial loss that is currently tanking your video's search ranking."
+> "You have exactly ten seconds to prove your video is worth a stranger's time, or the algorithm will bury your content and effectively delete months of your hard work."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

@@ -1,66 +1,19 @@
 # Story Structure: BYD’s Rise: How China Built the World’s EV Giant | Business Case Study
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 1353.0s
-- Hook: "There's competitors now ramping up and
-as you're familiar with BYD, which is"
-- Payoff: "costs about 40% of the total cost of
-manufacturing. But in PHEV cars, you"
+- Hook: "For years, the automotive industry treated BYD as nothing more than a punchline, dismissing its early designs as cheap, clunky, and destined"
+- Payoff: "Their meteoric rise serves as a stark reminder that the greatest threats to industry titans often emerge from the competitors they refuse to"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. There's competitors now ramping up and
-as you're familiar with BYD, which is
-2. also on the West Coast. I think they're
-ramping up production of their electric
-3. vehicles. Warren Buffett owns 10% stake
-in that. Why do you laugh? The reality
-4. is
-trying to compete. Why do you laugh?
-5. Have you seen that car?
-You know, BYD was once a joke, a
-6. complete laughing stock in the industry.
-
-### Act 2: Hidden Mechanism
-1. 260 Wh per kg, while nickel-cadmium
-batteries are limited to around 50 Wh
-2. per kg. This means for every kilogram of
-battery mass, a lithium-ion battery
-3. stores at least five times more energy.
-That is why devices like smartphones
-4. started to use lithium-ion batteries so
-that they could be lightweight and yet
-5. super powerful.
-Secondly, nickel-cadmium batteries lose
-6. capacity over time if you recharge them
-before they are fully empty. But,
-
-### Act 3: Crisis/Climax
-1. a Chevrolet Optra. Others were filming
-the doors of the cars not shutting
-2. correctly.
-So, long story short, BYD had no engine
-3. technology, no engine design, and they
-had nothing special.
-4. Their low-end models got old and their
-newer models failed to take off. Even
-5. their early electric buses in the US
-faced reports of poor performance,
-6. mechanical problems, and terrible
-driving ranges. And just when things
-
-### Act 4: Aftermath
-1. vehicle where if your EV charging runs
-out, you can use your gas engine until
-2. the next charge. And by the way, PHEV
-stands for plug-in hybrid electric
-3. vehicle. And this is where the magic
-happened.
-4. You see, manufacturing a hybrid vehicle
-over a fully EV car had three major
-5. advantages. Firstly, the battery is
-usually the biggest cost driver and
-6. costs about 40% of the total cost of
-manufacturing. But in PHEV cars, you
+### Act 1: Full Narrative Arc
+1. For years, the automotive industry treated BYD as nothing more than a punchline, dismissing its early designs as cheap, clunky, and destined for failure.
+2. Major global competitors openly laughed at the idea that this niche Chinese manufacturer could ever threaten the established giants of the road.
+3. Yet, beneath the ridicule, the company was quietly mastering the most critical technology in the modern vehicle: the battery.
+4. This strategic focus allowed BYD to vertically integrate its supply chain, giving it an unprecedented cost advantage over legacy automakers.
+5. When Warren Buffett famously took a ten percent stake in the company, the skeptical market was forced to take a closer look.
+6. Today, those early, plain-looking sedans have evolved into a sophisticated fleet of electric vehicles dominating the global market.
+7. BYD is no longer a laughing stock but a manufacturing juggernaut that is fundamentally reshaping the future of transportation.
+8. Their meteoric rise serves as a stark reminder that the greatest threats to industry titans often emerge from the competitors they refuse to take seriously.
 

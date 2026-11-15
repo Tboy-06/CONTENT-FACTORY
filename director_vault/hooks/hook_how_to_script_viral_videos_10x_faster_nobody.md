@@ -1,31 +1,27 @@
 # Hook: How to Script Viral Videos 10x Faster (Nobody Teaches This)
 
 ## Performance Telemetry
-- Views: 119,432
-- Likes: 5,053
-- View-to-Like Ratio: 23.6:1
-- Primary First Spoken Line (0:00 - 0:03): "Today we're talking about writing killer
-scripts. If you want to learn how to make content faster, this is going to be
-one of the most helpf"
+- Views: 119,884
+- Likes: 5,060
+- View-to-Like Ratio: 23.7:1
+- Primary Opening: "Every single time you stare at a blank page waiting for inspiration, you are actively losing thousands of dollars to creators who use a secret assembly line."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Today we're talking about writing killer
-scripts. If you want to learn how to make content faster, this is going to be
-o"
+> "Every single time you stare at a blank page waiting for inspiration, you are actively losing thousands of dollars to creators who use a secret assembly line."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to Script Viral Videos 10x Faster (N is completely backwards."
+> "Writing your video script from scratch is the exact reason your channel is dying, because top creators stopped writing days ago."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to Script Viral Videos 10x Fast."
+> "While you spend ten agonizing hours forcing a single script into existence, algorithms are silently burying your content into total irrelevance."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

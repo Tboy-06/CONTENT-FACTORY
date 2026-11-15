@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 948.0s
-- Hook: "Most creators lose their audience in the first three seconds because they are making one of four fatal mistakes."
-- Payoff: "Mastering these four corrections is the single fastest way to force the algorithm to push your content to a massive new audience."
+- Hook: "The first three seconds of your video determine whether thousands watch or nobody cares."
+- Payoff: "Mastering the anatomy of an unskippable hook is the single fastest way to skyrocket your views."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. Most creators lose their audience in the first three seconds because they are making one of four fatal mistakes.
-2. I have spent years deconstructing thousands of high-performing videos to identify exactly why viewers click away before the value even begins.
-3. The truth is that even the highest-quality content will fail if your initial promise doesn't immediately arrest the viewer's attention.
-4. We are going to dismantle the flawed psychological triggers that are actively killing your retention rates.
-5. First, we will address the structural errors that destroy your credibility before the audience trusts your expertise.
-6. Then, we will analyze the specific tactical shifts required to convert passive scrollers into deeply engaged viewers.
-7. By the end of this breakdown, you will possess a repeatable framework to craft hooks that are statistically impossible to skip.
-8. Mastering these four corrections is the single fastest way to force the algorithm to push your content to a massive new audience.
+1. The first three seconds of your video determine whether thousands watch or nobody cares.
+2. Creators spend hours crafting the perfect middle, only to watch their masterpieces die in the scroll.
+3. After analyzing thousands of high-performing pieces of content, a stark pattern emerges from the data.
+4. When a video fails to capture attention, it almost always traces back to one of four critical hook mistakes.
+5. These subtle psychological missteps actively train your audience to swipe away before the value even drops.
+6. Fixing these invisible friction points transforms a skippable introduction into an irresistible psychological pull.
+7. By dissecting tactical examples of what not to do, you can completely overhaul your retention rates.
+8. Mastering the anatomy of an unskippable hook is the single fastest way to skyrocket your views.
 
