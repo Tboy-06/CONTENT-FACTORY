@@ -1,26 +1,26 @@
 # Hook: 12 CAMERA ANGLES to Enhance Your Films
 
 ## Performance Telemetry
-- Views: 4,219,241
-- Likes: 182,689
+- Views: 4,220,824
+- Likes: 182,697
 - View-to-Like Ratio: 23.1:1
-- Primary Opening: "Most directors fail because they choose the wrong angle before they even press record."
+- Primary Opening: "Most filmmakers fail because they rely on their eyes rather than the geometry of the lens."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Most directors fail because they choose the wrong angle before they even press record."
+> "Most filmmakers fail because they rely on their eyes rather than the geometry of the lens."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Technically, the most cinematic shots in film history were actually mistakes until they broke every rule in the book."
+> "The secret to a cinematic masterpiece isn't the camera you own, but the twelve angles you’ve been ignoring."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are losing 90 percent of your audience's emotional engagement every time you fail to change your camera height."
+> "If your audience feels nothing, it is because you are choosing the wrong perspective to tell your story."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

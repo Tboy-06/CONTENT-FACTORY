@@ -1,32 +1,27 @@
 # Hook: How to make progress faster than everyone
 
 ## Performance Telemetry
-- Views: 675,408
-- Likes: 24,642
-- View-to-Like Ratio: 27.4:1
-- Primary First Spoken Line (0:00 - 0:03): "This is the first piece of content I
-ever made. >> Don't let your
-This is the first ad I ever made. >> tired of fitness places that are
->> t"
+- Views: 683,715
+- Likes: 24,735
+- View-to-Like Ratio: 27.6:1
+- Primary Opening: "I went from a failed amateur ad to a Guinness World Record holder in less than thirty-six months; here is the blueprint of my obsession."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "This is the first piece of content I
-ever made. >> Don't let your
-This is the first ad I ever made. >> tired of fitness "
+> "I went from a failed amateur ad to a Guinness World Record holder in less than thirty-six months; here is the blueprint of my obsession."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about How to make progress faster than everyon is completely backwards."
+> "Most people chase 'balance' to succeed, but every empire I’ve built was fueled by a calculated, obsessive imbalance that defied every conventional rule of productivity."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with How to make progress faster than ev."
+> "I burned through millions in failing ventures before realizing that speed isn't about working harder—it’s about eliminating the ninety-nine percent of tasks that are actively killing your progress."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

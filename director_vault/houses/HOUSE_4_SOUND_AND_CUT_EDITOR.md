@@ -3,7 +3,7 @@ title: House 4 - Sound & Cut Editor
 house: HOUSE_4_SOUND_AND_CUT_EDITOR
 type: moc_house
 target_quota: 20000
-current_quota: 485
+current_quota: 518
 tags: [house-4, sound-design, audio-mastering, cut-velocity, second-brain]
 ---
 
@@ -16,8 +16,8 @@ House 4 rules sound design, voice isolation, dynamic ducking, and millisecond-ac
 ## 📊 Sub-Room Quota Allocation (4,000 records each)
 | Sub-Room | Focus | Quota | Status |
 |---|---|---|---|
-| `cut_velocity_cpm` | Cut velocity rhythms, J-cuts, L-cuts, and match cuts | `68 / 4,000` | OPEN |
-| `multi_voice_archival` | Speaker panning, radio EQ bandpass, and voiceover layering | `289 / 4,000` | OPEN |
+| `cut_velocity_cpm` | Cut velocity rhythms, J-cuts, L-cuts, and match cuts | `79 / 4,000` | OPEN |
+| `multi_voice_archival` | Speaker panning, radio EQ bandpass, and voiceover layering | `292 / 4,000` | OPEN |
 
 ## 🎚️ Audio Mastering Standards
 - **Dialogue Level:** Loudness-normalized to `-14.0 LUFS`.

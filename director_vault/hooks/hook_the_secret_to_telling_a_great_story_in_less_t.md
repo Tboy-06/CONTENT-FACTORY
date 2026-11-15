@@ -1,31 +1,27 @@
 # Hook: The Secret to Telling a Great Story — in Less Than 60 Seconds | Jenny Hoyos | TED
 
 ## Performance Telemetry
-- Views: 1,136,191
-- Likes: 25,741
-- View-to-Like Ratio: 44.1:1
-- Primary First Spoken Line (0:00 - 0:03): "Have you ever wondered how much
-ice cream you can get for a dollar? Or what's the cheapest
-thing in an airport? Or if it's faster to go insi"
+- Views: 1,147,928
+- Likes: 25,820
+- View-to-Like Ratio: 44.5:1
+- Primary Opening: "Most people spend years trying to tell a story, but I found out that the internet only gives you three seconds to change someone’s life."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Have you ever wondered how much
-ice cream you can get for a dollar? Or what's the cheapest
-thing in an airport? Or if it"
+> "Most people spend years trying to tell a story, but I found out that the internet only gives you three seconds to change someone’s life."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The Secret to Telling a Great Story — in is completely backwards."
+> "You don't need a massive budget or a production crew to go viral; in fact, the most successful stories are the ones that ignore every rule you've ever been taught."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The Secret to Telling a Great Story."
+> "If you don't master the art of the hook within the first five seconds, your best ideas are destined to disappear into the digital graveyard forever."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

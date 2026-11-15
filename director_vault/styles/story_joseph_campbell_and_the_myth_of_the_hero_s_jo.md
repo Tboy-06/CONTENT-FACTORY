@@ -4,16 +4,16 @@
 - Format: 8-Sentence Short
 - Total Duration: 519.0s
 - Hook: "Across the vast expanse of human history, cultures separated by oceans and centuries have told the exact same story."
-- Payoff: "By exploring this cycle, we discover that every legend is ultimately a map for our own path through the unknown."
+- Payoff: "We are all walking the same path, constantly reliving the mythic cycle of departure, initiation, and ultimate return."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
 1. Across the vast expanse of human history, cultures separated by oceans and centuries have told the exact same story.
-2. In the 20th century, scholars studying comparative mythology began to notice an uncanny pattern hidden within the world’s ancient folklore.
-3. From the deserts of the Middle East to the jungles of the Americas, these disparate myths shared a identical heartbeat of theme and structure.
-4. This revelation ignited a profound mystery: how could human societies with no contact develop such strikingly similar narratives?
-5. Carl Jung and Joseph Campbell emerged as the primary architects of a revolutionary answer to this enduring riddle.
-6. They proposed that these universal motifs were not coincidental, but rather echoes of a shared psychological architecture common to all mankind.
-7. Campbell distilled these recurring patterns into the 'Hero’s Journey,' a singular blueprint for the transformation of the human spirit.
-8. By exploring this cycle, we discover that every legend is ultimately a map for our own path through the unknown.
+2. Scholars of the 20th century began to notice a hauntingly familiar rhythm buried within the myths of disparate civilizations.
+3. From ancient Mesopotamia to the modern era, the structural DNA of our greatest legends reveals a profound, shared architecture.
+4. This phenomenon forced thinkers to confront a radical question: how could total strangers conceive of the same universal truths?
+5. Carl Jung and Joseph Campbell emerged as the primary architects of this intellectual mystery.
+6. They proposed that these recurring patterns were not mere coincidences, but echoes of a collective human psyche.
+7. By mapping this ancient template, Campbell identified the Hero’s Journey as a singular, timeless blueprint for the human experience.
+8. We are all walking the same path, constantly reliving the mythic cycle of departure, initiation, and ultimate return.
 

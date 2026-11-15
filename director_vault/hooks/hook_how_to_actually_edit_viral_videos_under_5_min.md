@@ -1,26 +1,26 @@
 # Hook: How To Actually Edit Viral Videos (Under 5 Minutes)
 
 ## Performance Telemetry
-- Views: 197,659
-- Likes: 14,091
+- Views: 197,746
+- Likes: 14,095
 - View-to-Like Ratio: 14.0:1
-- Primary Opening: "You didn't choose to watch this video; I engineered the first three seconds to make it impossible for you to click away."
+- Primary Opening: "The reason you can't stop watching a video isn't talent; it’s a psychological blueprint that forces your brain to stay locked in."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "You didn't choose to watch this video; I engineered the first three seconds to make it impossible for you to click away."
+> "The reason you can't stop watching a video isn't talent; it’s a psychological blueprint that forces your brain to stay locked in."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Most creators believe that high-quality production is the secret to retention, but that is exactly why they are failing."
+> "Most creators fail because they treat editing like an art form, when in reality, it is a high-stakes game of keeping the viewer from hitting close."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "You are losing ninety percent of your audience before the intro even finishes, and it's because you are making one fatal editing error."
+> "If your audience leaves in the first ten seconds, your video is effectively dead before it even has the chance to go viral."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

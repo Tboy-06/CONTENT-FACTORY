@@ -23,12 +23,12 @@
 > "<b>a great sounding system.</b> <b>The process explained in this video will</b> <b>apply to any system you</b> <b>might be using, but I'll</b>"
 
 - **Beat 1 (treated_image):** Grade: `amber`, SFX: `click.wav`
-- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 2 (motion_card):** Grade: `hard_bw`, SFX: `none`
 
 ### Scene 4
 > "<b>be demonstrating the process using the</b> <b>Mackie SRM V-Class</b> <b>loudspeakers, DRM 18S subwoofers,</b> <b>and the Pro FX12 V3 Plus mixer.</b>"
 
-- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `riser.wav`
+- **Beat 1 (evidence_board):** Grade: `hard_bw`, SFX: `none`
 - **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `thud.wav`
 
 ### Scene 5
@@ -47,11 +47,11 @@
 > "<b>before making connections with cables.</b> <b>That way, you can keep cable pathways as</b> <b>clean as possible, which</b> <b>will make troubleshooting</b>"
 
 - **Beat 1 (motion_card):** Grade: `hard_bw`, SFX: `click.wav`
-- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 2 (treated_image):** Grade: `teal_split`, SFX: `none`
 
 ### Scene 8
 > "<b>and loadout much faster.</b> <b>There are three things that you should</b> <b>pay special attention to in this phase.</b>"
 
-- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `riser.wav`
+- **Beat 1 (treated_image):** Grade: `teal_split`, SFX: `none`
 - **Beat 2 (motion_card):** Grade: `amber`, SFX: `thud.wav`
 

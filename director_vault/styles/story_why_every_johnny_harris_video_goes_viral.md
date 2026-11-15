@@ -1,67 +1,19 @@
 # Story Structure: Why every Johnny Harris video goes viral
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 347.0s
-- Hook: "this airport this texas army this is
-look at this look at things"
-- Payoff: "context that bridges us directly to the
-next piece of visual evidence"
+- Hook: "How does one video creator explain everything from broken McDonald's ice cream machines to global geopolitical crises while racking up milli"
+- Payoff: "Ultimately, Johnny Harris proves that viral retention comes down to converting raw information into a relentless journey of visual curiosity"
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. this airport this texas army this is
-look at this look at things
-2. how does one person create videos
-explaining everything from mcdonald's
-3. ice cream machines to venezuela's border
-crisis and get millions of views on
-4. every single one i mean johnny harris
-even got nominated for an emmy which is
-5. like okay it isn't that johnny harris is
-an expert in these topics it isn't his
-6. fancy animations other people do that
-and never go viral so what is it johnny
-
-### Act 2: Hidden Mechanism
-1. then context visual evidence then
-context or from the audience's
-2. perspective experience it understand it
-experience understand it this repeating
-3. two-part structure is how he gets
-millions of views but it's something
-4. that anyone can do here's how number one
-i experience it visual anchors look at
-5. the first three minutes of the video and
-you'll see these visual anchors
-6. visual anchors also known as visual
-evidence
-
-### Act 3: Crisis/Climax
-1. this banana let's talk about tea the
-bookstore i'm in a village a venezuelan
-2. style hot dog ice cream cone this
-airport this textbook this army barracks
-3. this is me look at this purse look at
-the explosive look at this bridge look
-4. at how this pbs explainer deferred
-visual evidence to later in the piece
-5. attempting to establish understanding by
-having viewers hear about the context
-6. johnny does the opposite when i'm
-thinking about a story i'm thinking
-
-### Act 4: Aftermath
-1. evidence but anchor bridge is the
-reverse of that and it's this reversal
-2. that enables johnny harris to command
-our attention so well they're like what
-3. is this and then they will sit through
-four minutes of history in context
-4. listen to johnny harris's piece again
-and you'll hear johnny making us look at
-5. this thing relentlessly until we're
-hungry for
-6. context that bridges us directly to the
-next piece of visual evidence
+### Act 1: Full Narrative Arc
+1. How does one video creator explain everything from broken McDonald's ice cream machines to global geopolitical crises while racking up millions of views on every single upload?
+2. With an Emmy nomination to his name, Johnny Harris has mastered a level of digital storytelling that leaves traditional media networks scrambling to catch up.
+3. It is tempting to credit his success to deep academic expertise, yet Harris frequently investigates topics far outside his personal background.
+4. Others attribute his popularity to flashy map animations, but countless channels copy his aesthetic without ever achieving his legendary viral reach.
+5. The true driver behind his staggering metrics isn't technical polish, but a highly disciplined visual narrative formula.
+6. Instead of lecturing the audience, Harris anchors every script around tangible visual evidence that hooks viewers from the opening frame.
+7. By framing complex investigative journalism as an accessible step-by-step mystery, he transforms passive scrollers into invested co-detectives.
+8. Ultimately, Johnny Harris proves that viral retention comes down to converting raw information into a relentless journey of visual curiosity.
 

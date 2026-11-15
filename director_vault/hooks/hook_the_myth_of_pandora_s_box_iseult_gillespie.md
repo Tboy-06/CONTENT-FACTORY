@@ -1,27 +1,27 @@
 # Hook: The myth of Pandora’s box - Iseult Gillespie
 
 ## Performance Telemetry
-- Views: 9,236,943
-- Likes: 156,627
+- Views: 9,240,683
+- Likes: 156,650
 - View-to-Like Ratio: 59.0:1
-- Primary First Spoken Line (0:00 - 0:03): "Curiosity: a blessing, or a curse? The paradoxical nature of this trait"
+- Primary Opening: "The gods gave her one single rule: never open the jar, yet they knew exactly what she would do before she was even created."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "Curiosity: a blessing, or a curse? The paradoxical nature of this trait"
+> "The gods gave her one single rule: never open the jar, yet they knew exactly what she would do before she was even created."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Everything you think you know about The myth of Pandora’s box - Iseult Gille is completely backwards."
+> "Pandora wasn't a villain or a victim; she was a deliberate biological weapon designed by the gods to destroy humanity from the inside out."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Red slam word motion card: 'CRITICAL ERROR' with heavy thud SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "In 2026, 99% of creators make this fatal mistake with The myth of Pandora’s box - Iseult ."
+> "One mistake turned the entire world into a cage of suffering, and we are still living in the wreckage of that single moment of weakness."
 
 - **Target Duration:** 3.4s
-- **Visual Pacing:** Stat counter slamming '99% AT RISK' with whoosh riser
+- **Visual Pacing:** Dynamic stat counter with whoosh riser
 

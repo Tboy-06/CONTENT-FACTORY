@@ -1,26 +1,26 @@
 # Hook: CapCut Edits That Look Too Advanced to Be Real!
 
 ## Performance Telemetry
-- Views: 1,361,412
-- Likes: 53,471
+- Views: 1,363,079
+- Likes: 53,501
 - View-to-Like Ratio: 25.5:1
-- Primary Opening: "The industry's best-kept secret isn't a five-thousand-dollar software license, but a single mobile app that Hollywood editors are currently terrified of."
+- Primary Opening: "The industry's best kept secret is that your phone has been hiding a professional-grade engine capable of destroying After Effects in a fraction of the time."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "The industry's best-kept secret isn't a five-thousand-dollar software license, but a single mobile app that Hollywood editors are currently terrified of."
+> "The industry's best kept secret is that your phone has been hiding a professional-grade engine capable of destroying After Effects in a fraction of the time."
 
 - **Target Duration:** 3.2s
 - **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "Professional motion graphics don't require After Effects; they require the exact sequence of flaws that most CapCut users are currently overlooking."
+> "Stop believing that you need a ten-thousand-dollar workstation to produce Hollywood-level motion graphics when the most powerful software is already in your pocket."
 
 - **Target Duration:** 3.0s
 - **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> "Stop wasting thousands on professional suites when you can achieve the impossible with a smartphone interface that was never meant to look this cinematic."
+> "You are wasting thousands of hours on complex software workflows while elite editors are using these three hidden CapCut exploits to bypass the professional gatekeepers."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

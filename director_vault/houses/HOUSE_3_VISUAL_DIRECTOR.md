@@ -3,7 +3,7 @@ title: House 3 - Visual Director
 house: HOUSE_3_VISUAL_DIRECTOR
 type: moc_house
 target_quota: 20000
-current_quota: 508
+current_quota: 547
 tags: [house-3, visual-director, camera-moves, motion-cards, second-brain]
 ---
 
@@ -16,10 +16,10 @@ House 3 governs motion graphics, GLSL depth shaders, camera moves, and color gra
 ## 📊 Sub-Room Quota Allocation (4,000 records each)
 | Sub-Room | Focus | Quota | Status |
 |---|---|---|---|
-| `depth_3d_shaders` | Ray-marched OpenGL GLSL shaders & DepthFlow displacement | `38 / 4,000` | OPEN |
-| `motion_hud_cards` | Pillow 60fps 2D cards (steppers, counters, declassified scans) | `40 / 4,000` | OPEN |
-| `color_grade_lighting` | Ev1 color grading LUTs (teal_split, hard_bw, skit_warm, etc.) | `54 / 4,000` | OPEN |
-| `broll_composition` | Pexels/archival shot framing, golden ratio, subject eye-lines | `333 / 4,000` | OPEN |
+| `depth_3d_shaders` | Ray-marched OpenGL GLSL shaders & DepthFlow displacement | `43 / 4,000` | OPEN |
+| `motion_hud_cards` | Pillow 60fps 2D cards (steppers, counters, declassified scans) | `48 / 4,000` | OPEN |
+| `color_grade_lighting` | Ev1 color grading LUTs (teal_split, hard_bw, skit_warm, etc.) | `62 / 4,000` | OPEN |
+| `broll_composition` | Pexels/archival shot framing, golden ratio, subject eye-lines | `343 / 4,000` | OPEN |
 
 ## ⚙️ Strict Engine Enums
 - **Valid Cameras:** `cosine_in`, `cosine_out`, `snap_zoom`, `camera_shake`, `orbital`, `dolly_vertigo`, `rack_focus_bokeh`, `pan_right`

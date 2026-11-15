@@ -1,26 +1,26 @@
 # Hook: the psychology of building a brand everyone loves
 
 ## Performance Telemetry
-- Views: 513,690
-- Likes: 20,094
+- Views: 514,684
+- Likes: 20,113
 - View-to-Like Ratio: 25.6:1
-- Primary Opening: "To everyone who's ever told anyone with a dream they can't, this video is for you. >> Every iconic brand started with a"
+- Primary Opening: "The world’s most beloved brands aren't actually selling products; they’re weaponizing a psychological glitch that makes you feel like you’re betraying yourself if you buy from their competitors."
 
 ## High-Retention Hook Variations
 ### Curiosity Gap
-> "To everyone who's ever told anyone with a dream they can't, this video is for you. >> Every iconic brand started with a"
+> "The world’s most beloved brands aren't actually selling products; they’re weaponizing a psychological glitch that makes you feel like you’re betraying yourself if you buy from their competitors."
 
 - **Target Duration:** 3.2s
-- **Visual Pacing:** Rapid cosine punch-in with high-contrast B&W archival overlay
+- **Visual Pacing:** Rapid cosine punch-in with high-contrast archival overlay
 
 ### Counter Intuitive
-> "founder that focused on a key principle to create something legendary."
+> "If you are starting a business to make money, you have already guaranteed your own failure, because the most iconic empires in history were never built on profit."
 
 - **Target Duration:** 3.0s
-- **Visual Pacing:** Forensic declassified scan with thud.wav SFX
+- **Visual Pacing:** Forensic declassified document card with heavy thud SFX
 
 ### Negative Bias
-> ">> You're not in it for the money. >> I don't think anyone at the company's in"
+> "Most entrepreneurs are one bad decision away from being forgotten, yet a handful of founders mastered a hidden psychological trigger that makes their legacy essentially immortal."
 
 - **Target Duration:** 3.4s
 - **Visual Pacing:** Dynamic stat counter with whoosh riser

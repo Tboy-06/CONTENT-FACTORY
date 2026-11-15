@@ -3,17 +3,17 @@
 ## Narrative Overview
 - Format: 8-Sentence Short
 - Total Duration: 67.0s
-- Hook: "When Richard Harris passed away, the role of Albus Dumbledore became the most coveted vacancy in Hollywood."
-- Payoff: "Ultimately, McKellen declined the offer, proving that even the biggest roles in history are not worth compromising his personal integrity."
+- Hook: "When Richard Harris passed away, the role of Albus Dumbledore became the most coveted vacancy in Hollywood, yet one legendary actor chose to"
+- Payoff: "Ultimately, McKellen declined the part because one iconic wizarding world was quite enough for his career."
 
 ## Acts & Narrative Breakdown
 ### Act 1: Full Narrative Arc
-1. When Richard Harris passed away, the role of Albus Dumbledore became the most coveted vacancy in Hollywood.
-2. During his lifetime, Harris famously criticized Sir Ian McKellen, Kenneth Branagh, and Derek Jacobi, labeling them technically brilliant but ultimately passionless.
-3. McKellen, unfazed by the harsh assessment, considered himself in excellent company among his fellow esteemed thespians.
-4. While Harris had famously portrayed the Hogwarts headmaster, McKellen noted that he himself had portrayed the definitive wizard of cinema.
-5. After Harris’s death, producers approached McKellen to step into the legendary robes of the wizarding icon.
-6. Despite the immense prestige of the Harry Potter franchise, McKellen harbored significant reservations about accepting the part.
-7. The actor knew he could not take over a role from a man who had publicly questioned his artistic soul.
-8. Ultimately, McKellen declined the offer, proving that even the biggest roles in history are not worth compromising his personal integrity.
+1. When Richard Harris passed away, the role of Albus Dumbledore became the most coveted vacancy in Hollywood, yet one legendary actor chose to walk away.
+2. Years prior, Harris had famously dismissed Sir Ian McKellen, Derek Jacobi, and Kenneth Branagh as technically brilliant but entirely passionless actors.
+3. McKellen, unfazed by the critique, took pride in being grouped with such esteemed company despite the harsh assessment of his craft.
+4. When the call finally came to step into the wizarding robes of Hogwarts, McKellen found himself standing at a professional crossroads.
+5. He already held the mantle of the definitive cinematic wizard as Gandalf in The Lord of the Rings franchise.
+6. McKellen realized he could not step into a role previously held by a man who had publicly questioned his artistic soul.
+7. Rather than following in Harris’s footsteps, he chose to preserve his own legacy within the world of Middle-earth.
+8. Ultimately, McKellen declined the part because one iconic wizarding world was quite enough for his career.
 

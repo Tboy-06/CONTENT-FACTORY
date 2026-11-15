@@ -1,41 +1,19 @@
 # Story Structure: Why Boredom is Good For You
 
 ## Narrative Overview
-- Format: 24-Sentence 4-Act Documentary
+- Format: 8-Sentence Short
 - Total Duration: 441.0s
-- Hook: "Part of this video was sponsored by LastPass. Stick around to the end for a word from our sponsor."
-- Payoff: "LastPass is a password manager"
+- Hook: "We have become so terrified of being alone with our own minds that we would rather inflict physical pain than endure a moment of boredom."
+- Payoff: "Learning to embrace the void is not a waste of time, but a necessary evolution for a sharper, more focused mind."
 
 ## Acts & Narrative Breakdown
-### Act 1: Inciting Anomaly
-1. Part of this video was sponsored by LastPass. Stick around to the end for a word from our sponsor.
-2. In a recent study participants were placed in a room for between 6 and 15 minutes.
-3. They were given nothing except a button that they knew would shock them if they pressed it.
-4. They were asked to entertain themselves with their thoughts,
-5. but they could self administer the shock if they so chose.
-6. So what happened?
-
-### Act 2: Hidden Mechanism
-1. No, no, I generally don't.
-2. But are we losing anything by avoiding boredom?
-3. Well, scientific research says yes, and what we're losing is important.
-4. When you're bored your mind wanders.
-5. That's only natural.
-6. The state of boredom is one where your attention is not focused on anything in particular.
-
-### Act 3: Crisis/Climax
-1. And that provides an immediate and concrete purpose to a life that might momentarily feel like it's lacking one.
-2. You know, studies designed to induce boredom have shown
-3. that more bored participants are more likely to donate to charity, or to give blood.
-4. Can I ask what led you to donate blood today?
-5. I had free time in my hands. You know, just, waiting for 2 hours, an hour and a half or so.
-6. So apparently the opportunity to do meaningful,
-
-### Act 4: Aftermath
-1. Except in your case, the pain goes much deeper to the very nature of who you are, and who you will become.
-2. So think carefully before pressing that button.
-3. So, being bored is apparently something our brains need to do.
-4. Something our brains don't need to do, is remember lots of random passwords.
-5. Which is why the sponsor of this video is LastPass.
-6. LastPass is a password manager
+### Act 1: Full Narrative Arc
+1. We have become so terrified of being alone with our own minds that we would rather inflict physical pain than endure a moment of boredom.
+2. In a revealing study, participants were locked in a room for fifteen minutes with nothing to do but sit with their own thoughts.
+3. They were given a single option: a button that would deliver a painful electric shock if pressed.
+4. Disturbingly, 67% of men and 25% of women chose to shock themselves rather than sit in silence.
+5. This outcome is shocking because every participant had previously insisted they would pay money to avoid that very same pain.
+6. We treat boredom like a defect, constantly reaching for distractions to fill the void of a quiet mind.
+7. Yet, by starving our brains of space to wander, we are actually suppressing the very mechanism that sparks deep creativity and problem-solving.
+8. Learning to embrace the void is not a waste of time, but a necessary evolution for a sharper, more focused mind.
 
