@@ -50,10 +50,13 @@ STATE_PATH = os.path.join(WORKSPACE_DIR, "harvest_state.json")
 VAULT_DIR = os.path.abspath(r"D:\CONTENT-FACTORY\director_vault")
 
 os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(os.path.join(VAULT_DIR, "techniques"), exist_ok=True)
-os.makedirs(os.path.join(VAULT_DIR, "hooks"), exist_ok=True)
-os.makedirs(os.path.join(VAULT_DIR, "styles"), exist_ok=True)
-os.makedirs(os.path.join(VAULT_DIR, "sfx"), exist_ok=True)
+try:
+    for _sub in ("techniques", "hooks", "styles", "sfx"):
+        os.makedirs(os.path.join(VAULT_DIR, _sub), exist_ok=True)
+except OSError:
+    VAULT_DIR = os.path.join(WORKSPACE_DIR, "director_vault_cache")
+    for _sub in ("techniques", "hooks", "styles", "sfx"):
+        os.makedirs(os.path.join(VAULT_DIR, _sub), exist_ok=True)
 
 # ==============================================================================
 # STRICT ENGINE ENUMS (FFMPEG & TIMELINE ARCHITECTURE)
@@ -998,7 +1001,7 @@ def stream_huggingface_batch(state: Dict[str, Any], count_per_cycle: int = 3) ->
 
 
 def sync_reflexion_mistakes(state: Dict[str, Any]) -> int:
-    """Syncs real mistake corrections from C:\\cf_training\\reflexion_log.jsonl into HOUSE_5_COPILOT_AND_REFLEXION."""
+    """Syncs real mistake corrections from C:\\cf_training\\reflexion_log.jsonl into HOUSE_5_COPILOT_AND_REFLEXION (idempotent)."""
     h5 = state.get("houses", {}).get("HOUSE_5_COPILOT_AND_REFLEXION", {})
     s_fix = h5.get("sub_rooms", {}).get("reflexion_mistake_fixes", {})
     if s_fix.get("status") == "FULL" or h5.get("status") == "FULL":
@@ -1007,6 +1010,25 @@ def sync_reflexion_mistakes(state: Dict[str, Any]) -> int:
     reflexion_file = os.path.join(WORKSPACE_DIR, "reflexion_log.jsonl")
     if not os.path.exists(reflexion_file):
         return 0
+
+    synced_keys = set(state.get("synced_reflexion_keys", []))
+    # Also scan existing dataset.jsonl so a state reset never re-adds existing reflexion rows
+    if os.path.exists(DATASET_PATH):
+        try:
+            with open(DATASET_PATH, "r", encoding="utf-8") as df:
+                for dline in df:
+                    if not dline.strip():
+                        continue
+                    try:
+                        drec = json.loads(dline)
+                        if drec.get("sub_room") == "reflexion_mistake_fixes" or drec.get("house") == "HOUSE_5_COPILOT_AND_REFLEXION":
+                            d_inst = drec.get("instruction", "").strip()
+                            d_key = f"{d_inst}||{drec.get('input', '')}||{drec.get('output', '')}"
+                            synced_keys.add(d_key)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
     added = 0
     try:
@@ -1019,11 +1041,17 @@ def sync_reflexion_mistakes(state: Dict[str, Any]) -> int:
                     inst = entry.get("instruction", "")
                     if not inst.startswith("[HOUSE:"):
                         inst = f"[HOUSE: HOUSE_5_COPILOT_AND_REFLEXION | GENRE: auto] {inst}".strip()
+                    sig = f"{inst}||{entry.get('input', '')}||{entry.get('output', '')}"
+                    if sig in synced_keys:
+                        continue
                     entry["instruction"] = inst
                     entry["house"] = "HOUSE_5_COPILOT_AND_REFLEXION"
                     entry["sub_room"] = "reflexion_mistake_fixes"
                     entry["genre"] = "auto"
                     if record_to_house_quota(entry, "HOUSE_5_COPILOT_AND_REFLEXION", "reflexion_mistake_fixes", "auto", state):
+                        synced_keys.add(sig)
+                        state["synced_reflexion_keys"] = list(synced_keys)
+                        save_harvest_state(state)
                         added += 1
                 except Exception:
                     pass
@@ -1264,7 +1292,7 @@ def ask_brain_sync(
     system_prompt: Optional[str] = None,
     format_json: bool = True,
     timeout: float = 25.0,
-    engine_mode: str = "auto",
+    engine_mode: str = "cloud",
     max_retries: int = 3
 ) -> Optional[str]:
     """Synchronous Dual-Brain gateway to ask_brain() in backend/engine/brain.py.

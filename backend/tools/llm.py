@@ -59,8 +59,9 @@ Output ONLY valid JSON in this format, with no markdown formatting or backticks:
         logger.error(f"Error in generate_script routing through brain: {e}")
         return {
             "title": niche,
-            "hook": f"Most people completely misunderstand {niche}.",
-            "body": f"Here is the breakdown of {niche} and why it matters right now.",
-            "cta": "Follow for more.",
-            "search_terms": [niche]
+            "hook": f"The documented investigation into {niche}.",
+            "body": f"Here is the primary source breakdown of {niche} and its verified context.",
+            "cta": "Review the full dossier.",
+            "search_terms": [niche],
+            "unverified_draft": True
         }

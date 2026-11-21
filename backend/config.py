@@ -27,11 +27,20 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google AI Studio API key")
     gemini_model: str = Field(default="models/gemini-3.5-flash-lite", description="Default LLM model")
-    gemini_pro_model: str = Field(default="models/gemini-3.5-flash", description="Pro model for complex tasks")
-    gemini_vision_model: str = Field(default="models/gemini-3.5-flash", description="Vision model for video analysis")
+    gemini_pro_model: str = Field(default="models/gemini-3.8-flash", description="Pro model for complex tasks")
+    gemini_vision_model: str = Field(default="models/gemini-3.8-flash", description="Vision model for video analysis")
     openrouter_api_key: str = Field(default="", description="OpenRouter API key for strictly-free ($0.00 :free) tier")
     ollama_model: str = Field(default="copilot-brain:latest", description="Local Ollama model name")
     ollama_endpoint: str = Field(default="http://localhost:11434/api/chat", description="Local Ollama endpoint")
+
+    # ------------------------------------------------------------------
+    # Local Brain & C: Storage Paths (0 MB bloat on D:)
+    # ------------------------------------------------------------------
+    llama_server_bin: str = Field(default=r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe", description="Path to llama-server.exe")
+    spark_gguf_blob: str = Field(default=r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf", description="Path to local GGUF weights on C:")
+    dataset_file: str = Field(default=r"C:\cf_training\dataset.jsonl", description="Harvester dataset JSONL path on C:")
+    harvest_state_file: str = Field(default=r"C:\cf_training\harvest_state.json", description="Harvester state JSON path on C:")
+    uploads_dir: str = Field(default=r"C:\cf_training\temp\uploads", description="Temporary upload storage on C:")
 
     # ------------------------------------------------------------------
     # Kimi K3 / Moonshot AI
@@ -113,17 +122,22 @@ class Settings(BaseSettings):
     analytics_fetch_hour: int = Field(default=2, ge=0, le=23)
 
     # ------------------------------------------------------------------
-    # Cost Control
+    # Cost Control (Zero-Cost $0 API Spend Rule by default)
     # ------------------------------------------------------------------
-    max_cost_per_video_usd: float = Field(default=2.0, gt=0)
-    daily_budget_usd: float = Field(default=10.0, gt=0)
-    monthly_budget_usd: float = Field(default=200.0, gt=0)
+    max_cost_per_video_usd: float = Field(default=0.0, ge=0)
+    daily_budget_usd: float = Field(default=0.0, ge=0)
+    monthly_budget_usd: float = Field(default=0.0, ge=0)
+    elevenlabs_api_key: str = Field(default="", description="Optional ElevenLabs API key (unused under $0 rule)")
 
     # ------------------------------------------------------------------
-    # Approval & Automation
+    # Approval, Niches, Paths & Automation
     # ------------------------------------------------------------------
     default_approval_mode: str = Field(default="manual", description="manual | auto_after_first | full_auto")
     auto_approve_after_n_success: int = Field(default=3, ge=0)
+    approval_timeout_hours: int = Field(default=24, ge=1)
+    max_concurrent_jobs: int = Field(default=2, ge=1)
+    default_niches: str = Field(default="crime_doc,viral_edu,movie_cinema", description="Comma-separated default niches")
+    data_dir: str = Field(default=str(BASE_DIR), description="Base data directory")
 
     # ------------------------------------------------------------------
     # Logging
@@ -134,6 +148,26 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Derived / Computed
     # ------------------------------------------------------------------
+    @property
+    def niches_list(self) -> List[str]:
+        return [x.strip() for x in (self.default_niches or "").split(",") if x.strip()]
+
+    @property
+    def output_dir(self) -> Path:
+        return Path(self.data_dir) / "output"
+
+    @property
+    def temp_dir(self) -> Path:
+        return Path(self.data_dir) / "temp"
+
+    @property
+    def styles_dir(self) -> Path:
+        return Path(self.data_dir) / "styles"
+
+    @property
+    def skills_dir(self) -> Path:
+        return Path(self.data_dir) / "skills"
+
     @property
     def effective_database_url(self) -> str:
         if self.use_postgres and self.postgres_url:

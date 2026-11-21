@@ -36,12 +36,68 @@ from backend.engine.vault_graph import query_director_vault
 from backend.vault import repository
 from backend.vault.models import JobStatus
 
+from pathlib import Path
+from backend.config import get_settings
+
 logger = logging.getLogger("api.copilot")
 router = APIRouter()
 
 # Safe upload storage on C: drive to strictly protect 8 GB D: partition
-UPLOADS_DIR = r"C:\cf_training\temp\uploads"
+_settings = get_settings()
+UPLOADS_DIR = getattr(_settings, "uploads_dir", r"C:\cf_training\temp\uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".mkv"}
+MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MB cap
+
+
+def validate_safe_video_path(video_path: str) -> str:
+    """
+    Validates a client-supplied video_path against allowed studio directories
+    and allowed video extensions (.mp4, .mov, .webm, .mkv).
+    Raises HTTPException(400) on path traversal or disallowed file types.
+    """
+    if not video_path or not isinstance(video_path, str):
+        raise HTTPException(status_code=400, detail="Invalid or empty video_path.")
+
+    project_root = Path(__file__).resolve().parent.parent.parent
+    allowed_roots = [
+        (project_root / "output").resolve(),
+        (project_root / "jobs").resolve(),
+        (project_root / "temp").resolve(),
+        Path(UPLOADS_DIR).resolve(),
+        Path(r"C:\cf_training\temp").resolve(),
+        Path(r"C:\cf_training\archive_outputs").resolve(),
+    ]
+
+    try:
+        candidate = Path(video_path).resolve()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Malformed video_path.")
+
+    ext = candidate.suffix.lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Disallowed file extension '{ext}'. Allowed: {sorted(ALLOWED_VIDEO_EXTENSIONS)}",
+        )
+
+    is_within_allowed = False
+    for root in allowed_roots:
+        try:
+            candidate.relative_to(root)
+            is_within_allowed = True
+            break
+        except ValueError:
+            continue
+
+    if not is_within_allowed:
+        raise HTTPException(
+            status_code=400,
+            detail="Path traversal blocked: video_path must reside inside studio output, jobs, or uploads directories.",
+        )
+
+    return str(candidate)
 
 # Global lazy-loaded Faster-Whisper model on CPU (0 MB VRAM, ~200MB RAM)
 _whisper_model = None
@@ -312,15 +368,36 @@ async def analyze_video(
     target_path = None
 
     if file and file.filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_VIDEO_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Disallowed upload extension '{ext}'. Allowed: {sorted(ALLOWED_VIDEO_EXTENSIONS)}",
+            )
         safe_name = re.sub(r"[^a-zA-Z0-9_\.-]", "_", file.filename)
         dest_filename = f"{int(time.time())}_{safe_name}"
         dest_path = os.path.join(UPLOADS_DIR, dest_filename)
         
         try:
+            total_written = 0
             with open(dest_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+                while True:
+                    chunk = file.file.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total_written += len(chunk)
+                    if total_written > MAX_VIDEO_UPLOAD_BYTES:
+                        buffer.close()
+                        try:
+                            os.remove(dest_path)
+                        except OSError:
+                            pass
+                        raise HTTPException(status_code=400, detail="Uploaded video exceeds 500 MB size limit.")
+                    buffer.write(chunk)
             target_path = dest_path
             logger.info(f"[copilot] Uploaded video stored on C: drive -> {target_path}")
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed writing upload to C: drive: {e}")
 
@@ -337,8 +414,10 @@ async def analyze_video(
             if os.path.exists(cand):
                 target_path = cand
 
-    elif video_path and os.path.exists(video_path):
-        target_path = video_path
+    elif video_path:
+        validated = validate_safe_video_path(video_path)
+        if os.path.exists(validated):
+            target_path = validated
 
     if not target_path or not os.path.exists(target_path):
         raise HTTPException(status_code=400, detail="No valid video file uploaded or found.")
@@ -735,8 +814,10 @@ async def execute_slice_viral_shorts(
 
     # 2. Check local video_path or job_id
     if not source_video:
-        if video_path and os.path.exists(video_path):
-            source_video = video_path
+        if video_path:
+            validated = validate_safe_video_path(video_path)
+            if os.path.exists(validated):
+                source_video = validated
         elif job_id:
             cand = f"output/instant_{job_id}.mp4"
             if os.path.exists(cand):
@@ -1118,15 +1199,17 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
 
             elif act_name == "edit_uploaded_video" and req.video_context:
                 v_path = req.video_context.get("video_path")
-                if v_path and os.path.exists(v_path):
-                    res = await execute_edit_uploaded_video(
-                        video_path=v_path,
-                        color_grade=act.get("color_grade", "none"),
-                        burn_subtitles=act.get("burn_subtitles", False),
-                        cut_silences=act.get("cut_silences", False)
-                    )
-                    executed_actions.append(res)
-                    updated_video_url = res.get("video_url")
+                if v_path:
+                    safe_v_path = validate_safe_video_path(v_path)
+                    if os.path.exists(safe_v_path):
+                        res = await execute_edit_uploaded_video(
+                            video_path=safe_v_path,
+                            color_grade=act.get("color_grade", "none"),
+                            burn_subtitles=act.get("burn_subtitles", False),
+                            cut_silences=act.get("cut_silences", False)
+                        )
+                        executed_actions.append(res)
+                        updated_video_url = res.get("video_url")
 
             elif act_name == "slice_viral_shorts":
                 v_path = req.video_context.get("video_path") if req.video_context else None
@@ -1168,7 +1251,7 @@ If the user is simply chatting or asking for advice, set "actions": []. Output s
             res = await execute_recut_genre(current_job_id, target_g)
             executed_actions.append(res)
             updated_video_url = res.get("video_url")
-            message = f"🎬 Timeline successfully re-cut with {target_g.upper()} editing physics and color grading!"
+            message = f"Timeline successfully re-cut with {target_g.upper()} editing physics and color grading."
 
     return {
         "status": "success",

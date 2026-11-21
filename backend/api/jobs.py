@@ -197,34 +197,24 @@ async def create_job(req: JobCreateRequest):
     }
     
     job = await repository.create_job(niche=req.niche, config=config, priority=0)
-    await repository.update_job_status(job.id, JobStatus.RUNNING, "IDEA")
-    
-    # Continuous execution: Run pipeline stages directly instead of 5-minute scheduler idle delays
-    async def _run_continuous_stages(job_id: int):
-        stages = ["IDEA", "RESEARCH", "SCRIPT", "ART", "VIDEO", "QC1"]
-        for stg in stages:
-            try:
-                current_db = await repository.get_job(job_id)
-                if not current_db or current_db.status != JobStatus.RUNNING:
-                    break
-                if current_db.current_stage == "QC1":
-                    await repository.create_approval(job_id, "QC1")
-                    break
-                agent_job = _db_job_to_agent_job(current_db)
-                await process_job_stage(agent_job)
-                await asyncio.sleep(0.5)
-            except Exception as e:
-                logger.error(f"[continuous_pipeline] Stage {stg} failed for job #{job_id}: {e}")
-                await repository.update_job_status(job_id, JobStatus.FAILED, stg)
-                break
+    await repository.update_job_status(job.id, JobStatus.RUNNING, "SCRIPT")
 
-    asyncio.create_task(_run_continuous_stages(job.id))
+    # Route directly through the unified 2-pass Documentary Engine so Copilot jobs never hang at SCRIPT
+    asyncio.create_task(run_instant_pipeline(
+        job.id,
+        req.niche,
+        req.voice or "en-US-AriaNeural",
+        req.style_preset or "Dark Documentary",
+        req.format or "9:16",
+        req.duration or "60s",
+        genre="auto"
+    ))
 
     return {
         "id": job.id, 
         "niche": job.niche, 
         "status": "RUNNING", 
-        "current_stage": "IDEA", 
+        "current_stage": "SCRIPT", 
         "created_at": job.created_at.isoformat() if job.created_at else None
     }
 
@@ -604,14 +594,90 @@ async def publish_job(job_id: int, req: PublishRequest):
     job = await repository.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    await repository.update_job_status(job_id, JobStatus.COMPLETED, "PUBLISHED")
-    return {
-        "status": "success",
-        "job_id": job_id,
-        "published_platforms": req.platforms,
-        "cookie_status": "Active",
-        "message": f"Approved and scheduled to {', '.join(req.platforms)}"
-    }
+
+    from backend.config import get_settings
+    cfg = get_settings()
+    env_postiz = os.environ.get("POSTIZ_API_KEY")
+    raw_postiz_key = env_postiz if env_postiz is not None else (cfg.postiz_api_key or "")
+    postiz_key = raw_postiz_key.strip()
+    if any(p in postiz_key.lower() for p in ("your_", "placeholder", "changeme", "none", "todo", "xxx")):
+        postiz_key = ""
+    postiz_url = (cfg.postiz_url or os.environ.get("POSTIZ_URL") or "").strip()
+
+    # Never falsely claim "PUBLISHED" without a real external provider post_id
+    if not postiz_key:
+        await repository.update_job_status(job_id, JobStatus.COMPLETED, "READY_TO_PUBLISH")
+        return {
+            "status": "READY_TO_PUBLISH",
+            "publish_state": "READY_TO_PUBLISH",
+            "published": False,
+            "post_id": None,
+            "job_id": job_id,
+            "published_platforms": [],
+            "requested_platforms": req.platforms,
+            "cookie_status": "Not Configured",
+            "message": (
+                f"Video passed QC1 and is marked READY_TO_PUBLISH for {', '.join(req.platforms)}. "
+                "Configure POSTIZ_API_KEY in Settings to enable automated social upload."
+            ),
+        }
+
+    await repository.update_job_status(job_id, JobStatus.RUNNING, "PUBLISHING")
+    try:
+        import urllib.request
+        payload = json.dumps({
+            "job_id": job_id,
+            "title": job.niche,
+            "platforms": req.platforms,
+        }).encode("utf-8")
+        api_req = urllib.request.Request(
+            f"{postiz_url.rstrip('/')}/api/posts",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {postiz_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(api_req, timeout=15) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            external_post_id = resp_data.get("id") or resp_data.get("post_id")
+
+        if not external_post_id:
+            await repository.update_job_status(job_id, JobStatus.COMPLETED, "PUBLISH_FAILED")
+            return {
+                "status": "PUBLISH_FAILED",
+                "publish_state": "PUBLISH_FAILED",
+                "published": False,
+                "post_id": None,
+                "job_id": job_id,
+                "published_platforms": [],
+                "requested_platforms": req.platforms,
+                "message": "Uploader responded without a verified external post_id.",
+            }
+
+        await repository.update_job_status(job_id, JobStatus.COMPLETED, "PUBLISHED")
+        return {
+            "status": "PUBLISHED",
+            "publish_state": "PUBLISHED",
+            "published": True,
+            "post_id": str(external_post_id),
+            "job_id": job_id,
+            "published_platforms": req.platforms,
+            "cookie_status": "Active",
+            "message": f"Published to {', '.join(req.platforms)} (post_id={external_post_id})",
+        }
+    except Exception as pub_err:
+        await repository.update_job_status(job_id, JobStatus.COMPLETED, "PUBLISH_FAILED")
+        return {
+            "status": "PUBLISH_FAILED",
+            "publish_state": "PUBLISH_FAILED",
+            "published": False,
+            "post_id": None,
+            "job_id": job_id,
+            "published_platforms": [],
+            "requested_platforms": req.platforms,
+            "message": f"Social provider upload failed: {pub_err}",
+        }
 
 @router.post('/{job_id}/upload-anchor')
 async def upload_job_anchor(job_id: int, file: UploadFile = File(...)):

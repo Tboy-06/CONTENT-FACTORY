@@ -13,6 +13,7 @@ import json
 import logging
 import math
 import os
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -20,6 +21,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("engine.openrouter_discovery")
+
+_STATE_LOCK = threading.Lock()
 
 OPENROUTER_CATALOG_URL = "https://openrouter.ai/api/v1/models?output_modalities=all"
 OPENROUTER_KEY_URL = "https://openrouter.ai/api/v1/key"
@@ -375,31 +378,34 @@ def record_openrouter_status(status_code: int, reason: str = "") -> None:
     or HTTP 429 (per-minute rate limit).
     """
     now = time.time()
-    if status_code == 402:
-        _CIRCUIT_BREAKER["cooldown_until"] = now + COOLDOWN_402_SECONDS
-        _CIRCUIT_BREAKER["last_status_code"] = 402
-        _CIRCUIT_BREAKER["last_reason"] = reason or "HTTP 402: Daily free cap exhausted or payment required (15m auto-skip)"
-        _CIRCUIT_BREAKER["triggered_at"] = now
-        logger.warning(f"[OpenRouterDiscovery] Circuit breaker tripped (402): auto-skipping to local engines for 15m.")
-    elif status_code == 429:
-        _CIRCUIT_BREAKER["cooldown_until"] = max(_CIRCUIT_BREAKER["cooldown_until"], now + COOLDOWN_429_SECONDS)
-        _CIRCUIT_BREAKER["last_status_code"] = 429
-        _CIRCUIT_BREAKER["last_reason"] = reason or "HTTP 429: Upstream free rate limit hit (60s auto-skip)"
-        _CIRCUIT_BREAKER["triggered_at"] = now
-        logger.warning(f"[OpenRouterDiscovery] Circuit breaker tripped (429): auto-skipping to local engines for 60s.")
+    with _STATE_LOCK:
+        if status_code == 402:
+            _CIRCUIT_BREAKER["cooldown_until"] = now + COOLDOWN_402_SECONDS
+            _CIRCUIT_BREAKER["last_status_code"] = 402
+            _CIRCUIT_BREAKER["last_reason"] = reason or "HTTP 402: Daily free cap exhausted or payment required (15m auto-skip)"
+            _CIRCUIT_BREAKER["triggered_at"] = now
+            logger.warning(f"[OpenRouterDiscovery] Circuit breaker tripped (402): auto-skipping to local engines for 15m.")
+        elif status_code == 429:
+            _CIRCUIT_BREAKER["cooldown_until"] = max(_CIRCUIT_BREAKER["cooldown_until"], now + COOLDOWN_429_SECONDS)
+            _CIRCUIT_BREAKER["last_status_code"] = 429
+            _CIRCUIT_BREAKER["last_reason"] = reason or "HTTP 429: Upstream free rate limit hit (60s auto-skip)"
+            _CIRCUIT_BREAKER["triggered_at"] = now
+            logger.warning(f"[OpenRouterDiscovery] Circuit breaker tripped (429): auto-skipping to local engines for 60s.")
 
 
 def is_openrouter_on_cooldown() -> bool:
     """Returns True if the circuit breaker is currently active."""
-    return time.time() < float(_CIRCUIT_BREAKER.get("cooldown_until") or 0.0)
+    with _STATE_LOCK:
+        return time.time() < float(_CIRCUIT_BREAKER.get("cooldown_until") or 0.0)
 
 
 def reset_circuit_breaker() -> None:
     """Resets the circuit breaker state."""
-    _CIRCUIT_BREAKER["cooldown_until"] = 0.0
-    _CIRCUIT_BREAKER["last_status_code"] = None
-    _CIRCUIT_BREAKER["last_reason"] = ""
-    _CIRCUIT_BREAKER["triggered_at"] = None
+    with _STATE_LOCK:
+        _CIRCUIT_BREAKER["cooldown_until"] = 0.0
+        _CIRCUIT_BREAKER["last_status_code"] = None
+        _CIRCUIT_BREAKER["last_reason"] = ""
+        _CIRCUIT_BREAKER["triggered_at"] = None
 
 
 def get_circuit_breaker_status() -> Dict[str, Any]:

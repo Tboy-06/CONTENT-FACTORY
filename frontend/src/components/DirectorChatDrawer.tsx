@@ -61,7 +61,7 @@ export default function DirectorChatDrawer({
   onVideoUpdated
 }: DirectorChatDrawerProps) {
   const navigate = useNavigate();
-  const [engineMode, setEngineMode] = useState<'auto' | 'offline_spark' | 'cloud'>('auto');
+  const [engineMode, setEngineMode] = useState<'auto' | 'offline_spark' | 'openrouter_free' | 'cloud'>('auto');
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [videoContext, setVideoContext] = useState<VideoContext | null>(null);
@@ -96,7 +96,7 @@ export default function DirectorChatDrawer({
         {
           id: String(Date.now()),
           role: 'director',
-          content: `🎬 **Job #${jobId} Re-Cut Completed**\n\nGenre applied: \`${targetGenre}\`.\nTimeline re-rendered with new pacing physics, visual grade, and audio ducking.`,
+          content: `**Job #${jobId} Re-Cut Completed**\n\nGenre applied: \`${targetGenre}\`.\nTimeline re-rendered with new pacing physics, visual grade, and audio ducking.`,
           videoUrl: res?.video_url,
           timestamp: new Date()
         }
@@ -107,7 +107,7 @@ export default function DirectorChatDrawer({
         {
           id: String(Date.now()),
           role: 'director',
-          content: `⚠️ Error re-cutting job: ${err.message || err}`,
+          content: `[ALERT] Error re-cutting job: ${err.message || err}`,
           timestamp: new Date()
         }
       ]);
@@ -155,7 +155,7 @@ export default function DirectorChatDrawer({
         {
           id: String(Date.now()),
           role: 'director',
-          content: `🎬 **Video Deconstructed Successfully**: \`${file.name}\`\n\n` +
+          content: `**Video Deconstructed Successfully**: \`${file.name}\`\n\n` +
             `• **Pacing**: ${res.pacing?.cuts_per_minute || 0} cuts/min (cut every ${res.pacing?.avg_cut_interval || 0}s)\n` +
             `• **Dialogue**: ${res.audio?.words_per_minute || 0} WPM (${res.audio?.total_words || 0} spoken words)\n` +
             `• **Dead Air**: ${res.audio?.total_silence_seconds || 0}s silence detected\n` +
@@ -181,7 +181,7 @@ export default function DirectorChatDrawer({
         {
           id: String(Date.now()),
           role: 'director',
-          content: `📊 **Job #${jobId} Storyboard Deconstructed**:\n\n` +
+          content: `**Job #${jobId} Storyboard Deconstructed**:\n\n` +
             `• **Pacing**: ${res.pacing?.cuts_per_minute || 0} cuts/min (avg cut ${res.pacing?.avg_cut_interval || 0}s)\n` +
             `• **Pacing Rhythm**: 16 beats across ${res.duration || 50}s (${res.dimensions?.aspect_ratio})\n` +
             `• **Narration**: ${res.audio?.words_per_minute || 0} WPM (${res.audio?.total_words || 0} words)\n` +
@@ -246,7 +246,7 @@ export default function DirectorChatDrawer({
         {
           id: String(Date.now() + 1),
           role: 'director',
-          content: `⚠️ Error executing director instruction: ${err.message || err}`,
+          content: `[ALERT] Error executing director instruction: ${err.message || err}`,
           timestamp: new Date()
         }
       ]);
@@ -254,16 +254,16 @@ export default function DirectorChatDrawer({
   };
 
   const quickPrompts = jobId ? [
-    "✂️ Extract top 3 viral shorts from this",
-    "🗺️ Change Beat 3 to radar map flyover with headline TARGET DETECTED",
-    "🎨 Switch Beat 5 to grade teal_split",
-    "⚡ Boost pacing: tighten timeline cuts",
-    "📋 Swap Beat 7 to declassified dossier with yellow highlighter"
+    "Extract top 3 viral shorts from this",
+    "Change Beat 3 to radar map flyover with headline TARGET DETECTED",
+    "Switch Beat 5 to grade teal_split",
+    "Boost pacing: tighten timeline cuts",
+    "Swap Beat 7 to declassified dossier with yellow highlighter"
   ] : [
-    "✂️ Extract top 3 viral shorts from this video",
-    "🎬 Clone this pacing into a video about CIA Project Azorian",
-    "✂️ Cut dead air pauses and burn yellow subtitles",
-    "🎨 Apply 35mm hard black-and-white film grade"
+    "Extract top 3 viral shorts from this video",
+    "Clone this pacing into a video about CIA Project Azorian",
+    "Cut dead air pauses and burn yellow subtitles",
+    "Apply 35mm hard black-and-white film grade"
   ];
 
   return (
@@ -272,14 +272,14 @@ export default function DirectorChatDrawer({
       {/* Top Header */}
       <div className="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
             <Sparkles size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-white tracking-wide">AI Director Studio</h2>
               {jobId && (
-                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-900/60 border border-blue-600/40 text-blue-300">
+                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-blue-900/60 border border-blue-600/40 text-blue-300">
                   Job #{jobId}
                 </span>
               )}
@@ -319,27 +319,40 @@ export default function DirectorChatDrawer({
 
           <button
             onClick={() => setEngineMode('auto')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
               engineMode === 'auto'
                 ? 'bg-blue-950 border border-blue-500/50 text-blue-300 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
-            title="Auto Hybrid Router (Gemini Free Tier -> Local Failover)"
+            title="Auto Hybrid Waterfall (Gemini AI Studio -> OpenRouter :free -> Pollinations -> Local Spark)"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-blue-400"></span>
             Auto Hybrid
+          </button>
+
+          <button
+            onClick={() => setEngineMode('openrouter_free')}
+            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+              engineMode === 'openrouter_free'
+                ? 'bg-amber-950 border border-amber-500/50 text-amber-300 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Strictly-Free ($0.00 :free) OpenRouter 6-Stage Router (Nemotron 3.5 / Gemma 4)"
+          >
+            <span className="w-1.5 h-1.5 rounded-sm bg-amber-400"></span>
+            OpenRouter $0
           </button>
 
           <button
             onClick={() => setEngineMode('cloud')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
               engineMode === 'cloud'
-                ? 'bg-violet-950 border border-violet-500/50 text-violet-300 shadow-sm'
+                ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
             title="Cloud Models (Gemini / Kimi K3)"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-cyan-400"></span>
             Cloud
           </button>
         </div>
@@ -382,15 +395,15 @@ export default function DirectorChatDrawer({
             onClick={() => setShowLearnedRules(prev => !prev)}
             className={`!py-1 !px-2.5 text-[11px] border flex items-center gap-1.5 rounded-lg transition-colors ${
               showLearnedRules
-                ? 'bg-purple-950/80 border-purple-500/60 text-purple-200'
+                ? 'bg-cyan-950/80 border-cyan-500/60 text-cyan-200'
                 : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
             }`}
             title="Reflexion Continuous Learning Memory (Mistakes Caught & Prevented)"
           >
-            <Brain size={12} className="text-purple-400" />
+            <Brain size={12} className="text-cyan-400" />
             <span>Learned Rules</span>
             {learnedData?.total_rules ? (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                 {learnedData.total_rules}
               </span>
             ) : null}
@@ -406,10 +419,10 @@ export default function DirectorChatDrawer({
             }`}
             title="5-House 100,000 Brain Quota Architecture"
           >
-            <span>🏛️</span>
+            <Layers size={12} className="text-amber-400" />
             <span>Brain Quota</span>
             {houseQuotasData?.data?.total_records !== undefined && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 {houseQuotasData.data.total_records.toLocaleString()}
               </span>
             )}
@@ -516,13 +529,13 @@ export default function DirectorChatDrawer({
 
       {/* Learned Rules Panel (Reflexion RL) */}
       {showLearnedRules && (
-        <div className="p-3 bg-purple-950/20 border-b border-purple-900/40 text-xs space-y-2 animate-in fade-in max-h-60 overflow-y-auto">
-          <div className="flex items-center justify-between pb-1 border-b border-purple-900/30">
-            <div className="flex items-center gap-1.5 text-purple-300 font-semibold text-[11px]">
-              <Brain size={13} className="text-purple-400" />
-              <span>Reflexion Memory — Active Learned Guardrails</span>
+        <div className="p-3 bg-cyan-950/20 border-b border-cyan-900/40 text-xs space-y-2 animate-in fade-in max-h-60 overflow-y-auto">
+          <div className="flex items-center justify-between pb-1 border-b border-cyan-900/30">
+            <div className="flex items-center gap-1.5 text-cyan-300 font-semibold text-[11px]">
+              <Brain size={13} className="text-cyan-400" />
+              <span>Reflexion Memory: Active Learned Guardrails</span>
             </div>
-            <span className="text-[10px] text-purple-400/70 font-mono">
+            <span className="text-[10px] text-cyan-400/70 font-mono">
               {learnedData?.total_rules || 0} active rules
             </span>
           </div>
@@ -530,9 +543,9 @@ export default function DirectorChatDrawer({
           {learnedData?.rules && learnedData.rules.length > 0 ? (
             <div className="space-y-1.5 pt-0.5">
               {learnedData.rules.map((rule, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-slate-900/90 border border-purple-900/30 text-[11px]">
+                <div key={idx} className="p-2 rounded-lg bg-slate-900/90 border border-cyan-900/30 text-[11px]">
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-purple-950 border border-purple-500/40 text-purple-300">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-cyan-950 border border-cyan-500/40 text-cyan-300">
                       #{rule.category}
                     </span>
                     <span className="text-[10px] text-amber-400 font-mono font-medium">
@@ -561,7 +574,8 @@ export default function DirectorChatDrawer({
         <div className="p-3.5 bg-slate-900/90 border-b border-slate-800 text-xs space-y-2.5 max-h-72 overflow-y-auto animate-in fade-in">
           <div className="flex items-center justify-between pb-1 border-b border-slate-800">
             <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px] uppercase tracking-wider">
-              <span>🏛️ 5-House Knowledge Quota (100,000 Cap)</span>
+              <Layers size={13} className="text-amber-400" />
+              <span>5-House Knowledge Quota (100,000 Cap)</span>
             </div>
             <span className="font-mono text-[10px] text-slate-400">
               Total: {(houseQuotasData?.data?.total_records || 0).toLocaleString()} / 100,000 ({(((houseQuotasData?.data?.total_records || 0) / 100000) * 100).toFixed(1)}%)
@@ -589,10 +603,10 @@ export default function DirectorChatDrawer({
                       </span>
                     </div>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-800 rounded-sm overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isFull ? 'bg-amber-400' : 'bg-gradient-to-r from-blue-500 to-emerald-400'
+                      className={`h-full rounded-sm transition-all duration-500 ${
+                        isFull ? 'bg-amber-400' : 'bg-blue-500'
                       }`}
                       style={{ width: `${pct}%` }}
                     />
@@ -608,16 +622,16 @@ export default function DirectorChatDrawer({
       {jobId && (
         <div className="px-4 py-2 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between gap-1.5 text-xs">
           <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
-            <span>🎭</span>
+            <Film size={12} className="text-amber-400" />
             <span>Re-Cut Genre:</span>
           </span>
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
             {[
-              { id: 'crime_doc', label: 'Crime', icon: '🕵️' },
-              { id: 'comedy_skit', label: 'Comedy', icon: '😂' },
-              { id: 'action_hype', label: 'Action', icon: '🔥' },
-              { id: 'movie_cinema', label: 'Cinema', icon: '🎬' },
-              { id: 'viral_edu', label: 'Viral Edu', icon: '⚡' },
+              { id: 'crime_doc', label: 'Crime' },
+              { id: 'comedy_skit', label: 'Comedy' },
+              { id: 'action_hype', label: 'Action' },
+              { id: 'movie_cinema', label: 'Cinema' },
+              { id: 'viral_edu', label: 'Viral Edu' },
             ].map(g => (
               <button
                 key={g.id}
@@ -627,7 +641,6 @@ export default function DirectorChatDrawer({
                 className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 text-slate-300 hover:text-white text-[10px] font-medium transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
                 title={`Re-cut Job #${jobId} with ${g.label} editing physics`}
               >
-                <span>{g.icon}</span>
                 <span>{g.label}</span>
               </button>
             ))}
@@ -733,30 +746,30 @@ export default function DirectorChatDrawer({
                         return (
                           <div 
                             key={idx}
-                            className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/40 space-y-3 text-purple-200 mt-2"
+                            className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 space-y-3 text-blue-200 mt-2"
                           >
-                            <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
-                              <div className="flex items-center gap-2 font-bold text-purple-300 text-xs">
-                                <Scissors size={14} className="text-purple-400 shrink-0" />
+                            <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
+                              <div className="flex items-center gap-2 font-bold text-blue-300 text-xs">
+                                <Scissors size={14} className="text-blue-400 shrink-0" />
                                 <span>{shortsList.length} Viral Shorts Extracted (9:16 Vertical · Karaoke Subtitles)</span>
                               </div>
                             </div>
 
                             <div className="space-y-3 pt-1">
                               {shortsList.map((sh: any, sIdx: number) => (
-                                <div key={sIdx} className="p-2.5 rounded-lg bg-slate-950/80 border border-purple-500/30 space-y-2">
+                                <div key={sIdx} className="p-2.5 rounded-lg bg-slate-950/80 border border-blue-500/30 space-y-2">
                                   <div className="flex items-center justify-between text-[11px]">
                                     <span className="font-bold text-white tracking-wide truncate max-w-[220px]">
                                       #{sh.id} · {sh.title}
                                     </span>
-                                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-purple-300">
-                                      <span className="bg-purple-900/60 px-1.5 py-0.5 rounded border border-purple-600/40">{sh.duration}s</span>
+                                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-blue-300">
+                                      <span className="bg-blue-900/60 px-1.5 py-0.5 rounded border border-blue-600/40">{sh.duration}s</span>
                                       <span className="text-slate-400">{sh.start}s - {sh.end}s</span>
                                     </div>
                                   </div>
 
                                   {sh.hook_text && (
-                                    <p className="text-[10px] text-slate-300 italic line-clamp-2 border-l-2 border-purple-400 pl-2">
+                                    <p className="text-[10px] text-slate-300 italic line-clamp-2 border-l-2 border-blue-400 pl-2">
                                       "{sh.hook_text}"
                                     </p>
                                   )}
@@ -788,7 +801,7 @@ export default function DirectorChatDrawer({
                                       <a
                                         href={sh.video_url}
                                         download={`viral_short_${sh.id}.mp4`}
-                                        className="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-medium text-[10px] flex items-center gap-1 transition-colors"
+                                        className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-[10px] flex items-center gap-1 transition-colors"
                                       >
                                         <Download size={10} />
                                         Download 9:16
@@ -834,7 +847,7 @@ export default function DirectorChatDrawer({
               key={idx}
               onClick={() => handleSendMessage(qp)}
               disabled={chatMutation.isPending}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white whitespace-nowrap transition-colors shrink-0"
+              className="text-[11px] px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white whitespace-nowrap transition-colors shrink-0"
             >
               {qp}
             </button>

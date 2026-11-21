@@ -4,7 +4,8 @@ import json
 from datetime import datetime, timezone
 from typing import Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from backend.vault import get_jobs, get_job, get_total_costs
+from backend.vault import get_jobs, get_job, get_total_costs, repository
+from backend.vault.models import ApprovalDecision, JobStatus
 
 router = APIRouter()
 
@@ -55,9 +56,43 @@ async def pipeline_ws(websocket: WebSocket):
                 data = await asyncio.wait_for(websocket.receive_text(), timeout=30)
                 msg = json.loads(data)
                 # Handle client messages (e.g., approve/reject)
-                if msg.get('action') == 'approve':
-                    # TODO: implement approval
-                    pass
+                action = msg.get('action')
+                if action in ('approve', 'reject'):
+                    decision = ApprovalDecision.APPROVED if action == 'approve' else ApprovalDecision.REJECTED
+                    target_approval_id = msg.get('approval_id')
+                    target_job_id = msg.get('job_id')
+                    notes = msg.get('notes')
+                    resolved = False
+
+                    if target_approval_id is not None:
+                        resolved = await repository.resolve_approval(
+                            int(target_approval_id),
+                            decision=decision,
+                            decided_by="websocket_director",
+                            notes=notes,
+                        )
+                    elif target_job_id is not None:
+                        pending = await repository.get_pending_approvals()
+                        for appr in pending:
+                            if appr.job_id == int(target_job_id):
+                                resolved = await repository.resolve_approval(
+                                    appr.id,
+                                    decision=decision,
+                                    decided_by="websocket_director",
+                                    notes=notes,
+                                )
+                                break
+                        new_stage = "READY_TO_PUBLISH" if decision == ApprovalDecision.APPROVED else "QC_REJECTED"
+                        await repository.update_job_status(int(target_job_id), JobStatus.COMPLETED, new_stage)
+                        resolved = True
+
+                    await websocket.send_json({
+                        'type': 'approval_resolved',
+                        'action': action,
+                        'job_id': target_job_id,
+                        'approval_id': target_approval_id,
+                        'resolved': resolved,
+                    })
             except asyncio.TimeoutError:
                 # Send heartbeat
                 await websocket.send_json({'type': 'heartbeat', 'timestamp': datetime.now(timezone.utc).isoformat()})

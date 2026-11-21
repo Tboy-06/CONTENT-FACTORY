@@ -26,6 +26,7 @@ from backend.engine.ev1_treat import (
 )
 from backend.engine.motion_cards import render_motion_card
 import backend.engine.visual_cortex as visual_cortex
+import backend.engine.free_visuals as free_visuals
 import backend.engine.forensic_canvas as forensic_canvas
 import backend.engine.depth_cortex as depth_cortex
 import backend.engine.zero_gpu_hook as zero_gpu_hook
@@ -104,37 +105,53 @@ async def render_beat_pass1(
             plate_path = norm_output
 
     elif beat.get("type") in ("hero_hook", "ai_video") or (beat_id in ("b01", "beat_01") and duration <= 4.0):
-        # Engine 1: Free Serverless Cloud GPU for 3-Second Hero Hook (ZeroGPU Spaces via gradio_client)
-        hero_dest = os.path.join(beats_dir, f"{beat_id}_zerogpu.mp4")
-        prompt = beat.get("visual_prompt") or beat.get("prompt", "cinematic film dramatic hook")
-        hero_path = await asyncio.to_thread(
-            zero_gpu_hook.generate_zero_gpu_hero_clip,
-            prompt=prompt,
-            output_path=hero_dest
+        # Beat 1 Intro Priority:
+        # 1. Try real HD moving Pexels B-Roll video first (100% real camera footage, zero AI look)
+        broll_dest = os.path.join(beats_dir, f"{beat_id}_broll.mp4")
+        prompt = beat.get("visual_prompt") or beat.get("prompt", "cinematic documentary")
+        broll_query = beat.get("broll_query") or " ".join(prompt.split()[:5])
+        fetched_broll = await asyncio.to_thread(
+            visual_cortex.fetch_pexels_broll,
+            query=broll_query,
+            output_path=broll_dest,
+            aspect_ratio=aspect_ratio,
+            duration=duration
         )
-        if hero_path and os.path.exists(hero_dest):
+        if fetched_broll and os.path.exists(broll_dest):
             is_video_input = True
-            video_source_path = hero_dest
+            video_source_path = broll_dest
         else:
-            # Fallback to Pollinations Flux + DepthCortex 3D motion
-            fetched = await asyncio.to_thread(
-                visual_cortex.fetch_pollinations_flux,
+            # 2. Try Serverless ZeroGPU Moving Video Clip
+            hero_dest = os.path.join(beats_dir, f"{beat_id}_zerogpu.mp4")
+            hero_path = await asyncio.to_thread(
+                zero_gpu_hook.generate_zero_gpu_hero_clip,
                 prompt=prompt,
-                output_path=raw_img_path,
-                width=fetch_w,
-                height=fetch_h
+                output_path=hero_dest
             )
-            if fetched and os.path.exists(raw_img_path):
-                apply_color_grade(raw_img_path, plate_path, grade=beat.get("grade", "hard_bw"))
+            if hero_path and os.path.exists(hero_dest):
+                is_video_input = True
+                video_source_path = hero_dest
             else:
-                render_motion_card(
-                    template="red_slam_word",
-                    headline="BREAKING ARCHIVE",
-                    highlight=prompt[:32],
-                    output_path=plate_path,
-                    width=out_w,
-                    height=out_h
+                # 3. Fallback to natural color-graded documentary photojournalism plate via 6-stage free_visuals router
+                intro_grade = beat.get("grade") or ("cinema_scope" if beat.get("genre") == "movie_cinema" else "teal_split")
+                fetched = await asyncio.to_thread(
+                    free_visuals.resolve_image_plate,
+                    prompt=prompt,
+                    output_path=raw_img_path,
+                    width=fetch_w,
+                    height=fetch_h
                 )
+                if fetched and os.path.exists(raw_img_path):
+                    apply_color_grade(raw_img_path, plate_path, grade=intro_grade, target_width=out_w, target_height=out_h)
+                else:
+                    render_motion_card(
+                        template="red_slam_word",
+                        headline="BREAKING ARCHIVE",
+                        highlight=prompt[:32],
+                        output_path=plate_path,
+                        width=out_w,
+                        height=out_h
+                    )
 
     elif beat.get("type") == "declassified_scan":
         # Engine 2: Forensic Canvas - Declassified CIA Dossier with yellow highlighter sweep
@@ -221,7 +238,7 @@ async def render_beat_pass1(
         prompt = beat.get("visual_prompt") or beat.get("prompt", "declassified intelligence document archival photo")
 
         fetched = await asyncio.to_thread(
-            visual_cortex.fetch_pollinations_flux,
+            free_visuals.resolve_image_plate,
             prompt=prompt,
             output_path=raw_img_path,
             width=fetch_w,
@@ -497,17 +514,18 @@ async def assemble_final_pass2(
         cmd_master.extend(["-i", voice_path])
         if os.path.exists(bgm_path):
             # Cap infinite stream loop with -t to guarantee FFmpeg never hangs on 0-byte voice
+            # Fade in BGM gently after 1.2s so the opening hook voiceover & intro SFX hit with 100% clarity
             cmd_master.extend(["-stream_loop", "-1", "-t", str(target_duration + 3.0), "-i", bgm_path])
-            # Inputs: 0=stitched (sfx), 1=voice, 2=bgm
-            filter_complex.append("[0:a]volume=0.85[sfx]")
-            filter_complex.append("[1:a]volume=1.05[voice]")
-            filter_complex.append("[2:a]volume=0.15[bgm]")
-            filter_complex.append("[voice][sfx][bgm]amix=inputs=3:duration=first:dropout_transition=2[aout]")
+            # Inputs: 0=stitched (sfx), 1=voice, 2=bgm (normalize=0 preserves full -14 LUFS voice volume)
+            filter_complex.append("[0:a]volume=0.55[sfx]")
+            filter_complex.append("[1:a]volume=1.15[voice]")
+            filter_complex.append("[2:a]afade=t=in:st=1.2:d=1.8,volume=0.06[bgm]")
+            filter_complex.append("[voice][sfx][bgm]amix=inputs=3:duration=first:dropout_transition=2:normalize=0[aout]")
         else:
             # Inputs: 0=stitched (sfx), 1=voice
-            filter_complex.append("[0:a]volume=0.85[sfx]")
-            filter_complex.append("[1:a]volume=1.05[voice]")
-            filter_complex.append("[voice][sfx]amix=inputs=2:duration=first[aout]")
+            filter_complex.append("[0:a]volume=0.55[sfx]")
+            filter_complex.append("[1:a]volume=1.15[voice]")
+            filter_complex.append("[voice][sfx]amix=inputs=2:duration=first:normalize=0[aout]")
     else:
         # Fallback to SFX audio stream only
         filter_complex.append("[0:a]volume=1.0[aout]")

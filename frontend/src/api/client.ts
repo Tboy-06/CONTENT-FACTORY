@@ -130,7 +130,7 @@ export function useDirectorChat() {
       prompt: string;
       jobId?: number;
       videoContext?: VideoContext | null;
-      engineMode?: 'auto' | 'offline_spark' | 'cloud';
+      engineMode?: 'auto' | 'offline_spark' | 'openrouter_free' | 'cloud';
       history?: Array<{ role: string; content: string }>;
     }) => {
       const data = await api.post('/api/copilot/chat', {
@@ -154,7 +154,7 @@ export function useChat() {
   return useMutation({
     mutationFn: async ({ prompt, system_prompt }: { prompt: string, system_prompt?: string }) => {
       const data = await api.post('/api/copilot/chat', { prompt, system_prompt });
-      return data.response;
+      return data.message || data.response || '';
     }
   });
 }

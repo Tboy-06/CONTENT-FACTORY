@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X, Sparkles } from 'lucide-react';
+import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X, Sparkles, ShieldAlert, Smile, Flame, Clapperboard, Cpu } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useCreateInstantJob, useBrainstormHooks, useJobs, useDeleteJob, useClearAllJobs, useUploadAnchor, api } from '../api/client';
 import DirectorChatDrawer from '../components/DirectorChatDrawer';
@@ -20,12 +20,12 @@ const voices = [
 ];
 
 const genres = [
-  { id: 'auto', label: 'Auto Detect', icon: '✨', desc: 'Auto-detect genre physics from topic' },
-  { id: 'crime_doc', label: 'Crime/Doc', icon: '🕵️', desc: 'Forensic canvas, 18-24 CPM, radio voice filter' },
-  { id: 'comedy_skit', label: 'Comedy/Skit', icon: '😂', desc: '25-35 CPM, 1.35x snap-zooms, 0.3s dead air' },
-  { id: 'action_hype', label: 'Action/Hype', icon: '🔥', desc: '40-55 CPM, handheld camera-shake, slam titles' },
-  { id: 'movie_cinema', label: 'Movie/Cinema', icon: '🎬', desc: '12-18 CPM, 2.35:1 letterbox, 35mm scope' },
-  { id: 'viral_edu', label: 'Viral Edu', icon: '⚡', desc: '28-38 CPM, stat counters & workflow cards' }
+  { id: 'auto', label: 'Auto Detect', Icon: Cpu, desc: 'Auto-detect genre physics from topic' },
+  { id: 'crime_doc', label: 'Crime/Doc', Icon: ShieldAlert, desc: 'Forensic canvas, 18-24 CPM, radio voice filter' },
+  { id: 'comedy_skit', label: 'Comedy/Skit', Icon: Smile, desc: '25-35 CPM, 1.35x snap-zooms, 0.3s dead air' },
+  { id: 'action_hype', label: 'Action/Hype', Icon: Flame, desc: '40-55 CPM, handheld camera-shake, slam titles' },
+  { id: 'movie_cinema', label: 'Movie/Cinema', Icon: Clapperboard, desc: '12-18 CPM, 2.35:1 letterbox, 35mm scope' },
+  { id: 'viral_edu', label: 'Viral Edu', Icon: Zap, desc: '28-38 CPM, stat counters & workflow cards' }
 ];
 
 const pipelineSteps = [
@@ -120,7 +120,7 @@ export default function Create() {
 
             const hasVideo = currentJob.assets?.some((a: any) => a.type === 'VIDEO' || a.type === 'video');
 
-            if (currentJob.current_stage === 'QC1' && hasVideo) {
+            if ((currentJob.current_stage === 'QC1' || currentJob.status === 'COMPLETED') && hasVideo) {
               clearInterval(interval);
               setActiveStepIndex(4);
               setTimeout(() => navigate(`/qc1/${jobId}`), 400);
@@ -134,11 +134,11 @@ export default function Create() {
           // ignore transient errors
         }
 
-        // Safety timeout of 180s (prevent eternal loop)
-        if (Date.now() - startTime > 180000) {
+        // Safety timeout of 360s (supports 4-Act long-form & cold-boot local GGUF renders)
+        if (Date.now() - startTime > 360000) {
           clearInterval(interval);
           setIsGenerating(false);
-          setErrorMsg('Generation timed out. Check terminal logs.');
+          setErrorMsg('Generation timed out. Check Pipeline tab for background progress.');
         }
       }, 1000);
 
@@ -162,10 +162,10 @@ export default function Create() {
           <Badge variant="success">Zero API Cost</Badge>
           <Button
             onClick={() => setIsDirectorChatOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 text-slate-950 shadow-md shadow-amber-500/20 rounded-lg transition-all"
+            className="flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm rounded-md transition-all"
             title="Open AI Director Command Studio to clone styles or analyze videos"
           >
-            <Sparkles size={14} className="text-slate-950 fill-slate-950" />
+            <Sparkles size={14} className="text-slate-950" />
             <span>AI Director Studio</span>
           </Button>
         </div>
@@ -237,19 +237,20 @@ export default function Create() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {genres.map((g) => {
               const active = genre === g.id;
+              const GenreIcon = g.Icon;
               return (
                 <button
                   key={g.id}
                   type="button"
                   onClick={() => setGenre(g.id)}
                   disabled={isGenerating}
-                  className={`px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                  className={`px-3 py-2.5 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
                     active
-                      ? 'bg-amber-500/15 border-amber-500 text-amber-300 shadow-md shadow-amber-500/10'
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-300 shadow-sm'
                       : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
                   }`}
                 >
-                  <span className="text-base">{g.icon}</span>
+                  <GenreIcon size={14} className="shrink-0" />
                   <span className="truncate">{g.label}</span>
                 </button>
               );

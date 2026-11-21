@@ -57,10 +57,16 @@ def fetch_pollinations_flux(
     Zero API keys required. Completely free.
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    clean_prompt = prompt.strip()[:240]
+    # Inject authentic photojournalism directives so plates look like real documentary footage, not CGI/AI art
+    clean_base = prompt.strip()[:190]
+    if "photojournalism" not in clean_base.lower() and "archival" not in clean_base.lower():
+        clean_prompt = f"{clean_base}, authentic 35mm documentary photojournalism, natural optical lighting, realistic film texture, no CGI, no watermark"
+    else:
+        clean_prompt = f"{clean_base}, natural optical lighting, realistic 35mm film texture, no CGI"
     encoded_prompt = urllib.parse.quote(clean_prompt)
-    seed_param = f"&seed={seed}" if seed is not None else "&seed=42"
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux&nologo=true{seed_param}"
+    computed_seed = seed if seed is not None else (abs(hash(clean_base)) % 900000 + 10000)
+    seed_param = f"&seed={computed_seed}"
+    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux&nologo=true&enhance=true{seed_param}"
 
     req = urllib.request.Request(
         url,

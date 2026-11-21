@@ -11,7 +11,7 @@ export default function Agents() {
     { 
       name: 'Niche Scorer', 
       status: 'Active', 
-      model: 'Gemini 3.6 Flash', 
+      model: 'Hybrid Cloud / Spark-X2.5-4B', 
       role: 'Evaluator', 
       desc: 'Scores volume, competition, CPM, and evergreen potential with quantitative analysis.',
       icon: Target
@@ -19,7 +19,7 @@ export default function Agents() {
     { 
       name: 'Viral Researcher', 
       status: 'Active', 
-      model: 'Gemini 3.6 Flash', 
+      model: 'Hybrid Cloud / Spark-X2.5-4B', 
       role: 'Content', 
       desc: 'Generates high-retention angles, psychological hooks, and brief packages.',
       icon: Zap
@@ -27,7 +27,7 @@ export default function Agents() {
     { 
       name: 'Documentary Scriptwriter', 
       status: 'Active', 
-      model: 'Gemini 3.6 Flash', 
+      model: 'Hybrid Cloud / Spark-X2.5-4B', 
       role: 'Planner', 
       desc: 'Structures 8-sentence scripts with 16 rapid visual beat cues and sound effects.',
       icon: Cpu

@@ -388,7 +388,8 @@ async def run_instant_pipeline(
         full_narration = " ".join(s.get("text", "") for s in manifest.get("sentences", []))
 
         await repository.add_asset(job_id, "VIDEO", final_video_path, {
-            "aspect_ratio": "9:16",
+            "aspect_ratio": aspect_ratio,
+            "genre": manifest.get("genre", genre),
             "title": topic,
             "duration": total_audio_duration,
             "video_url": f"/output/instant_{job_id}.mp4",

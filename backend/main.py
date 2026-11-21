@@ -58,6 +58,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await stop_bot()
         except Exception as e:
             logger.error(f"Failed to stop bot: {e}")
+    try:
+        from backend.engine.brain import shutdown_local_brain
+        shutdown_local_brain()
+    except Exception as e:
+        logger.error(f"Failed to stop local brain subprocess: {e}")
     logger.info("CONTENT-FACTORY backend stopped")
 
 
@@ -70,7 +75,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,8 +103,9 @@ async def list_models() -> JSONResponse:
     return JSONResponse({
         "object": "list",
         "data": [
-            {"id": "gemini-2.5-flash", "object": "model", "owned_by": "google"},
-            {"id": "gemini-2.5-flash-lite", "object": "model", "owned_by": "google"},
+            {"id": "models/gemini-3.8-flash", "object": "model", "owned_by": "google"},
+            {"id": "models/gemini-3.6-flash", "object": "model", "owned_by": "google"},
+            {"id": "models/gemini-3.5-flash-lite", "object": "model", "owned_by": "google"},
             {"id": "spark-x2.5-4b", "object": "model", "owned_by": "local"}
         ]
     })
@@ -133,4 +139,4 @@ async def root() -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)

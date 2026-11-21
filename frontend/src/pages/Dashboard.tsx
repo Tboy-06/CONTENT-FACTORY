@@ -10,9 +10,23 @@ export default function Dashboard() {
   const clearCacheMutation = useClearCache();
   const deleteJobMutation = useDeleteJob();
 
-  const activeJobs = jobs.filter((j: any) => j.status === 'RUNNING' || j.status === 'PENDING' || j.status === 'QUEUED');
+  const activeJobs = jobs.filter(
+    (j: any) =>
+      (j.status === 'RUNNING' || j.status === 'PENDING' || j.status === 'QUEUED') &&
+      j.current_stage !== 'QC1' &&
+      j.current_stage !== 'PUBLISHED' &&
+      j.current_stage !== 'COMPLETED'
+  );
   const qcJobs = jobs.filter((j: any) => j.status === 'AWAITING_APPROVAL' || j.current_stage === 'QC1');
-  const recentJobs = jobs.filter((j: any) => j.status === 'COMPLETED' || j.status === 'PUBLISHED').slice(0, 5);
+  const recentJobs = jobs
+    .filter(
+      (j: any) =>
+        j.status === 'COMPLETED' ||
+        j.status === 'PUBLISHED' ||
+        j.current_stage === 'QC1' ||
+        j.assets?.some((a: any) => a.type === 'VIDEO' || a.type === 'video')
+    )
+    .slice(0, 5);
 
   return (
     <div className="animate-in fade-in min-h-full flex flex-col pb-8">

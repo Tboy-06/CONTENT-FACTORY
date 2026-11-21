@@ -178,15 +178,19 @@ def _load_hero_plate(job_id: int, job_dir: Optional[str] = None) -> Optional[Ima
 
 
 def generate_ab_titles(topic: str, fact_dossier: Optional[Dict[str, Any]] = None, hook: Optional[str] = None) -> List[str]:
-    """Generates 3 viral, high-CTR A/B test titles."""
+    """Generates 3 viral, high-CTR A/B test titles without inventing fake numbers or dates."""
     dossier = fact_dossier or {}
-    year = dossier.get("key_dates", ["1974"])[0] if dossier.get("key_dates") else "Classified"
-    metric = dossier.get("key_metrics", ["$3.8 Billion"])[0] if dossier.get("key_metrics") else "$3.8B"
+    dates = [d for d in (dossier.get("key_dates") or []) if d and d != "UNVERIFIED"]
+    metrics = [m for m in (dossier.get("key_metrics") or []) if m and m != "UNVERIFIED"]
+    entities = [e for e in (dossier.get("key_entities") or []) if e and e != "UNVERIFIED"]
+    year = dates[0] if dates else "Archival"
+    metric = metrics[0] if metrics else "Classified"
     short_topic = topic.split(":")[0].strip()
+    primary_entity = entities[0] if entities else short_topic
 
-    title_1 = f"The {metric} Secret They Tried to Erase ({short_topic})"
-    title_2 = f"Why Nobody Talks About the {year} {short_topic} Operation"
-    title_3 = f"Declassified: What Actually Happened Aboard {dossier.get('key_entities', [short_topic])[0]}"
+    title_1 = f"The {metric} Record Behind {short_topic}"
+    title_2 = f"Inside the {year} {short_topic} Investigation"
+    title_3 = f"Declassified: The Documented Timeline of {primary_entity}"
 
     return [title_1, title_2, title_3]
 
@@ -264,8 +268,8 @@ def render_thumbnail_variant_2(
     topic: str,
     width: int,
     height: int,
-    stat_text: str = "$3.8 BILLION",
-    year_str: str = "1974"
+    stat_text: str = "UNVERIFIED RECORD",
+    year_str: str = "ARCHIVE"
 ) -> Image.Image:
     """Variant 2: 'Forensic Classified' - Dossier document, redacted bars, yellow highlighter, rubber stamp."""
     is_vertical = height > width
@@ -420,9 +424,11 @@ async def generate_job_thumbnails(
     topic = m.get("topic") or f"Job {job_id}"
     dossier = m.get("fact_dossier") or {}
 
-    # Extract primary hook words and stats
-    stat = dossier.get("key_metrics", ["$3.8 Billion"])[0] if dossier.get("key_metrics") else "$3.8 BILLION"
-    year = dossier.get("key_dates", ["1974"])[0] if dossier.get("key_dates") else "1974"
+    # Extract primary hook words and stats (only use real dossier values, never fake numbers)
+    metrics = [m for m in (dossier.get("key_metrics") or []) if m and m != "UNVERIFIED"]
+    dates = [d for d in (dossier.get("key_dates") or []) if d and d != "UNVERIFIED"]
+    stat = metrics[0].upper() if metrics else "ARCHIVAL DOSSIER"
+    year = dates[0] if dates else "ARCHIVE"
     hook_3words = "THE SECRET HEIST"
 
     # Derive 3-word hook from topic

@@ -35,33 +35,37 @@ def apply_color_grade(
     with Image.open(image_path) as img:
         img = img.convert("RGB")
 
-        # Resize & crop to 9:16 vertical
+        # 1. Strip bottom 7% & right 3% margin first to physically remove any third-party corner watermarks (e.g. pollinations.ai)
+        raw_w, raw_h = img.size
+        if raw_h > 200 and raw_w > 200:
+            img = img.crop((0, 0, int(raw_w * 0.98), int(raw_h * 0.925)))
+
+        # 2. Resize & center-crop to target aspect ratio (9:16 or 16:9)
         img_w, img_h = img.size
         target_ratio = target_width / target_height
         src_ratio = img_w / img_h
 
         if src_ratio > target_ratio:
-            # Source is wider: crop sides
             new_w = int(img_h * target_ratio)
             left = (img_w - new_w) // 2
             img = img.crop((left, 0, left + new_w, img_h))
         else:
-            # Source is taller: crop top/bottom
             new_h = int(img_w / target_ratio)
             top = (img_h - new_h) // 2
             img = img.crop((0, top, img_w, top + new_h))
 
         img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
 
-        grade_clean = grade.lower().strip()
+        grade_clean = (grade or "teal_split").lower().strip()
 
         if grade_clean == "hard_bw":
-            # Grayscale with steep contrast
-            img = ImageOps.grayscale(img).convert("RGB")
+            # Archival photojournalism B&W: preserve midtone detail (never crush into pitch-black silhouettes)
+            img = ImageOps.grayscale(img)
+            img = ImageOps.autocontrast(img, cutoff=1).convert("RGB")
             enhancer = ImageEnhance.Contrast(img)
-            img = enhancer.enhance(1.65)
+            img = enhancer.enhance(1.18)
             brightness = ImageEnhance.Brightness(img)
-            img = brightness.enhance(0.95)
+            img = brightness.enhance(1.04)
 
         elif grade_clean == "teal_split":
             # Cool shadows, desaturated mids

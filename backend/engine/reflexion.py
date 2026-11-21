@@ -116,6 +116,9 @@ context_topic: {context_topic}
 
     # Append to training datasets for offline and future LoRA fine-tuning
     tuning_record = {
+        "task": "copilot",
+        "house": "HOUSE_5_COPILOT_AND_REFLEXION",
+        "sub_room": "reflexion_mistake_fixes",
         "timestamp": now_iso,
         "category": category,
         "occurrences": total_occurrences,
@@ -256,11 +259,22 @@ def audit_and_heal_beats(
             # Check 3 consecutive identical types (e.g. 3 treated_images in a row)
             elif i >= 2 and curr_type == prev_type and prev_type == healed_beats[i - 2].get("type", ""):
                 bad_state = {"beat_index": i, "repeated_type": curr_type, "count": 3}
-                # Diversify by converting the 3rd beat to an evidence board or declassified scan
-                new_type = "declassified_scan" if curr_type == "treated_image" else "treated_image"
-                beat["type"] = new_type
-                if new_type == "declassified_scan" and not beat.get("text"):
-                    beat["text"] = beat.get("headline", topic.upper())
+                beat_genre = (beat.get("genre") or "crime_doc").lower()
+                if curr_type == "treated_image":
+                    if beat_genre == "crime_doc":
+                        new_type = "declassified_scan"
+                        beat["type"] = new_type
+                        if not beat.get("text"):
+                            beat["text"] = beat.get("headline", topic.upper()[:24])
+                    else:
+                        new_type = "motion_card"
+                        beat["type"] = new_type
+                        beat["template"] = "quote_box" if beat_genre in ("comedy_skit", "movie_cinema") else "stat_counter"
+                        if not beat.get("headline"):
+                            beat["headline"] = topic.upper()[:24]
+                else:
+                    new_type = "treated_image"
+                    beat["type"] = new_type
                 fixed_state = {"beat_index": i, "diversified_to": new_type}
 
                 lesson = f"Never allow 3 consecutive beats of type '{curr_type}'; alternate with '{new_type}' to prevent viewer drop-off."

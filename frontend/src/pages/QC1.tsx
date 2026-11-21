@@ -16,7 +16,13 @@ import {
   Upload, 
   Image as ImageIcon, 
   Sparkles,
-  Copy
+  Copy,
+  ShieldAlert,
+  Smile,
+  Flame,
+  Clapperboard,
+  Zap,
+  Cpu
 } from 'lucide-react';
 import { 
   useJobs, 
@@ -94,16 +100,16 @@ export default function QC1() {
   const displayScenes = editedScenes.length > 0 ? editedScenes : rawScenes;
   const stylePreset = jobMeta.style_preset || job.config?.style_preset || 'Dark Documentary';
   const voiceName = jobMeta.voice || job.config?.voice || 'en-US-AriaNeural';
-  const totalDuration = jobMeta.duration ? `${Math.round(jobMeta.duration)}s` : '15s';
+  const totalDuration = jobMeta.duration ? `${Math.round(jobMeta.duration)}s` : (job.config?.duration || '45s');
   const currentGenre = jobMeta.genre || job.config?.genre || 'auto';
 
-  const genreBadgeConfig: Record<string, { label: string; icon: string; style: string }> = {
-    crime_doc: { label: 'Crime/Doc', icon: '🕵️', style: 'bg-red-950/70 border-red-500/50 text-red-300' },
-    comedy_skit: { label: 'Comedy/Skit', icon: '😂', style: 'bg-amber-950/70 border-amber-500/50 text-amber-300' },
-    action_hype: { label: 'Action/Hype', icon: '🔥', style: 'bg-orange-950/70 border-orange-500/50 text-orange-300' },
-    movie_cinema: { label: 'Movie/Cinema', icon: '🎬', style: 'bg-purple-950/70 border-purple-500/50 text-purple-300' },
-    viral_edu: { label: 'Viral Edu', icon: '⚡', style: 'bg-blue-950/70 border-blue-500/50 text-blue-300' },
-    auto: { label: 'Auto Detect', icon: '✨', style: 'bg-slate-900 border-slate-700 text-slate-300' }
+  const genreBadgeConfig: Record<string, { label: string; Icon: any; style: string }> = {
+    crime_doc: { label: 'Crime/Doc', Icon: ShieldAlert, style: 'bg-red-950/70 border-red-500/50 text-red-300' },
+    comedy_skit: { label: 'Comedy/Skit', Icon: Smile, style: 'bg-amber-950/70 border-amber-500/50 text-amber-300' },
+    action_hype: { label: 'Action/Hype', Icon: Flame, style: 'bg-orange-950/70 border-orange-500/50 text-orange-300' },
+    movie_cinema: { label: 'Movie/Cinema', Icon: Clapperboard, style: 'bg-cyan-950/70 border-cyan-500/50 text-cyan-300' },
+    viral_edu: { label: 'Viral Edu', Icon: Zap, style: 'bg-blue-950/70 border-blue-500/50 text-blue-300' },
+    auto: { label: 'Auto Detect', Icon: Cpu, style: 'bg-slate-900 border-slate-700 text-slate-300' }
   };
 
   const handleSceneTextChange = (index: number, newText: string) => {
@@ -233,22 +239,25 @@ export default function QC1() {
             )}
             {jobMeta.fact_dossier && (
               <span 
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 flex items-center gap-1 shadow-sm"
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 flex items-center gap-1 shadow-sm"
                 title={`Fact Dossier: ${jobMeta.fact_dossier.canonical_title} | Coords: ${jobMeta.fact_dossier.coordinates || 'N/A'}`}
               >
                 <ShieldCheck size={11} className="text-emerald-400" />
                 Verified Fact Dossier
               </span>
             )}
-            {genreBadgeConfig[currentGenre] && (
-              <span 
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 shadow-sm ${genreBadgeConfig[currentGenre].style}`}
-                title={`Genre: ${genreBadgeConfig[currentGenre].label}`}
-              >
-                <span>{genreBadgeConfig[currentGenre].icon}</span>
-                <span>{genreBadgeConfig[currentGenre].label}</span>
-              </span>
-            )}
+            {genreBadgeConfig[currentGenre] && (() => {
+              const GIcon = genreBadgeConfig[currentGenre].Icon;
+              return (
+                <span 
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 shadow-sm ${genreBadgeConfig[currentGenre].style}`}
+                  title={`Genre: ${genreBadgeConfig[currentGenre].label}`}
+                >
+                  <GIcon size={11} />
+                  <span>{genreBadgeConfig[currentGenre].label}</span>
+                </span>
+              );
+            })()}
           </div>
           <p className="text-xs text-[var(--mu)] mt-0.5">
             Job #{job.id} · Genre: {genreBadgeConfig[currentGenre]?.label || currentGenre} · {stylePreset} · {totalDuration} · Voice: {voiceName.split('-')[2] || 'Aria'}
@@ -258,10 +267,10 @@ export default function QC1() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsDirectorChatOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold !py-2 !px-3.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-md shadow-amber-500/20 rounded-lg transition-all"
+            className="flex items-center gap-1.5 text-xs font-semibold !py-2 !px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm rounded-md transition-all"
             title="Open AI Director Command Studio"
           >
-            <Sparkles size={14} className="text-slate-950 fill-slate-950" />
+            <Sparkles size={14} className="text-slate-950" />
             <span>AI Director Studio</span>
           </Button>
 
@@ -401,7 +410,7 @@ export default function QC1() {
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     High-CTR Thumbnail & Title Packager
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-500/40 text-amber-300">
                       3 A/B Variants
                     </span>
                   </h3>

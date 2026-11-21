@@ -1,3 +1,10 @@
+"""
+DEPRECATED LEGACY PIPELINE WRAPPER:
+Canonical production execution now runs through `backend.engine.*`
+(planner.py -> audio_subs.py -> visual_cortex.py -> assembler.py)
+invoked via `backend.tools.instant_pipeline.run_instant_pipeline`.
+Retained only for backwards compatibility with legacy tests.
+"""
 import asyncio
 import logging
 import time

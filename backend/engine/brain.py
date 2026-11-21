@@ -10,12 +10,14 @@ Auto-detects online/offline connectivity and routes reasoning to:
 from __future__ import annotations
 
 import asyncio
+import atexit
 import json
 import logging
 import os
 import re
 import socket
 import subprocess
+import time
 import urllib.request
 from typing import Any, Dict, Optional
 
@@ -52,6 +54,29 @@ SPARK_GGUF_BLOB = r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf"
 # Fallback paths on C: (zero GGUF models stored on D:)
 _FALLBACK_BIN = r"C:\cf_training\bin\llama-server.exe"
 _LOCAL_BRAIN_PROC: Optional[subprocess.Popen] = None
+_LOCAL_BRAIN_LOCK = asyncio.Lock()
+
+
+def shutdown_local_brain() -> None:
+    """Terminates the local llama-server subprocess cleanly on FastAPI shutdown or process exit."""
+    global _LOCAL_BRAIN_PROC
+    proc = _LOCAL_BRAIN_PROC
+    if proc is not None:
+        try:
+            if proc.poll() is None:
+                logger.info("[Brain] Terminating local llama-server.exe subprocess...")
+                proc.terminate()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+        except Exception as e:
+            logger.debug(f"[Brain] Error terminating local brain subprocess: {e}")
+        finally:
+            _LOCAL_BRAIN_PROC = None
+
+
+atexit.register(shutdown_local_brain)
 
 
 def get_preferred_gguf_blob() -> str:
@@ -70,53 +95,59 @@ def get_preferred_gguf_blob() -> str:
 
 
 async def ensure_local_brain(timeout_secs: int = 60) -> bool:
-    """Wakes up the local GGUF model blob on demand using llama-server.exe without eating RAM when idle."""
+    """
+    Wakes up the local GGUF model blob on demand using llama-server.exe without eating RAM when idle.
+    Protected by _LOCAL_BRAIN_LOCK to prevent concurrent duplicate spawns.
+    NOTE: Spark-X2.5-4B has a native 1,048,576-token (1M) context architecture; `-c 8192` is an
+    intentional 16 GB RAM safeguard that keeps the KV cache at ~240 MB on Windows.
+    """
     global _LOCAL_BRAIN_PROC
-    if is_ollama_ready():
-        return True
-
-    # If the process isn't running at all, spawn it
-    if not is_ollama_running():
-        bin_path = LLAMA_SERVER_BIN if os.path.exists(LLAMA_SERVER_BIN) else _FALLBACK_BIN
-        blob_path = get_preferred_gguf_blob()
-
-        if not os.path.exists(bin_path) or not os.path.exists(blob_path):
-            logger.warning(f"[Brain] llama-server ({bin_path}) or GGUF blob ({blob_path}) not found.")
-            return False
-
-        model_label = "Spark-X2.5-4B" if "spark" in blob_path.lower() else "Copilot-Brain"
-        logger.info(f"[Brain] Waking up {model_label} GGUF on demand via llama-server.exe ({blob_path})...")
-        cmd = [
-            bin_path,
-            "-m", blob_path,
-            "--port", "11434",
-            "--host", "127.0.0.1",
-            "-c", "8192",
-            "-t", "6",
-            "--log-disable",
-            "--sleep-idle-seconds", "300"
-        ]
-        try:
-            _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
-            _LOCAL_BRAIN_PROC = subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                creationflags=_no_win
-            )
-        except Exception as e:
-            logger.error(f"[Brain] Failed to start llama-server.exe: {e}")
-            return False
-
-    # Wait until model is fully loaded and ready (returns HTTP 200 from /health)
-    for _ in range(timeout_secs):
-        await asyncio.sleep(1)
+    async with _LOCAL_BRAIN_LOCK:
         if is_ollama_ready():
-            logger.info("[Brain] Local GGUF llama-server is online, model loaded, and ready on http://127.0.0.1:11434")
             return True
 
-    return is_ollama_ready()
+        # If the process isn't running at all, spawn it
+        if not is_ollama_running():
+            bin_path = LLAMA_SERVER_BIN if os.path.exists(LLAMA_SERVER_BIN) else _FALLBACK_BIN
+            blob_path = get_preferred_gguf_blob()
+
+            if not os.path.exists(bin_path) or not os.path.exists(blob_path):
+                logger.warning(f"[Brain] llama-server ({bin_path}) or GGUF blob ({blob_path}) not found.")
+                return False
+
+            model_label = "Spark-X2.5-4B" if "spark" in blob_path.lower() else "Copilot-Brain"
+            logger.info(f"[Brain] Waking up {model_label} GGUF on demand via llama-server.exe ({blob_path})...")
+            cmd = [
+                bin_path,
+                "-m", blob_path,
+                "--port", "11434",
+                "--host", "127.0.0.1",
+                "-c", "8192",  # Intentional 16GB RAM KV-cache cap (~240 MB) on native 1M-context Spark-X2.5-4B
+                "-t", "6",
+                "--log-disable",
+                "--sleep-idle-seconds", "300"
+            ]
+            try:
+                _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
+                _LOCAL_BRAIN_PROC = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL,
+                    creationflags=_no_win
+                )
+            except Exception as e:
+                logger.error(f"[Brain] Failed to start llama-server.exe: {e}")
+                return False
+
+        # Wait until model is fully loaded and ready (returns HTTP 200 from /health)
+        for _ in range(timeout_secs):
+            await asyncio.sleep(1)
+            if is_ollama_ready():
+                logger.info("[Brain] Local GGUF llama-server is online, model loaded, and ready on http://127.0.0.1:11434")
+                return True
+
+        return is_ollama_ready()
 
 
 def is_ollama_ready(timeout: float = 1.0) -> bool:
@@ -316,7 +347,7 @@ async def call_cloud_free(
         if gemini_key:
             import google.generativeai as genai
             genai.configure(api_key=gemini_key)
-            model_inst = genai.GenerativeModel(cfg.gemini_model or "gemini-2.5-flash")
+            model_inst = genai.GenerativeModel(cfg.gemini_model or "models/gemini-3.5-flash-lite")
             full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
             res = await asyncio.to_thread(model_inst.generate_content, full_prompt)
             if res and res.text:

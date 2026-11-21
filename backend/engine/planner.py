@@ -17,31 +17,18 @@ import re
 from typing import Any, Dict, List, Optional
 
 from backend.engine.brain import ask_brain
-from backend.engine.vault_graph import query_director_vault, log_script_to_vault
+from backend.engine.vault_graph import (
+    query_director_vault,
+    log_script_to_vault,
+    detect_genre,
+    format_topic_title,
+)
 from backend.engine.researcher import research_fact_dossier
 from backend.engine.reflexion import audit_and_heal_beats
 
 logger = logging.getLogger("engine.planner")
 
 GENRES = ["auto", "crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"]
-
-
-def detect_genre(topic: str, prompt: str = "") -> str:
-    """Auto-detects one of the 5 genre archetypes from topic/prompt."""
-    combined = f"{topic} {prompt}".lower()
-    
-    if any(k in combined for k in ["funny", "skit", "prank", "humor", "comedy", "laugh", "awkward", "parody", "roast", "joke", "meme"]):
-        return "comedy_skit"
-    if any(k in combined for k in ["action", "fight", "battle", "hype", "beast", "workout", "gym", "combat", "chase", "explosion", "speed", "anime"]):
-        return "action_hype"
-    if any(k in combined for k in ["movie", "cinema", "trailer", "film", "hollywood", "cinematic", "screenplay", "scene", "monologue", "widescreen"]):
-        return "movie_cinema"
-    if any(k in combined for k in ["crime", "cia", "kgb", "fbi", "conspiracy", "scandal", "murder", "heist", "classified", "secret", "submarine", "azorian", "espionage", "investigation"]):
-        return "crime_doc"
-    if any(k in combined for k in ["money", "how to", "why", "tech", "code", "crypto", "business", "science", "economy", "ai", "guide", "tutorial", "explain", "system", "psychology"]):
-        return "viral_edu"
-    
-    return "crime_doc"
 
 
 def get_genre_rules(genre: str) -> str:
@@ -153,7 +140,7 @@ def generate_fallback_manifest(
     genre_clean = (genre or "crime_doc").lower()
     if genre_clean not in GENRES:
         genre_clean = "crime_doc"
-    topic_clean = topic.strip().title()
+    topic_clean = format_topic_title(topic)
 
     # Genre physics styling defaults
     if genre_clean == "comedy_skit":
@@ -182,54 +169,67 @@ def generate_fallback_manifest(
         impact_sfx = "thud.wav"
         whoosh_sfx = "click.wav"
 
-    # Pull real-world facts from dossier if available
+    # Pull real-world facts from dossier ONLY if verified (never fabricate numbers or coordinates)
     facts = fact_dossier or {}
-    metric_1 = (facts.get("key_metrics") or ["OVER 90% EXPONENTIAL"])[0].upper()
-    metric_2 = (facts.get("key_metrics") or ["10X ACCELERATION"])[-1].upper()
-    date_1 = (facts.get("key_dates") or ["1974"])[0]
-    coords = facts.get("coordinates") or "38.8977° N, 77.0365° W"
-    loc_name = facts.get("location_name") or topic_clean[:18].upper()
-    quote_text = facts.get("verified_quote") or "NOTHING WILL REMAIN THE SAME"
-    summary_text = facts.get("summary") or f"CLASSIFIED MEMORANDUM REGARDING THE HISTORIC EMERGENCE OF {topic_clean.upper()}."
+    raw_metrics = [m for m in (facts.get("key_metrics") or []) if m and m != "UNVERIFIED"]
+    raw_dates = [d for d in (facts.get("key_dates") or []) if d and d != "UNVERIFIED"]
+    metric_1 = raw_metrics[0].upper() if raw_metrics else "UNVERIFIED METRIC"
+    metric_2 = raw_metrics[-1].upper() if raw_metrics else "UNVERIFIED SCALE"
+    date_1 = raw_dates[0] if raw_dates else "UNVERIFIED DATE"
+    raw_coords = facts.get("coordinates")
+    coords = raw_coords if (raw_coords and raw_coords != "UNVERIFIED") else "UNVERIFIED"
+    raw_loc = facts.get("location_name")
+    loc_name = raw_loc if (raw_loc and raw_loc != "UNVERIFIED") else topic_clean[:18].upper()
+    raw_quote = facts.get("verified_quote")
+    quote_text = raw_quote if (raw_quote and raw_quote != "UNVERIFIED") else "UNVERIFIED ARCHIVAL RECORD"
+    summary_text = facts.get("summary") or f"UNVERIFIED DRAFT DOSSIER REGARDING {topic_clean.upper()}."
 
-    # Build entity nodes for evidence_board
-    ent_list = facts.get("key_entities") or [topic_clean[:16], "CENTRAL INTELLIGENCE", "GLOBAL IMPACT"]
+    # Build entity nodes for evidence_board without fake agency names
+    ent_list = [e for e in (facts.get("key_entities") or []) if e] or [topic_clean[:16]]
     evidence_nodes = [
-        {"title": ent_list[0][:16], "desc": "CORE OPERATION"},
-        {"title": ent_list[1][:16] if len(ent_list) > 1 else "AGENCY DIRECTIVE", "desc": "OVERSIGHT TASKFORCE"},
-        {"title": ent_list[2][:16] if len(ent_list) > 2 else "GLOBAL IMPACT", "desc": "SYSTEMIC REVELATION"}
+        {"title": ent_list[0][:16], "desc": "PRIMARY SUBJECT"},
+        {"title": ent_list[1][:16] if len(ent_list) > 1 else "UNVERIFIED NODE", "desc": "SECONDARY RECORD"},
+        {"title": ent_list[2][:16] if len(ent_list) > 2 else "ARCHIVE ENTRY", "desc": "PENDING REVIEW"}
     ]
+
+    date_phrase = f"documented in {date_1}" if date_1 != "UNVERIFIED DATE" else "documented in historical records"
+    metric_phrase = f"recorded at {metric_2}" if metric_2 != "UNVERIFIED SCALE" else "undergoing structural evaluation"
+    quote_spoken = (
+        f"Archival records note the primary statement: \"{quote_text[:80]}\"."
+        if quote_text != "UNVERIFIED ARCHIVAL RECORD"
+        else f"Archival records regarding {topic_clean} require primary source verification."
+    )
 
     sentences_data = [
         {
             "id": 1,
-            "text": f"Most people completely misunderstand the real story behind {topic_clean}.",
+            "text": f"The documented history behind {topic_clean} reveals a critical investigative timeline.",
             "beats": [
                 {
                     "id": "beat_01",
                     "type": "hero_hook",
                     "visual_prompt": f"Cinematic 35mm anamorphic film shot, dramatic volumetric lighting, {topic_clean} in high tension atmosphere, slow push-in zoom, 8k UHD",
-                    "headline": "THE UNTOLD TRUTH",
+                    "headline": "INVESTIGATIVE BRIEF",
                     "highlight": topic_clean.upper()[:24],
-                    "camera_movement": "dolly_vertigo",
+                    "camera_movement": hero_cam,
                     "duration": 1.4,
-                    "sfx": "thud.wav"
+                    "sfx": impact_sfx
                 },
                 {
                     "id": "beat_02",
                     "type": "treated_image",
                     "visual_prompt": f"Cinematic 35mm photograph of {topic_clean}, dramatic chiaroscuro lighting, 35mm film grain, orbital rotation",
                     "prompt": f"cinematic archival photograph of {topic_clean}, dramatic chiaroscuro lighting, 35mm film grain",
-                    "grade": "hard_bw",
+                    "grade": default_grade,
                     "camera_movement": "orbital",
                     "duration": 1.6,
-                    "sfx": "click.wav"
+                    "sfx": whoosh_sfx
                 }
             ]
         },
         {
             "id": 2,
-            "text": f"When you trace the origins of {topic_clean} back to {date_1}, the verified numbers reveal a massive shift that caught everyone off guard.",
+            "text": f"When you examine the origins of {topic_clean} {date_phrase}, the primary evidence highlights a major structural shift.",
             "beats": [
                 {
                     "id": "beat_03",
@@ -253,22 +253,22 @@ def generate_fallback_manifest(
         },
         {
             "id": 3,
-            "text": f"Early pioneers faced fierce resistance before the breakthrough that changed {topic_clean} forever.",
+            "text": f"Key developments surrounding {topic_clean} shaped how investigators and analysts track the subject today.",
             "beats": [
                 {
                     "id": "beat_05",
                     "type": "motion_card",
                     "template": "3_item_list",
                     "headline": "KEY FACTORS",
-                    "highlight": f"{ent_list[0][:10].upper()} * IMPACT * {date_1}",
+                    "highlight": f"{ent_list[0][:10].upper()} * ARCHIVE * {date_1}",
                     "duration": 1.5,
                     "sfx": "thud.wav"
                 },
                 {
                     "id": "beat_06",
                     "type": "broll_video",
-                    "broll_query": f"{topic_clean} laboratory research",
-                    "visual_prompt": f"retro laboratory workshop with inventors gathered around {topic_clean}, dramatic rim lighting",
+                    "broll_query": f"{topic_clean} documentary archive",
+                    "visual_prompt": f"archival research workspace examining {topic_clean}, dramatic rim lighting",
                     "grade": "teal_split",
                     "camera_movement": "rack_focus_bokeh",
                     "duration": 1.6,
@@ -278,13 +278,13 @@ def generate_fallback_manifest(
         },
         {
             "id": 4,
-            "text": f"Declassified archives confirm the primary witness statement: \"{quote_text[:80]}\".",
+            "text": quote_spoken,
             "beats": [
                 {
                     "id": "beat_07",
                     "type": "motion_card",
                     "template": "quote_box",
-                    "headline": "VERIFIED ARCHIVE",
+                    "headline": "ARCHIVE RECORD",
                     "highlight": quote_text[:34].upper(),
                     "duration": 1.4,
                     "sfx": "whoosh.wav"
@@ -292,7 +292,7 @@ def generate_fallback_manifest(
                 {
                     "id": "beat_08",
                     "type": "evidence_board",
-                    "headline": f"{topic_clean.upper()[:16]} TARGET NETWORK",
+                    "headline": f"{topic_clean.upper()[:16]} SUBJECT MAP",
                     "nodes": evidence_nodes,
                     "duration": 1.6,
                     "sfx": "click.wav"
@@ -301,22 +301,22 @@ def generate_fallback_manifest(
         },
         {
             "id": 5,
-            "text": f"What makes {topic_clean} so critical today is a geographical and geopolitical footprint spanning {loc_name}.",
+            "text": f"The operational context of {topic_clean} centers on {loc_name}.",
             "beats": [
                 {
                     "id": "beat_09",
                     "type": "map_flyover",
                     "location": loc_name,
                     "coords": coords,
-                    "headline": f"COVERT LOCATION // {loc_name[:14]}",
+                    "headline": f"SECTOR // {loc_name[:14]}",
                     "duration": 1.4,
                     "sfx": "thud.wav"
                 },
                 {
                     "id": "beat_10",
                     "type": "treated_image",
-                    "visual_prompt": f"close-up detailed macro lens shot representing the essence of {topic_clean}, high contrast, 35mm Kodak grain",
-                    "prompt": f"close-up detailed macro lens shot representing the essence of {topic_clean}, high contrast",
+                    "visual_prompt": f"close-up detailed macro lens shot representing {topic_clean}, high contrast, 35mm Kodak grain",
+                    "prompt": f"close-up detailed macro lens shot representing {topic_clean}, high contrast",
                     "grade": "amber",
                     "camera_movement": "dolly_vertigo",
                     "duration": 1.6,
@@ -326,13 +326,13 @@ def generate_fallback_manifest(
         },
         {
             "id": 6,
-            "text": f"Modern innovators are now using this exact formula to achieve results with {metric_2} velocity.",
+            "text": f"Current assessments show {topic_clean} {metric_phrase} across documented case studies.",
             "beats": [
                 {
                     "id": "beat_11",
                     "type": "motion_card",
                     "template": "stat_counter",
-                    "headline": "EFFICIENCY METRIC",
+                    "headline": "DOCUMENTED STATUS",
                     "highlight": metric_2[:24],
                     "duration": 1.4,
                     "sfx": "thud.wav"
@@ -340,8 +340,8 @@ def generate_fallback_manifest(
                 {
                     "id": "beat_12",
                     "type": "treated_image",
-                    "visual_prompt": f"futuristic modern minimalist workspace focused on {topic_clean}, sleek aesthetic, dark mode, volumetric cyan glow",
-                    "prompt": f"futuristic modern minimalist workspace focused on {topic_clean}, sleek aesthetic, dark mode",
+                    "visual_prompt": f"modern investigative desk focused on {topic_clean}, dark mode, natural tungsten key light",
+                    "prompt": f"modern investigative desk focused on {topic_clean}, dark mode",
                     "grade": "teal_split",
                     "camera_movement": "rack_focus_bokeh",
                     "duration": 1.5,
@@ -351,22 +351,22 @@ def generate_fallback_manifest(
         },
         {
             "id": 7,
-            "text": f"If you ignore how {topic_clean} is evolving right now, you risk getting left completely behind.",
+            "text": f"Tracking how {topic_clean} develops provides essential context for what comes next.",
             "beats": [
                 {
                     "id": "beat_13",
                     "type": "motion_card",
                     "template": "quote_box",
-                    "headline": "THE WARNING",
-                    "highlight": "ADAPT OR FALL BEHIND",
+                    "headline": "KEY OBSERVATION",
+                    "highlight": "EVIDENCE UNDER REVIEW",
                     "duration": 1.5,
                     "sfx": "whoosh.wav"
                 },
                 {
                     "id": "beat_14",
                     "type": "treated_image",
-                    "visual_prompt": f"cinematic silhouette overlooking bustling modern city skyline, twilight volumetric fog, 35mm grain",
-                    "prompt": f"cinematic silhouette overlooking bustling modern city skyline, twilight atmosphere",
+                    "visual_prompt": f"cinematic silhouette overlooking modern city skyline, twilight volumetric fog, 35mm grain",
+                    "prompt": f"cinematic silhouette overlooking modern city skyline, twilight atmosphere",
                     "grade": "hard_bw",
                     "camera_movement": "orbital",
                     "duration": 1.5,
@@ -376,22 +376,22 @@ def generate_fallback_manifest(
         },
         {
             "id": 8,
-            "text": f"Understanding {topic_clean} is no longer optional - it is the single biggest advantage you have today.",
+            "text": f"Every verified detail around {topic_clean} reshapes the broader picture.",
             "beats": [
                 {
                     "id": "beat_15",
                     "type": "motion_card",
                     "template": "red_slam_word",
-                    "headline": "THE TAKEAWAY",
-                    "highlight": "UNFAIR ADVANTAGE",
+                    "headline": "FINAL SUMMARY",
+                    "highlight": topic_clean.upper()[:22],
                     "duration": 1.4,
                     "sfx": "riser.wav"
                 },
                 {
                     "id": "beat_16",
                     "type": "treated_image",
-                    "visual_prompt": f"powerful inspiring portrait framing {topic_clean}, golden hour warm backlight, 85mm anamorphic flare",
-                    "prompt": f"powerful inspiring portrait framing {topic_clean}, golden hour warm backlight",
+                    "visual_prompt": f"dramatic documentary frame representing {topic_clean}, warm backlight, 85mm anamorphic lens",
+                    "prompt": f"dramatic documentary frame representing {topic_clean}, warm backlight",
                     "grade": "amber",
                     "camera_movement": "dolly_vertigo",
                     "duration": 1.8,
@@ -401,25 +401,25 @@ def generate_fallback_manifest(
         }
     ]
 
-    # If long-form (3m+ or 5m+), expand narrative with Acts 2, 3, and 4
+    # If long-form (3m+ or 5m+), expand narrative with Acts 2, 3, and 4 without fake percentages
     if duration_target > 60:
         extra_acts = [
-            (9, f"Phase two began behind closed doors, where the initial architecture of {topic_clean} was redesigned from scratch.", "stat_counter", "ARCHITECTURAL OVERHAUL", "5X EFFICIENCY MULTIPLIER", "blueprints and architectural drafts", "amber"),
-            (10, f"Engineers and strategists worked in total secrecy, knowing that a single flaw could collapse the entire operation.", "treated_image", None, None, f"secret war room strategists analyzing {topic_clean} data graphs", "hard_bw"),
-            (11, f"The breakthrough came when they discovered an overlooked vulnerability in the conventional method.", "motion_card", "CRITICAL VULNERABILITY", "EXPLOITING THE GAP", None, "teal_split"),
-            (12, f"Within six months, the prototype had demonstrated results that defied all standard predictions.", "stat_counter", "TEST BENCH RESULTS", "99.8% PRECISION RATING", None, "amber"),
-            (13, f"Competitors scrambled to decipher how {topic_clean} was achieving such unprecedented speed.", "3_item_list", "COMPETITIVE MOATS", "SPEED · DEFENSE · MOAT", None, "teal_split"),
-            (14, f"By the time the market understood the shift, the competitive barrier was already insurmountable.", "treated_image", None, None, f"imposing steel fortress vault symbolizing resilience of {topic_clean}", "hard_bw"),
-            (15, f"Then came the turning point: an unexpected crisis that pushed {topic_clean} to its absolute limit.", "red_slam_word", "THE TURNING POINT", "CRITICAL STRESS TEST", None, "amber"),
-            (16, f"When external pressure spiked, older legacy systems failed one by one.", "treated_image", None, None, f"dramatic stormy industrial landscape representing systemic stress on {topic_clean}", "teal_split"),
-            (17, f"Only the refined methodology of {topic_clean} held firm under the intense scrutiny.", "stat_counter", "UPTIME RESILIENCE", "100% OPERATIONAL", None, "amber"),
-            (18, f"This single performance proved that the new paradigm was not just viable—it was inevitable.", "quote_box", "FIELD REPORT", "THE IRREVERSIBLE SHIFT", None, "hard_bw"),
-            (19, f"Institutions worldwide took note, beginning the mass transition that defines our current era.", "treated_image", None, None, f"global satellite telemetry grid illuminating worldwide adoption of {topic_clean}", "teal_split"),
-            (20, f"The debate was officially settled: {topic_clean} had rewritten the rules permanently.", "motion_card", "FINAL VERDICT", "PARADIGM CONQUERED", None, "amber"),
-            (21, f"Looking forward, the lessons forged during the development of {topic_clean} remain more relevant than ever.", "3_item_list", "CORE LESSONS", "ADAPT · ENDURE · SCALE", None, "hard_bw"),
-            (22, f"Those who recognize these historical inflection points early are the ones who capture the greatest upside.", "stat_counter", "EXPONENTIAL UPSIDE", "THE 1% ASYMMETRY", None, "teal_split"),
-            (23, f"The window of opportunity around {topic_clean} is actively moving right before our eyes.", "treated_image", None, None, f"cinematic sunrise over horizon casting golden illumination on {topic_clean} future", "amber"),
-            (24, f"And those who master its principles today will be the ones directing the next decade.", "red_slam_word", "FINAL MASTERY", "DIRECT THE FUTURE", None, "amber"),
+            (9, f"Phase two examined the core framework of {topic_clean} from primary records.", "stat_counter", "STRUCTURAL REVIEW", metric_1[:22], "blueprints and archival drafts", "amber"),
+            (10, f"Analysts cross-checked each sequence to verify the timeline.", "treated_image", None, None, f"analysts reviewing {topic_clean} archival records", "hard_bw"),
+            (11, f"A closer inspection revealed an overlooked detail in the conventional account.", "motion_card", "KEY FINDING", "ARCHIVE COMPARISON", None, "teal_split"),
+            (12, f"Subsequent evaluations documented the findings for further scrutiny.", "stat_counter", "EVALUATION STATUS", metric_2[:22], None, "amber"),
+            (13, f"Observers worked to trace how {topic_clean} progressed across each stage.", "3_item_list", "CORE FACTORS", "ORIGIN · TIMELINE · IMPACT", None, "teal_split"),
+            (14, f"By the time the full record surfaced, the implications were clear.", "treated_image", None, None, f"archival vault symbolizing history of {topic_clean}", "hard_bw"),
+            (15, f"Then came the pivotal turning point that tested {topic_clean}.", "red_slam_word", "THE TURNING POINT", "CRITICAL INFLECTION", None, "amber"),
+            (16, f"Under heightened scrutiny, earlier assumptions had to be revised.", "treated_image", None, None, f"dramatic industrial landscape representing {topic_clean}", "teal_split"),
+            (17, f"The documented record of {topic_clean} remained central to the investigation.", "stat_counter", "RECORD STATUS", "UNVERIFIED DRAFT", None, "amber"),
+            (18, f"This sequence demonstrated how the broader narrative evolved.", "quote_box", "FIELD REPORT", "TIMELINE UPDATED", None, "hard_bw"),
+            (19, f"Institutions and researchers continued to catalog the aftermath.", "treated_image", None, None, f"global archival map documenting {topic_clean}", "teal_split"),
+            (20, f"The primary takeaway surrounding {topic_clean} continues to inform current analysis.", "motion_card", "FINAL VERDICT", "CASE REVIEWED", None, "amber"),
+            (21, f"Looking forward, the questions raised by {topic_clean} remain active.", "3_item_list", "CORE LESSONS", "VERIFY · DOCUMENT · ANALYZE", None, "hard_bw"),
+            (22, f"Careful examination of primary sources is essential before drawing conclusions.", "stat_counter", "SOURCE STATUS", "PRIMARY VERIFICATION", None, "teal_split"),
+            (23, f"New evidence around {topic_clean} continues to be indexed and reviewed.", "treated_image", None, None, f"cinematic horizon illumination representing {topic_clean}", "amber"),
+            (24, f"Review and edit this draft manifest before final documentary publication.", "red_slam_word", "DRAFT REVIEW", "VERIFICATION REQUIRED", None, "amber"),
         ]
 
         beat_counter = 17
@@ -454,6 +454,8 @@ def generate_fallback_manifest(
         "style": "editor-v1",
         "genre": genre_clean,
         "duration_target": duration_target,
+        "unverified_draft": True,
+        "verification_status": "UNVERIFIED_DRAFT",
         "sentences": sentences_data
     }
 
@@ -492,27 +494,30 @@ async def plan_documentary(
 
     fact_context = ""
     if fact_dossier:
-        metrics_str = ", ".join(fact_dossier.get("key_metrics", []))
-        dates_str = ", ".join(fact_dossier.get("key_dates", []))
-        entities_str = ", ".join(fact_dossier.get("key_entities", []))
+        metrics_str = ", ".join(fact_dossier.get("key_metrics", [])) or "UNVERIFIED (do not invent numbers)"
+        dates_str = ", ".join(fact_dossier.get("key_dates", [])) or "UNVERIFIED (do not invent years)"
+        entities_str = ", ".join(fact_dossier.get("key_entities", [])) or format_topic_title(topic)
+        coords_val = fact_dossier.get("coordinates") or "UNVERIFIED"
+        loc_val = fact_dossier.get("location_name") or "UNVERIFIED"
+        quote_val = fact_dossier.get("verified_quote") or "UNVERIFIED"
         fact_context = (
-            f"\n[VERIFIED FACT DOSSIER - GROUND ALL CARDS IN THIS DATA]:\n"
+            f"\n[FACT DOSSIER - STATUS: {fact_dossier.get('verification_status', 'UNVERIFIED')}]:\n"
             f"• Canonical Title: {fact_dossier.get('canonical_title')}\n"
             f"• Description: {fact_dossier.get('description')}\n"
-            f"• Real Metrics ($ & %): {metrics_str}\n"
+            f"• Verified Metrics ($ & %): {metrics_str}\n"
             f"• Verified Dates: {dates_str}\n"
-            f"• Key Suspects / Entities: {entities_str}\n"
-            f"• Coordinates: {fact_dossier.get('coordinates', '38.8977° N, 77.0365° W')} ({fact_dossier.get('location_name', 'TARGET SECTOR')})\n"
-            f"• Archival Record Quote: \"{fact_dossier.get('verified_quote', '')}\"\n"
-            f"MANDATORY FACT INSTRUCTIONS:\n"
-            f"1. Any 'stat_counter' beat MUST use one of the Real Metrics above.\n"
-            f"2. Any 'map_flyover' beat MUST use the Coordinates and Location above.\n"
-            f"3. Any 'evidence_board' beat MUST list the Key Entities above in 'nodes'.\n"
-            f"4. Any 'quote_box' or 'declassified_scan' beat MUST feature the Archival Record Quote.\n"
+            f"• Key Entities: {entities_str}\n"
+            f"• Coordinates: {coords_val} ({loc_val})\n"
+            f"• Archival Record Quote: \"{quote_val}\"\n"
+            f"STRICT FACTUAL INTEGRITY RULES:\n"
+            f"1. NEVER fabricate fake statistics, dollar figures, coordinates, or years.\n"
+            f"2. Only use 'stat_counter' with specific numbers if Verified Metrics are provided above.\n"
+            f"3. Only use 'map_flyover' with specific coordinates if Coordinates above are not UNVERIFIED.\n"
+            f"4. Any 'evidence_board' beat MUST list the Key Entities above in 'nodes'.\n"
         )
 
-    # 2. Retrieve connected directing principles from Obsidian Second Brain & Harvester Dataset via BM25
-    vault_context = query_director_vault(topic, genre=resolved_genre, house="HOUSE_2")
+    # 2. Retrieve connected 5-House directing principles from Obsidian Second Brain & Harvester Dataset via BM25
+    vault_context = query_director_vault(topic, genre=resolved_genre, house="ALL")
 
     # -------------------------------------------------------------
     # CASE A: LONG-FORM DOCUMENTARY (>60s) - 4 SEQUENTIAL ACTS
@@ -563,8 +568,14 @@ async def plan_documentary(
 
             if len(all_sentences) >= 12:
                 all_beats = [b for s in all_sentences for b in s.get("beats", [])]
+                healed_beats, _ = audit_and_heal_beats(all_beats, topic)
+                h_idx = 0
+                for s in all_sentences:
+                    num_b = len(s.get("beats", []))
+                    s["beats"] = healed_beats[h_idx : h_idx + num_b]
+                    h_idx += num_b
                 hook_txt = all_sentences[0].get("text", "")
-                log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Documentary", all_beats)
+                log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Documentary", healed_beats)
                 return {
                     "job_id": job_id,
                     "topic": topic,
@@ -573,7 +584,8 @@ async def plan_documentary(
                     "aspect_ratio": aspect_ratio,
                     "duration_target": duration_target,
                     "fact_dossier": fact_dossier,
-                    "sentences": all_sentences
+                    "sentences": all_sentences,
+                    "beats": healed_beats
                 }
         except Exception as e:
             logger.info(f"[Planner] Multi-act brain loop interrupted ({e}), using long-form fallback manifest")

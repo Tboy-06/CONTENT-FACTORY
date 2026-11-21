@@ -97,22 +97,63 @@ STOP_WORDS = {
 }
 
 
+ACRONYMS = {
+    "CIA", "FBI", "AI", "USA", "UK", "CEO", "NASA", "NFT", "LLM", "GPU", "CPU",
+    "API", "NSA", "KGB", "MI6", "UN", "EU", "SEC", "IRS", "FDA", "DOD", "DOJ",
+    "UFO", "UAP", "AGI", "DARPA", "NATO", "OPEC", "SWIFT", "DNA", "RNA",
+}
+
+_MINOR_TITLE_WORDS = {"a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "nor", "of", "on", "or", "the", "to", "with"}
+
+
+def format_topic_title(topic: str) -> str:
+    """
+    Formats a topic into clean title case while preserving uppercase acronyms
+    (e.g. 'CIA', 'FBI', 'AI', 'NASA', 'LLM') instead of Python .title() mangling 'CIA' -> 'Cia'.
+    """
+    if not topic or not topic.strip():
+        return "Untitled Subject"
+    words = topic.strip().split()
+    out: List[str] = []
+    for idx, word in enumerate(words):
+        prefix_m = re.match(r"^([^a-zA-Z0-9]*)(.*?)([^a-zA-Z0-9]*)$", word)
+        if not prefix_m:
+            out.append(word)
+            continue
+        lead, core, trail = prefix_m.groups()
+        if not core:
+            out.append(word)
+            continue
+        upper_core = core.upper()
+        if upper_core in ACRONYMS:
+            out.append(f"{lead}{upper_core}{trail}")
+        elif idx > 0 and core.lower() in _MINOR_TITLE_WORDS:
+            out.append(f"{lead}{core.lower()}{trail}")
+        elif core.isupper() and len(core) <= 4:
+            out.append(f"{lead}{core}{trail}")
+        else:
+            out.append(f"{lead}{core.capitalize()}{trail}")
+    return " ".join(out)
+
+
 def tokenize(text: str) -> List[str]:
     """Tokenizes text into lowercase word tokens, filtering out stop-words."""
     words = re.findall(r"\b[a-zA-Z0-9_-]{2,}\b", text.lower())
     return [w for w in words if w not in STOP_WORDS]
 
 
-def detect_genre(text: str) -> str:
-    """Auto-detects one of the 5 genres based on lexical and narrative indicators."""
-    t = text.lower()
-    if any(k in t for k in ["comedy", "skit", "funny", "humor", "joke", "prank", "hilarious", "parody", "laugh", "meme"]):
+def detect_genre(topic: str, prompt: str = "") -> str:
+    """Canonical 5-genre detector shared across planner.py and vault_graph.py."""
+    t = f"{topic} {prompt}".lower()
+    if any(k in t for k in ["comedy", "skit", "funny", "humor", "joke", "prank", "hilarious", "parody", "laugh", "meme", "awkward", "roast"]):
         return "comedy_skit"
-    if any(k in t for k in ["action", "hype", "battle", "supercar", "fight", "war", "explosive", "military", "chase", "combat", "strike"]):
+    if any(k in t for k in ["action", "hype", "battle", "supercar", "fight", "war", "explosive", "military", "chase", "combat", "strike", "beast", "workout", "gym", "explosion", "speed", "anime"]):
         return "action_hype"
-    if any(k in t for k in ["movie", "cinema", "cinematic", "film", "hollywood", "35mm", "anamorphic", "drama", "scene"]):
+    if any(k in t for k in ["movie", "cinema", "cinematic", "film", "hollywood", "35mm", "anamorphic", "drama", "scene", "trailer", "screenplay", "monologue", "widescreen"]):
         return "movie_cinema"
-    if any(k in t for k in ["how to", "tutorial", "guide", "explained", "learn", "study", "tips", "hacks", "science", "facts", "step by step", "breakdown"]):
+    if any(k in t for k in ["crime", "cia", "kgb", "fbi", "conspiracy", "scandal", "murder", "heist", "classified", "secret", "submarine", "azorian", "espionage", "investigation"]):
+        return "crime_doc"
+    if any(k in t for k in ["how to", "tutorial", "guide", "explained", "explain", "learn", "study", "tips", "hacks", "science", "facts", "step by step", "breakdown", "money", "why", "tech", "code", "crypto", "business", "economy", "ai", "system", "psychology"]):
         return "viral_edu"
     return "crime_doc"
 
@@ -211,11 +252,14 @@ class BM25Corpus:
             if score <= 0.0:
                 continue
 
-            # Multiplier boosts:
+            # Multiplier boosts (Genre + House + Real-World Viral Telemetry):
             if target_genre and doc_genre == target_genre:
                 score *= 3.0
-            if target_house and doc_house == target_house:
+            if target_house and doc_house and target_house in doc_house:
                 score *= 2.0
+            view_count = int(doc_meta.get("view_count") or 0)
+            if view_count > 100:
+                score *= (1.0 + 0.15 * math.log10(view_count))
 
             scored.append((score, d))
 
@@ -226,15 +270,20 @@ class BM25Corpus:
 # Global cached BM25 corpus instance
 _cached_corpus: Optional[BM25Corpus] = None
 _last_build_time: float = 0.0
+_last_dataset_mtime: float = -1.0
 
 
 def get_vault_corpus() -> BM25Corpus:
-    """Builds or returns cached BM25 index over director_vault and dataset.jsonl."""
-    global _cached_corpus, _last_build_time
+    """Builds or returns cached BM25 index over director_vault and dataset.jsonl (reloads only when mtime changes)."""
+    global _cached_corpus, _last_build_time, _last_dataset_mtime
     import time
     now = time.time()
-    if _cached_corpus is not None and (now - _last_build_time) < 60.0:
-        return _cached_corpus
+    current_ds_mtime = os.path.getmtime(DATASET_FILE) if os.path.exists(DATASET_FILE) else -1.0
+    if _cached_corpus is not None:
+        if (now - _last_build_time) < 60.0:
+            return _cached_corpus
+        if current_ds_mtime == _last_dataset_mtime and (now - _last_build_time) < 600.0:
+            return _cached_corpus
 
     corpus = BM25Corpus()
 
@@ -292,6 +341,8 @@ def get_vault_corpus() -> BM25Corpus:
                         rec_house = rec.get("house")
                         rec_genre = rec.get("genre") or "auto"
                         rec_sub = rec.get("sub_room")
+                        out_obj = rec.get("output") if isinstance(rec.get("output"), dict) else {}
+                        rec_views = int(out_obj.get("view_count") or 0)
 
                         corpus.add_doc(
                             doc_id=f"dataset_row_{line_idx}",
@@ -303,6 +354,7 @@ def get_vault_corpus() -> BM25Corpus:
                                 "house": rec_house,
                                 "genre": rec_genre,
                                 "sub_room": rec_sub,
+                                "view_count": rec_views,
                                 "output": resp_str
                             }
                         )
@@ -314,6 +366,7 @@ def get_vault_corpus() -> BM25Corpus:
     corpus.build()
     _cached_corpus = corpus
     _last_build_time = now
+    _last_dataset_mtime = current_ds_mtime
     return corpus
 
 
@@ -337,10 +390,24 @@ def query_director_vault(
     physics = GENRE_EDITING_PHYSICS.get(resolved_genre, GENRE_EDITING_PHYSICS["crime_doc"])
     query_str = f"{topic} {resolved_genre}"
 
-    # Query matching notes/records strictly for this genre & house
-    matches = corpus.query(query_str, genre=resolved_genre, house=house, top_k=top_k)
+    # Query matching notes/records: Composite 5-House Retrieval when house is None or "ALL"
+    matches: List[Tuple[float, Dict[str, Any]]] = []
+    if not house or house.upper() == "ALL":
+        seen_ids = set()
+        for h_target in ["HOUSE_1", "HOUSE_2", "HOUSE_3", "HOUSE_4"]:
+            h_hits = corpus.query(query_str, genre=resolved_genre, house=h_target, top_k=1)
+            for sc, d in h_hits:
+                if d["id"] not in seen_ids:
+                    seen_ids.add(d["id"])
+                    matches.append((sc, d))
+    if len(matches) < top_k:
+        extra = corpus.query(query_str, genre=resolved_genre, house=house, top_k=top_k)
+        seen_ids = {d["id"] for _, d in matches}
+        for sc, d in extra:
+            if d["id"] not in seen_ids and len(matches) < top_k:
+                seen_ids.add(d["id"])
+                matches.append((sc, d))
     if not matches and corpus.n_docs > 0:
-        # Fallback to general query but keep genre constraint
         matches = corpus.query(query_str, genre=resolved_genre, top_k=top_k)
 
     sections = [
@@ -355,12 +422,12 @@ def query_director_vault(
         f"  - Hook Focus: {physics['hook_focus']}"
     ]
 
-    # Ingest retrieved Obsidian principles
+    # Ingest retrieved Obsidian principles & distilled few-shot examples
     if matches:
-        sections.append("\n• RETRIEVED CURATED PRINCIPLES & FORMULAS:")
-        for score, doc in matches[:3]:
+        sections.append("\n• RETRIEVED CURATED PRINCIPLES & FEW-SHOT EXAMPLES:")
+        for score, doc in matches[:4]:
             t = doc["title"]
-            text_preview = doc["text"][:160].replace("\n", " ").strip()
+            text_preview = doc["text"][:450].replace("\n", " ").strip()
             sections.append(f"  - [[{t}]]: \"{text_preview}\"")
 
     # Ingest learned editorial mistakes (Reflexion Reinforcement Learning)

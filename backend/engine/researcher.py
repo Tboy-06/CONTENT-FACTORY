@@ -25,7 +25,25 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional
 
+from backend.engine.vault_graph import format_topic_title
+
 logger = logging.getLogger("engine.researcher")
+
+
+def _fetch_json(url: str, timeout: float = 6.0) -> Optional[Dict[str, Any]]:
+    """Fetches JSON from a URL with a clean User-Agent."""
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "ContentFactoryDocumentaryBot/2.0 (contact: support@contentfactory.local)"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _search_yt_dlp_facts(topic: str, max_results: int = 1) -> List[str]:
+    """Helper for yt-dlp transcript quote search."""
+    q = fetch_transcript_quote_yt_dlp(topic)
+    return [q] if q else []
 
 
 def clean_text(text: str) -> str:
@@ -102,12 +120,9 @@ def fetch_wikipedia_dossier(topic: str) -> Dict[str, Any]:
         
         # 1. Search Wikipedia for best page match
         search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={encoded}&format=json&utf8=1"
-        req = urllib.request.Request(
-            search_url,
-            headers={"User-Agent": "ContentFactoryDocumentaryBot/2.0 (contact: support@contentfactory.local)"}
-        )
-        with urllib.request.urlopen(req, timeout=6) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        data = _fetch_json(search_url, timeout=6.0)
+        if not data:
+            return {}
 
         search_results = data.get("query", {}).get("search", [])
         if not search_results:
@@ -117,12 +132,9 @@ def fetch_wikipedia_dossier(topic: str) -> Dict[str, Any]:
 
         # 2. Fetch page summary extract
         summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(top_title)}"
-        req2 = urllib.request.Request(
-            summary_url,
-            headers={"User-Agent": "ContentFactoryDocumentaryBot/2.0 (contact: support@contentfactory.local)"}
-        )
-        with urllib.request.urlopen(req2, timeout=6) as resp2:
-            sum_data = json.loads(resp2.read().decode("utf-8"))
+        sum_data = _fetch_json(summary_url, timeout=6.0)
+        if not sum_data:
+            return {}
 
         extract = clean_text(sum_data.get("extract") or "")
         coords_raw = sum_data.get("coordinates")
@@ -134,10 +146,12 @@ def fetch_wikipedia_dossier(topic: str) -> Dict[str, Any]:
             lon_dir = "E" if lon >= 0 else "W"
             coords_str = f"{abs(lat):.2f}° {lat_dir}, {abs(lon):.2f}° {lon_dir}"
 
+        page_url = sum_data.get("content_urls", {}).get("desktop", {}).get("page") or summary_url
         return {
             "canonical_title": sum_data.get("title", top_title),
             "description": sum_data.get("description", ""),
             "extract": extract,
+            "source_url": page_url,
             "coordinates": coords_str,
             "metrics": extract_key_metrics(extract),
             "dates": extract_key_dates(extract),
@@ -168,7 +182,8 @@ def fetch_transcript_quote_yt_dlp(topic: str) -> Optional[str]:
             "--sub-format", "vtt",
             "-o", f"{sub_prefix}.%(ext)s"
         ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=12)
+        _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=12, creationflags=_no_win)
         vtt_file = f"{sub_prefix}.en.vtt"
 
         quote = None
@@ -207,64 +222,96 @@ async def research_fact_dossier(topic: str) -> Dict[str, Any]:
     """
     Fast zero-key research pre-step:
     Combines Wikipedia REST API + yt-dlp transcript snippets into an authoritative FactDossier.
-    Runs asynchronously with a strict 8-second total timeout.
+    Never invents or fabricates fallback numbers, dates, coordinates, or quotes.
+    Missing facts are explicitly tagged 'UNVERIFIED' or empty lists [].
     """
     logger.info(f"[researcher] Gathering verified fact dossier for: '{topic}'...")
 
     wiki_task = asyncio.to_thread(fetch_wikipedia_dossier, topic)
-    quote_task = asyncio.to_thread(fetch_transcript_quote_yt_dlp, topic)
+    quote_task = asyncio.to_thread(_search_yt_dlp_facts, topic, 1)
 
     try:
-        wiki_res, yt_quote = await asyncio.gather(wiki_task, quote_task)
+        wiki_res, yt_quotes = await asyncio.gather(wiki_task, quote_task)
     except Exception as e:
         logger.warning(f"[researcher] Parallel gather error: {e}")
         wiki_res = {}
-        yt_quote = None
+        yt_quotes = []
 
-    canonical_title = wiki_res.get("canonical_title") or topic.strip().title()
+    wiki_res = wiki_res or {}
+    yt_quote = yt_quotes[0] if yt_quotes else None
+
+    canonical_title = wiki_res.get("canonical_title") or format_topic_title(topic)
     description = wiki_res.get("description") or f"Investigative analysis of {canonical_title}"
     extract = wiki_res.get("extract") or ""
-    
-    # Merge quotes
-    quotes = wiki_res.get("quotes", [])
+    source_url = wiki_res.get("source_url") or ""
+
+    # Merge real quotes only (no fabricated fallback quotes)
+    quotes = list(wiki_res.get("quotes") or [])
     if yt_quote and yt_quote not in quotes:
         quotes.insert(0, yt_quote)
 
-    primary_quote = quotes[0] if quotes else f"The underlying reality of {canonical_title} was concealed for decades."
-
-    # Coordinates fallback: location defaults
-    coords = wiki_res.get("coordinates")
-    if not coords:
-        # Default thematic coordinate
-        coords = "38.8977° N, 77.0365° W"  # Washington D.C. intelligence grid
-
-    dates = wiki_res.get("dates", [])
-    if not dates:
-        dates = ["1974", "1992", "2018", "2024"]
-
-    metrics = wiki_res.get("metrics", [])
-    if not metrics:
-        metrics = ["$3.8 Billion", "99.8% Precision", "14,000 Personnel", "10X Acceleration"]
-
-    entities = wiki_res.get("entities", [])
+    primary_quote = quotes[0] if quotes else "UNVERIFIED"
+    coords = wiki_res.get("coordinates") or "UNVERIFIED"
+    dates = list(wiki_res.get("dates") or [])[:4]
+    metrics = list(wiki_res.get("metrics") or [])[:4]
+    entities = list(wiki_res.get("entities") or [])[:4]
     if not entities:
-        entities = [canonical_title, "Central Intelligence", "Special Operations", "Global Taskforce"]
+        entities = [canonical_title]
+
+    has_verified_source = bool(extract or yt_quote or dates or metrics)
+    verification_status = "VERIFIED" if has_verified_source else "UNVERIFIED"
+
+    claims: List[Dict[str, str]] = []
+    if extract:
+        claims.append({
+            "claim": extract[:240],
+            "source_url": source_url or "https://en.wikipedia.org",
+            "source_title": canonical_title,
+            "evidence": extract[:300],
+            "verification_status": "VERIFIED",
+        })
+    for m in metrics:
+        claims.append({
+            "claim": f"Documented metric: {m}",
+            "source_url": source_url or "https://en.wikipedia.org",
+            "source_title": canonical_title,
+            "evidence": extract[:200] if extract else m,
+            "verification_status": "VERIFIED",
+        })
+    if yt_quote:
+        claims.append({
+            "claim": yt_quote,
+            "source_url": f"ytsearch1:{topic} documentary",
+            "source_title": f"{canonical_title} Transcript Archive",
+            "evidence": yt_quote,
+            "verification_status": "VERIFIED",
+        })
+    if not claims:
+        claims.append({
+            "claim": f"No verified external metrics or archival quotes retrieved for {canonical_title}.",
+            "source_url": "UNVERIFIED",
+            "source_title": canonical_title,
+            "evidence": "UNVERIFIED",
+            "verification_status": "UNVERIFIED",
+        })
 
     dossier = {
         "topic": topic,
         "canonical_title": canonical_title,
         "description": description,
-        "summary": extract[:400] if extract else f"Key documented findings regarding {canonical_title}.",
-        "key_dates": dates[:4],
-        "key_metrics": metrics[:4],
-        "key_entities": entities[:4],
+        "summary": extract[:400] if extract else f"UNVERIFIED: No external archival extract retrieved for {canonical_title}.",
+        "key_dates": dates,
+        "key_metrics": metrics,
+        "key_entities": entities,
         "coordinates": coords,
-        "location_name": canonical_title.upper()[:28],
-        "verified_quote": primary_quote
+        "location_name": canonical_title.upper()[:28] if coords != "UNVERIFIED" else "UNVERIFIED",
+        "verified_quote": primary_quote,
+        "verification_status": verification_status,
+        "claims": claims,
     }
 
     logger.info(
-        f"[researcher] Fact Dossier ready for '{canonical_title}': "
+        f"[researcher] Fact Dossier ready for '{canonical_title}' (status={verification_status}): "
         f"{len(dossier['key_dates'])} dates, {len(dossier['key_metrics'])} metrics, coords={coords}"
     )
     return dossier

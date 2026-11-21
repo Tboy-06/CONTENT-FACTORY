@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Heart, MessageCircle, Bookmark, Share2, Disc3 } from 'lucide-react';
+import { Search, Heart, MessageCircle, Bookmark, Share2, Disc3, Music2 } from 'lucide-react';
 
 interface SafeZoneOverlayProps {
   visible: boolean;
@@ -50,19 +50,19 @@ export default function SafeZoneOverlay({
             {caption}
           </p>
           <div className="flex items-center gap-1.5 text-[10px] text-white/75 font-mono">
-            <span className="text-xs">♫</span>
+            <Music2 size={11} className="shrink-0" />
             <span className="truncate">Original Sound - Voiceover Audio (-14 LUFS)</span>
           </div>
         </div>
 
-        {/* Right Action Icons Column */}
+        {/* Right Action Icons Column (Safe-Zone Occlusion Guides) */}
         <div className="flex flex-col items-center gap-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] pb-1">
           {/* Avatar with + badge */}
           <div className="relative mb-1">
-            <div className="w-8 h-8 rounded-full border border-white bg-slate-800 flex items-center justify-center font-bold text-[10px] text-white">
+            <div className="w-8 h-8 rounded-md border border-white bg-slate-800 flex items-center justify-center font-bold text-[10px] text-white">
               CF
             </div>
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-red-500 rounded-sm flex items-center justify-center text-[10px] font-bold text-white">
               +
             </div>
           </div>
@@ -70,29 +70,29 @@ export default function SafeZoneOverlay({
           {/* Like */}
           <div className="flex flex-col items-center">
             <Heart size={20} className="fill-white/90 text-white/90" />
-            <span className="text-[9px] font-medium text-white mt-0.5">248.5K</span>
+            <span className="text-[9px] font-medium text-white mt-0.5">Like</span>
           </div>
 
           {/* Comment */}
           <div className="flex flex-col items-center">
             <MessageCircle size={20} className="fill-white/90 text-white/90" />
-            <span className="text-[9px] font-medium text-white mt-0.5">1,420</span>
+            <span className="text-[9px] font-medium text-white mt-0.5">Reply</span>
           </div>
 
           {/* Bookmark */}
           <div className="flex flex-col items-center">
             <Bookmark size={20} className="fill-white/90 text-white/90" />
-            <span className="text-[9px] font-medium text-white mt-0.5">38.2K</span>
+            <span className="text-[9px] font-medium text-white mt-0.5">Save</span>
           </div>
 
           {/* Share */}
           <div className="flex flex-col items-center">
             <Share2 size={20} className="fill-white/90 text-white/90" />
-            <span className="text-[9px] font-medium text-white mt-0.5">14.1K</span>
+            <span className="text-[9px] font-medium text-white mt-0.5">Share</span>
           </div>
 
-          {/* Music Disc */}
-          <div className="w-6 h-6 rounded-full bg-slate-900 border border-white/60 flex items-center justify-center text-white mt-1 animate-spin" style={{ animationDuration: '4s' }}>
+          {/* Audio Track Disc */}
+          <div className="w-6 h-6 rounded-md bg-slate-900 border border-white/60 flex items-center justify-center text-white mt-1">
             <Disc3 size={14} />
           </div>
         </div>
