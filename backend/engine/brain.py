@@ -24,6 +24,17 @@ logger = logging.getLogger("engine.brain")
 DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "copilot-brain:latest")
 OLLAMA_ENDPOINT = os.environ.get("OLLAMA_ENDPOINT", "http://localhost:11434/api/chat")
 
+# Current free-tier Gemini AI Studio candidate models (avoids deprecated 2.5 IDs per routing rules)
+GEMINI_FREE_CANDIDATE_MODELS = [
+    "models/gemini-3.5-flash-lite",
+    "models/gemini-3.8-flash",
+    "models/gemini-3.6-flash",
+    "models/gemini-3.5-flash",
+    "models/gemini-3.1-flash-lite",
+    "models/gemini-flash-latest",
+    "models/gemini-flash-lite-latest",
+]
+
 
 def clean_json_text(text: str) -> str:
     """Strips markdown code fences (```json ... ```) to guarantee parseable JSON."""
@@ -80,16 +91,19 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
             "-m", blob_path,
             "--port", "11434",
             "--host", "127.0.0.1",
-            "-c", "1024",
+            "-c", "8192",
             "-t", "6",
             "--log-disable",
             "--sleep-idle-seconds", "300"
         ]
         try:
+            _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
             _LOCAL_BRAIN_PROC = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                creationflags=_no_win
             )
         except Exception as e:
             logger.error(f"[Brain] Failed to start llama-server.exe: {e}")
@@ -180,7 +194,7 @@ async def call_ollama(
                 openai_url = "http://127.0.0.1:11434/v1/chat/completions"
                 payload = {
                     "messages": messages,
-                    "max_tokens": min(num_predict, 1024),
+                    "max_tokens": min(num_predict, 2048),
                     "temperature": 0.3
                 }
                 if format_json:
@@ -238,43 +252,6 @@ async def call_ollama(
         return content
     except Exception as e:
         logger.warning(f"Local brain inference error: {e}")
-        return None
-    messages = []
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.append({"role": "user", "content": prompt})
-
-    payload: Dict[str, Any] = {
-        "model": model,
-        "messages": messages,
-        "stream": False,
-        "think": False,
-        "keep_alive": "2m",
-        "options": {
-            "temperature": 0.4,
-            "num_predict": num_predict,
-            "think": False,
-        }
-    }
-    if format_json:
-        payload["format"] = "json"
-
-    def _sync_req():
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            OLLAMA_ENDPOINT,
-            data=data,
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = json.loads(resp.read().decode("utf-8"))
-            return raw.get("message", {}).get("content", "")
-
-    try:
-        content = await asyncio.to_thread(_sync_req)
-        return content
-    except Exception as e:
-        logger.warning(f"Ollama query failed ({model}): {e}")
         return None
 
 
@@ -411,6 +388,205 @@ async def call_kimi_k3(
     return None
 
 
+async def call_openrouter_free(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    format_json: bool = True,
+    timeout: float = 28.0,
+) -> Optional[str]:
+    """
+    Zero-Cost ($0.00 :free) OpenRouter Hybrid Engine:
+    - Uses `openrouter_discovery.get_free_models_for("text")` which enforces `is_strictly_free`
+      and prioritizes `nvidia/nemotron-3.5-lightning:free` -> `google/gemma-4-31b-it:free` -> `openrouter/free`.
+    - Caps retries to 1 so failed calls never drain the 50/day free limit.
+    - Trips the circuit breaker (15m on 402, 60s on 429) and silently skips to local engines.
+    """
+    from backend.engine import openrouter_discovery
+
+    if openrouter_discovery.is_openrouter_on_cooldown():
+        return None
+
+    api_key = openrouter_discovery.resolve_openrouter_api_key()
+    if not api_key:
+        return None
+
+    free_text_models = openrouter_discovery.get_free_models_for("text")
+    if not free_text_models:
+        return None
+
+    # Build strictly-free 3-model failover chain:
+    # [nvidia/nemotron-3.5-lightning:free, google/gemma-4-31b-it:free, openrouter/free]
+    chain = []
+    for candidate in (
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-31b-it:free",
+        "openrouter/free",
+    ):
+        if candidate in free_text_models and candidate not in chain:
+            chain.append(candidate)
+    for m in free_text_models:
+        if len(chain) >= 3:
+            break
+        if m not in chain:
+            chain.append(m)
+    if not chain:
+        chain = ["openrouter/free"]
+
+    user_content = prompt
+    if format_json and "JSON" not in user_content.upper():
+        user_content += "\nReturn strictly a valid JSON object without markdown fences."
+
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": user_content})
+
+    def _send_request(models_list):
+        primary = models_list[0]
+        payload: Dict[str, Any] = {
+            "model": primary,
+            "messages": messages,
+            "max_tokens": 2048,
+            "temperature": 0.25,
+        }
+        if len(models_list) > 1:
+            payload["models"] = models_list[:3]
+
+        req = urllib.request.Request(
+            openrouter_discovery.OPENROUTER_CHAT_URL,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "CONTENT-FACTORY Studio",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = json.loads(resp.read().decode("utf-8"))
+            choices = raw.get("choices") or []
+            if choices:
+                msg = choices[0].get("message") or {}
+                text = (msg.get("content") or msg.get("reasoning") or "").strip()
+                served_by = raw.get("model") or primary
+                if text:
+                    logger.info(f"[Brain] OpenRouter :free inference succeeded via {served_by} ($0.00 cost)")
+                    return text
+        return None
+
+    # Attempt 1: Native 3-model strictly-free failover array
+    try:
+        res = await asyncio.to_thread(_send_request, chain)
+        if res:
+            return res
+    except urllib.error.HTTPError as he:
+        if he.code in (402, 429):
+            openrouter_discovery.record_openrouter_status(he.code, f"Chat completion HTTP {he.code}")
+            return None
+        logger.debug(f"[Brain] OpenRouter primary chain HTTP {he.code}; trying 1 max retry on openrouter/free")
+    except Exception as e:
+        logger.debug(f"[Brain] OpenRouter primary chain error ({e}); trying 1 max retry on openrouter/free")
+
+    # Max 1 retry directly on openrouter/free (if not on cooldown)
+    if not openrouter_discovery.is_openrouter_on_cooldown() and chain[0] != "openrouter/free":
+        try:
+            res = await asyncio.to_thread(_send_request, ["openrouter/free"])
+            if res:
+                return res
+        except urllib.error.HTTPError as he:
+            if he.code in (402, 429):
+                openrouter_discovery.record_openrouter_status(he.code, f"Retry HTTP {he.code}")
+        except Exception as e:
+            logger.debug(f"[Brain] OpenRouter single retry failed: {e}")
+
+    return None
+
+
+async def analyze_visual_reference_openrouter(
+    prompt: str,
+    image_data_urls: Optional[ list[str] ] = None,
+    transcript_fallback: str = "",
+    system_prompt: Optional[str] = None,
+    format_json: bool = True,
+    timeout: float = 30.0,
+) -> str:
+    """
+    Stage 2 Hybrid Router (Vision -> Text):
+    Sends extracted FFmpeg keyframes + transcript to discovered `vision` :free models
+    (prioritizing `nvidia/nemotron-3.5-super-vl:free` -> `google/gemma-4-26b-a4b-it:free` -> `openrouter/free`).
+    If no free vision model is available or on cooldown, falls back cleanly to transcript-only on local Spark-X2.5-4B.
+    """
+    from backend.engine import openrouter_discovery
+
+    vision_models = openrouter_discovery.get_free_models_for("vision")
+    api_key = openrouter_discovery.resolve_openrouter_api_key()
+
+    if api_key and vision_models and image_data_urls and not openrouter_discovery.is_openrouter_on_cooldown():
+        chain = []
+        for candidate in (
+            "nvidia/nemotron-3.5-super-vl:free",
+            "google/gemma-4-26b-a4b-it:free",
+            "google/gemma-4-31b-it:free",
+            "openrouter/free",
+        ):
+            if candidate in vision_models and candidate not in chain:
+                chain.append(candidate)
+        for m in vision_models:
+            if len(chain) >= 3:
+                break
+            if m not in chain:
+                chain.append(m)
+
+        content_blocks = [{"type": "text", "text": prompt}]
+        for url in image_data_urls[:4]:
+            content_blocks.append({"type": "image_url", "image_url": {"url": url}})
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": content_blocks})
+
+        def _sync_vision():
+            payload = {
+                "model": chain[0],
+                "models": chain[:3],
+                "messages": messages,
+                "max_tokens": 2048,
+                "temperature": 0.2,
+            }
+            req = urllib.request.Request(
+                openrouter_discovery.OPENROUTER_CHAT_URL,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "CONTENT-FACTORY Studio Vision",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = json.loads(resp.read().decode("utf-8"))
+                choices = raw.get("choices") or []
+                if choices:
+                    msg = choices[0].get("message") or {}
+                    return (msg.get("content") or msg.get("reasoning") or "").strip()
+            return None
+
+        try:
+            v_res = await asyncio.to_thread(_sync_vision)
+            if v_res:
+                return clean_json_text(v_res) if format_json else v_res
+        except urllib.error.HTTPError as he:
+            if he.code in (402, 429):
+                openrouter_discovery.record_openrouter_status(he.code, f"Vision HTTP {he.code}")
+        except Exception as e:
+            logger.debug(f"[Brain] OpenRouter vision fallback to transcript/local: {e}")
+
+    # Fallback: transcript-only analysis via ask_brain (or local Spark-X2.5-4B)
+    combined_prompt = f"{prompt}\n\n[TRANSCRIPT CONTEXT]:\n{transcript_fallback}" if transcript_fallback else prompt
+    return await ask_brain(combined_prompt, system_prompt=system_prompt, format_json=format_json)
+
+
 async def ask_brain(
     prompt: str,
     system_prompt: Optional[str] = None,
@@ -421,8 +597,9 @@ async def ask_brain(
     """
     Unified brain router (Hardware-Optimized Priority):
     - "offline_spark": Forces local Ollama (Spark-X2.5-4B) for 100% offline private execution.
-    - "cloud": Forces cloud endpoints (Kimi K3 / Gemini / Cloud router).
-    - "auto": Online Cloud priority with automatic Ollama offline fallback.
+    - "openrouter_free": Forces strictly-free ($0.00 :free) OpenRouter router with local fallback.
+    - "cloud": Forces cloud waterfall (Kimi K3 -> Gemini AI Studio -> OpenRouter :free -> Pollinations Free).
+    - "auto": Online Cloud priority (Gemini AI Studio -> OpenRouter :free -> Pollinations Free) with automatic Ollama offline fallback.
     """
     if engine_mode == "offline_spark":
         if not is_ollama_ready():
@@ -439,10 +616,17 @@ async def ask_brain(
                 return clean_json_text(res) if format_json else res
         raise RuntimeError(f"Offline GGUF brain server ({DEFAULT_OLLAMA_MODEL}) could not be initialized on http://localhost:11434. Please verify {LLAMA_SERVER_BIN} exists.")
 
-    online = is_online() if engine_mode != "cloud" else True
+    if engine_mode == "openrouter_free":
+        or_res = await call_openrouter_free(prompt, system_prompt=system_prompt, format_json=format_json)
+        if or_res:
+            return clean_json_text(or_res) if format_json else or_res
+        logger.warning("[Brain] engine_mode='openrouter_free' unavailable or on cooldown; falling back to local/free cloud.")
+
+    online = is_online() if engine_mode not in ("cloud", "openrouter_free") else True
     logger.info(f"[Brain] Routing query (EngineMode={engine_mode}, Online={online})")
 
-    # 1. When Online or Cloud Mode: Try Cloud FIRST (Gemini 3.1 Flash Lite / Kimi K3 -> 0 MB local RAM, 0% CPU, 2s response)
+    # 1. When Online or Cloud Mode: Waterfall per User A2 Option 2:
+    #    Kimi K3 (if key set) -> Gemini AI Studio (if key set, 3.5/3.8/3.6 models) -> OpenRouter :free -> Pollinations Free -> Local Spark-X2.5-4B
     if online:
         # A. Kimi K3 / Moonshot Engine (ONLY if key is populated)
         from backend.config import get_settings
@@ -457,7 +641,7 @@ async def ask_brain(
             except Exception as e:
                 logger.warning(f"[Brain] Kimi K3 routing error: {e}")
 
-        # B. Gemini API with candidate model cascade
+        # B. Gemini AI Studio Free Tier with modern 3.5 / 3.8 / 3.6 model cascade (no deprecated 2.5 IDs)
         try:
             from backend.config import get_settings
             cfg = get_settings()
@@ -469,13 +653,8 @@ async def ask_brain(
                 if format_json and "JSON" not in full_prompt.upper():
                     full_prompt += "\nOutput strictly a valid JSON object or array without markdown fences."
 
-                candidate_models = [
-                    cfg.gemini_model if cfg.gemini_model and "2.5" not in cfg.gemini_model else "models/gemini-flash-latest",
-                    "models/gemini-flash-latest",
-                    "models/gemini-flash-lite-latest",
-                    "models/gemini-3.1-flash-lite",
-                    "models/gemini-3.5-flash",
-                ]
+                cfg_model = cfg.gemini_model if (cfg.gemini_model and "2.5" not in cfg.gemini_model) else "models/gemini-3.5-flash-lite"
+                candidate_models = [cfg_model] + list(GEMINI_FREE_CANDIDATE_MODELS)
                 seen_models = set()
                 models_to_try = []
                 for m in candidate_models:
@@ -505,7 +684,16 @@ async def ask_brain(
         except Exception as e:
             logger.warning(f"[Brain] Gemini cloud generation error: {e}")
 
-        # C. Free cloud endpoint fallback (0 key, 0 RAM)
+        # C. OpenRouter Strictly-Free ($0.00 :free) Dynamic Router
+        try:
+            or_res = await call_openrouter_free(prompt, system_prompt=system_prompt, format_json=format_json)
+            if or_res:
+                logger.info("[Brain] OpenRouter :free tier inference succeeded (0 MB local RAM, $0.00 cost)")
+                return clean_json_text(or_res) if format_json else or_res
+        except Exception as e:
+            logger.warning(f"[Brain] OpenRouter :free fallback error: {e}")
+
+        # D. Pollinations Free cloud endpoint fallback (0 key, 0 RAM)
         try:
             cloud_res = await call_cloud_free(prompt, system_prompt=system_prompt, format_json=format_json)
             if cloud_res:
@@ -514,9 +702,9 @@ async def ask_brain(
         except Exception as e:
             logger.warning(f"[Brain] Free cloud fallback error: {e}")
 
-    # 2. Offline Mode or Cloud Failover: Use local Ollama (copilot-brain:latest)
-    if is_ollama_running():
-        logger.info(f"[Brain] Engaging local Ollama ({DEFAULT_OLLAMA_MODEL}) offline engine...")
+    # 2. Offline Failover: Query local GGUF engine ONLY if already running (never auto-spawn background processes in 'auto' mode)
+    if is_ollama_ready() and engine_mode != "cloud":
+        logger.info(f"[Brain] Engaging local GGUF ({DEFAULT_OLLAMA_MODEL}) offline engine...")
         res = await call_ollama(
             prompt,
             system_prompt=system_prompt,
@@ -524,7 +712,7 @@ async def ask_brain(
             num_predict=num_predict
         )
         if res:
-            logger.info("[Brain] Local Ollama inference completed successfully")
+            logger.info("[Brain] Local GGUF inference completed successfully")
             return clean_json_text(res) if format_json else res
 
     raise RuntimeError("No LLM engine responded. Fallback generator should engage.")

@@ -1245,3 +1245,14 @@ async def get_house_quotas_endpoint():
             "houses": {}
         }
     }
+
+
+@router.get("/openrouter-capabilities")
+async def get_openrouter_capabilities(refresh: bool = False):
+    """
+    Returns the live 6-stage OpenRouter $0 :free capability discovery map,
+    showing which stages have active strictly-free models vs. which stages
+    auto-skip to local engines, plus current circuit-breaker status.
+    """
+    from backend.engine.openrouter_discovery import get_capabilities_report
+    return await asyncio.to_thread(get_capabilities_report, force_refresh=refresh)

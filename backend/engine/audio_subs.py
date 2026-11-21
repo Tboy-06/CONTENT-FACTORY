@@ -10,13 +10,101 @@ CONTENT-FACTORY Engine: Voiceover & Karaoke Subtitles (audio_subs)
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import subprocess
-from typing import Any, Dict, List, Tuple
+import urllib.error
+import urllib.request
+from typing import Any, Dict, List, Optional, Tuple
 import edge_tts
 
 logger = logging.getLogger("engine.audio_subs")
+
+
+def resolve_music_sfx_stage() -> Dict[str, Any]:
+    """
+    Stage 5 Hybrid Router (Music & SFX):
+    Checks `openrouter_discovery.get_free_models_for("audio")`.
+    When empty (no free OpenRouter audio models exist), immediately skips OpenRouter (0 API calls)
+    and uses local BGM/SFX library (`whoosh.wav`, `thud.wav`, `click.wav`) + FFmpeg -14 LUFS ducking mix.
+    """
+    from backend.engine import openrouter_discovery
+    free_audio_models = openrouter_discovery.get_free_models_for("audio")
+    if not free_audio_models:
+        return {
+            "stage": "audio",
+            "status": "auto_skip_to_local",
+            "free_models_available": [],
+            "openrouter_calls_made": 0,
+            "active_engine": "local_bgm_sfx_and_ffmpeg_lufs_ducking",
+        }
+    return {
+        "stage": "audio",
+        "status": "openrouter_free_available",
+        "free_models_available": free_audio_models,
+        "openrouter_calls_made": 0,
+        "active_engine": free_audio_models[0],
+    }
+
+
+def try_openrouter_free_tts(
+    text: str,
+    output_path: str,
+    timeout: float = 20.0,
+) -> bool:
+    """
+    Stage 4 Optional / Fallback Hybrid TTS (`speech` via `/api/v1/audio/speech`):
+    Queries discovered strictly-free speech models (`fish-audio/s2.1-pro-free:free`,
+    `heygen/heygen-voice-1-turbo:free`) when explicitly enabled or if Edge-TTS fails.
+    Immediately returns False (0 calls) if on cooldown or no free speech model is available.
+    """
+    from backend.engine import openrouter_discovery
+
+    if openrouter_discovery.is_openrouter_on_cooldown():
+        return False
+
+    api_key = openrouter_discovery.resolve_openrouter_api_key()
+    if not api_key:
+        return False
+
+    speech_models = openrouter_discovery.get_free_models_for("speech")
+    if not speech_models:
+        return False
+
+    model_id = speech_models[0]
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    payload = {
+        "model": model_id,
+        "input": text.strip()[:600],
+        "voice": "alloy",
+        "response_format": "mp3",
+    }
+
+    req = urllib.request.Request(
+        openrouter_discovery.OPENROUTER_SPEECH_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "CONTENT-FACTORY Studio TTS",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            audio_bytes = resp.read()
+            if len(audio_bytes) > 1000:
+                with open(output_path, "wb") as f:
+                    f.write(audio_bytes)
+                logger.info(f"[audio_subs] Generated $0 OpenRouter speech ({model_id}) -> {output_path}")
+                return True
+    except urllib.error.HTTPError as he:
+        if he.code in (402, 429):
+            openrouter_discovery.record_openrouter_status(he.code, f"Speech endpoint HTTP {he.code}")
+    except Exception as e:
+        logger.debug(f"[audio_subs] OpenRouter free speech skipped/fallback to Edge-TTS: {e}")
+    return False
 
 
 def get_contrasting_archival_voice(primary_voice: str) -> str:
