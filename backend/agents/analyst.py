@@ -241,7 +241,7 @@ Return as JSON array of strings.
         await upsert_style_guide(guide)
 
     async def _update_hook_formulas(self, niche: str, reports: List[PerformanceReport]):
-        from backend.vault.repository import get_hook_formula, upsert_hook_formula
+        from backend.vault.repository import find_hook_formula, upsert_hook_formula
         from backend.vault.models import HookFormula
 
         top_hooks = []
@@ -255,9 +255,9 @@ Return as JSON array of strings.
                 })
 
         for h in top_hooks:
-            formula = await get_hook_formula(niche, h["hook"][:50])
+            formula = await find_hook_formula(niche, h["hook"][:50])
             if not formula:
-                formula = HookFormula(name=h["hook"][:50], platform=niche)
+                formula = HookFormula(name=h["hook"][:50], pattern=h["hook"][:50], platform=niche)
 
             usage_count = formula.usage_count or 0
             formula.usage_count = usage_count + 1

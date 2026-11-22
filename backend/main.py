@@ -19,7 +19,7 @@ from backend.config import get_settings
 from backend.scheduler import init_scheduler, shutdown_scheduler
 from backend.telegram_bot import start_bot, stop_bot
 from backend.api.copilot import router as copilot_router
-from backend.api.jobs import router as jobs_router
+from backend.api.jobs import router as jobs_router, get_cache_status, clear_cache
 from backend.api.workflow import router as workflow_router
 from backend.api.settings import router as settings_router
 
@@ -83,9 +83,11 @@ app.add_middleware(
 
 app.include_router(copilot_router, prefix="/api/copilot", tags=["copilot"])
 app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"])
-app.include_router(jobs_router, prefix="/api", tags=["jobs_alias"])
 app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
 app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
+
+app.add_api_route("/api/system/cache", get_cache_status, methods=["GET"], tags=["system"])
+app.add_api_route("/api/system/cache/clear", clear_cache, methods=["POST"], tags=["system"])
 
 os.makedirs("output", exist_ok=True)
 os.makedirs("temp", exist_ok=True)

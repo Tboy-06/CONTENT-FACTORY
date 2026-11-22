@@ -220,7 +220,7 @@ export function useCacheStatus() {
   return useQuery({
     queryKey: ['system-cache'],
     queryFn: async () => {
-      return await api.get('/api/system/cache');
+      return await api.get('/api/jobs/system/cache');
     },
     refetchInterval: 10000,
   });
@@ -229,7 +229,7 @@ export function useCacheStatus() {
 export function useClearCache() {
   return useMutation({
     mutationFn: async () => {
-      return await api.post('/api/system/cache/clear');
+      return await api.post('/api/jobs/system/cache/clear');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-cache'] });

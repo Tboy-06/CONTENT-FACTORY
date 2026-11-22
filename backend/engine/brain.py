@@ -339,17 +339,17 @@ async def call_cloud_free(
         except Exception:
             pass
 
-    # Fallback to optional user API keys if configured
+    # Fallback to optional user API keys if configured (google-genai v3.x)
     try:
         from backend.config import get_settings
         cfg = get_settings()
         gemini_key = cfg.gemini_api_key or os.environ.get("GEMINI_API_KEY")
         if gemini_key:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model_inst = genai.GenerativeModel(cfg.gemini_model or "models/gemini-3.5-flash-lite")
+            from google import genai
+            client = genai.Client(api_key=gemini_key)
+            target_model = cfg.gemini_model or "models/gemini-3.5-flash-lite"
             full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-            res = await asyncio.to_thread(model_inst.generate_content, full_prompt)
+            res = await client.aio.models.generate_content(model=target_model, contents=full_prompt)
             if res and res.text:
                 return res.text.strip()
     except Exception as e:
@@ -618,6 +618,9 @@ async def analyze_visual_reference_openrouter(
     return await ask_brain(combined_prompt, system_prompt=system_prompt, format_json=format_json)
 
 
+MAX_BRAIN_DEADLINE_SECS = 45.0
+
+
 async def ask_brain(
     prompt: str,
     system_prompt: Optional[str] = None,
@@ -626,12 +629,31 @@ async def ask_brain(
     engine_mode: str = "auto"
 ) -> str:
     """
-    Unified brain router (Hardware-Optimized Priority):
+    Unified brain router (Hardware-Optimized Priority) with strict <= 45s overall deadline:
     - "offline_spark": Forces local Ollama (Spark-X2.5-4B) for 100% offline private execution.
     - "openrouter_free": Forces strictly-free ($0.00 :free) OpenRouter router with local fallback.
     - "cloud": Forces cloud waterfall (Kimi K3 -> Gemini AI Studio -> OpenRouter :free -> Pollinations Free).
     - "auto": Online Cloud priority (Gemini AI Studio -> OpenRouter :free -> Pollinations Free) with automatic Ollama offline fallback.
     """
+    return await asyncio.wait_for(
+        _ask_brain_inner(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            format_json=format_json,
+            num_predict=num_predict,
+            engine_mode=engine_mode,
+        ),
+        timeout=MAX_BRAIN_DEADLINE_SECS,
+    )
+
+
+async def _ask_brain_inner(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    format_json: bool = True,
+    num_predict: int = 2048,
+    engine_mode: str = "auto"
+) -> str:
     if engine_mode == "offline_spark":
         if not is_ollama_ready():
             await ensure_local_brain()
@@ -672,14 +694,14 @@ async def ask_brain(
             except Exception as e:
                 logger.warning(f"[Brain] Kimi K3 routing error: {e}")
 
-        # B. Gemini AI Studio Free Tier with modern 3.5 / 3.8 / 3.6 model cascade (no deprecated 2.5 IDs)
+        # B. Gemini AI Studio Free Tier with modern 3.5 / 3.8 / 3.6 model cascade (google-genai v3.x)
         try:
             from backend.config import get_settings
             cfg = get_settings()
             gemini_key = cfg.gemini_api_key or os.environ.get("GEMINI_API_KEY")
             if gemini_key:
-                import google.generativeai as genai
-                genai.configure(api_key=gemini_key)
+                from google import genai
+                client = genai.Client(api_key=gemini_key)
                 full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
                 if format_json and "JSON" not in full_prompt.upper():
                     full_prompt += "\nOutput strictly a valid JSON object or array without markdown fences."
@@ -695,10 +717,9 @@ async def ask_brain(
 
                 for model_name in models_to_try:
                     try:
-                        model_inst = genai.GenerativeModel(model_name)
                         res = await asyncio.wait_for(
-                            model_inst.generate_content_async(full_prompt),
-                            timeout=20.0
+                            client.aio.models.generate_content(model=model_name, contents=full_prompt),
+                            timeout=14.0
                         )
                         if res and res.text:
                             logger.info(f"[Brain] Cloud inference succeeded via {model_name} (0 MB local RAM used)")

@@ -9,9 +9,11 @@ Pass 2: Stitches beats + mixes SFX audio + voiceover + ducked BGM + burns .ASS c
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import shutil
 import subprocess
 import urllib.parse
 import urllib.request
@@ -33,6 +35,47 @@ import backend.engine.zero_gpu_hook as zero_gpu_hook
 from backend.engine.reflexion import audit_and_heal_beats, log_system_fallback
 
 logger = logging.getLogger("engine.assembler")
+
+# 16 GB Laptop Thermal & Concurrency Guard: serialize heavy FFmpeg encodes
+_FFMPEG_SEMAPHORE = asyncio.Semaphore(1)
+
+# Beat-Level SHA-256 Render Cache on C: drive (0 MB bloat on D:)
+BEAT_CACHE_DIR = r"C:\cf_training\temp\beat_cache"
+os.makedirs(BEAT_CACHE_DIR, exist_ok=True)
+_NO_WIN = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
+
+
+def compute_beat_render_hash(beat: Dict[str, Any], fps: int = 30) -> str:
+    """
+    Computes a deterministic SHA-256 hash over a beat's visual and audio render parameters.
+    Enables Pass 1 to skip FFmpeg completely when an identical beat has already been rendered.
+    """
+    payload = {
+        "type": beat.get("type", "treated_image"),
+        "template": beat.get("template", ""),
+        "headline": beat.get("headline", ""),
+        "highlight": beat.get("highlight", ""),
+        "prompt": beat.get("prompt", ""),
+        "visual_prompt": beat.get("visual_prompt", ""),
+        "text": beat.get("text", ""),
+        "grade": beat.get("grade", "hard_bw"),
+        "duration": round(float(beat.get("duration", 1.5)), 2),
+        "camera_movement": beat.get("camera_movement", "push_in"),
+        "aspect_ratio": beat.get("aspect_ratio", "9:16"),
+        "genre": beat.get("genre", "crime_doc"),
+        "broll_query": beat.get("broll_query", ""),
+        "coords": beat.get("coords", ""),
+        "location": beat.get("location", ""),
+        "nodes": beat.get("nodes", []),
+        "sfx": beat.get("sfx", "whoosh.wav"),
+        "snap_zoom": bool(beat.get("snap_zoom")),
+        "camera_shake": bool(beat.get("camera_shake")),
+        "anamorphic_bars": bool(beat.get("anamorphic_bars")),
+        "custom_media": beat.get("custom_media", ""),
+        "fps": int(fps),
+    }
+    serialized = json.dumps(payload, sort_keys=True, ensure_ascii=True)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def _fetch_archival_image(prompt: str, target_path: str, width: int = 720, height: int = 1280, timeout: float = 6.0) -> bool:
@@ -81,10 +124,35 @@ async def render_beat_pass1(
 
     beats_dir = os.path.join(job_dir, "beats")
     os.makedirs(beats_dir, exist_ok=True)
+    os.makedirs(BEAT_CACHE_DIR, exist_ok=True)
+
+    beat_hash = compute_beat_render_hash(beat, fps=fps)
+    beat["render_hash"] = beat_hash
+    local_hash_mp4 = os.path.join(beats_dir, f"{beat_hash}.mp4")
+    global_cache_mp4 = os.path.join(BEAT_CACHE_DIR, f"{beat_hash}.mp4")
 
     plate_path = os.path.join(beats_dir, f"{beat_id}_plate.png")
     raw_img_path = os.path.join(beats_dir, f"{beat_id}_raw.jpg")
     out_mp4 = os.path.join(beats_dir, f"{beat_id}.mp4")
+
+    # 0. Beat-Level SHA-256 Render Cache Check (skips FFmpeg Pass 1 in ~0ms on cache hit)
+    if not beat.get("_force_reroll"):
+        for cached_candidate in (local_hash_mp4, global_cache_mp4):
+            if os.path.exists(cached_candidate) and os.path.getsize(cached_candidate) > 500:
+                if os.path.abspath(cached_candidate) != os.path.abspath(out_mp4):
+                    shutil.copy2(cached_candidate, out_mp4)
+                if not os.path.exists(local_hash_mp4):
+                    try:
+                        shutil.copy2(cached_candidate, local_hash_mp4)
+                    except Exception:
+                        pass
+                beat["rendered_path"] = out_mp4
+                beat["_cache_hit"] = True
+                logger.info(f"[assembler] Pass 1 SHA-256 CACHE HIT for {beat_id} ({beat_hash[:12]}) -> {out_mp4}")
+                return out_mp4
+
+    beat["_cache_hit"] = False
+    beat.pop("_force_reroll", None)
 
     # 1. Zero-Cost Visual Cortex Media Ingestion (3 Tiers)
     custom_media = beat.get("custom_media")
@@ -360,15 +428,23 @@ async def render_beat_pass1(
             ]
 
     def _run_pass1():
-        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, creationflags=_NO_WIN)
 
     try:
-        await asyncio.to_thread(_run_pass1)
+        async with _FFMPEG_SEMAPHORE:
+            await asyncio.to_thread(_run_pass1)
     except Exception as e:
         logger.error(f"[assembler] Pass 1 timed out or failed on {beat_id}: {e}")
 
+    if os.path.exists(out_mp4) and os.path.getsize(out_mp4) > 500:
+        for cache_dest in (local_hash_mp4, global_cache_mp4):
+            try:
+                shutil.copy2(out_mp4, cache_dest)
+            except Exception:
+                pass
+
     beat["rendered_path"] = out_mp4
-    logger.info(f"[assembler] Pass 1 rendered {beat_id} -> {out_mp4}")
+    logger.info(f"[assembler] Pass 1 rendered {beat_id} ({beat_hash[:12]}) -> {out_mp4}")
     return out_mp4
 
 
@@ -472,10 +548,11 @@ async def assemble_final_pass2(
         stitched_video
     ]
     def _run_concat():
-        return subprocess.run(cmd_concat, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+        return subprocess.run(cmd_concat, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, creationflags=_NO_WIN)
 
     try:
-        await asyncio.to_thread(_run_concat)
+        async with _FFMPEG_SEMAPHORE:
+            await asyncio.to_thread(_run_concat)
     except Exception as e:
         logger.error(f"[assembler] Concat failed: {e}")
 
@@ -552,10 +629,11 @@ async def assemble_final_pass2(
     ])
 
     def _run_master():
-        return subprocess.run(cmd_master, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180)
+        return subprocess.run(cmd_master, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180, creationflags=_NO_WIN)
 
     try:
-        res = await asyncio.to_thread(_run_master)
+        async with _FFMPEG_SEMAPHORE:
+            res = await asyncio.to_thread(_run_master)
     except Exception as e:
         logger.error(f"[assembler] Pass 2 master execution error: {e}")
         res = None

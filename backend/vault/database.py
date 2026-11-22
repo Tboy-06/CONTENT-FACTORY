@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 from typing import AsyncGenerator, Optional
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -37,6 +38,15 @@ def init_database() -> None:
         connect_args=connect_args,
         poolclass=poolclass,
     )
+
+    if db_url.startswith("sqlite"):
+        @event.listens_for(engine.sync_engine, "connect")
+        def _set_sqlite_pragmas(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA busy_timeout=5000;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.close()
 
     async_session_factory = async_sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
