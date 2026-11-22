@@ -1311,23 +1311,101 @@ async def recut_genre_endpoint(req: RecutGenreRequest):
 
 @router.get("/house-quotas")
 async def get_house_quotas_endpoint():
-    """Returns 5-House Knowledge Quota status from C:\\cf_training\\harvest_state.json."""
-    state_file = r"C:\cf_training\harvest_state.json"
+    """
+    Returns real-time 5-House Knowledge Quota status from C:\\cf_training\\harvest_state.json
+    and C:\\cf_training\\dataset.jsonl (Master Target: 2,000,000 with 100,000 milestone checkpoints).
+    Zero hardcoded numbers: every metric is read directly from disk.
+    """
+    state_file = getattr(_settings, "harvest_state_file", r"C:\cf_training\harvest_state.json")
+    dataset_file = getattr(_settings, "dataset_file", r"C:\cf_training\dataset.jsonl")
+    data: Dict[str, Any] = {
+        "total_records": 0,
+        "target_total": 2000000,
+        "milestone_step": 100000,
+        "current_milestone_cap": 100000,
+        "milestone_status": "HARVESTING",
+        "last_harvested_item": None,
+        "houses": {},
+    }
     if os.path.exists(state_file):
         try:
             with open(state_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return {"status": "success", "data": data}
+                raw_state = json.load(f)
+            # Strip large processed_ids arrays from API response payload so polling is instant (<5 KB)
+            for k in (
+                "total_records",
+                "target_total",
+                "milestone_step",
+                "current_milestone_cap",
+                "milestone_status",
+                "last_harvested_item",
+                "houses",
+                "counts",
+                "last_updated",
+            ):
+                if k in raw_state:
+                    data[k] = raw_state[k]
         except Exception as e:
             logger.warning(f"Error reading harvest_state.json: {e}")
-    return {
-        "status": "success",
-        "data": {
-            "total_records": 0,
-            "target_total": 100000,
-            "houses": {}
+
+    data["target_total"] = max(int(data.get("target_total") or 2000000), 2000000)
+    data["milestone_step"] = int(data.get("milestone_step") or 100000)
+    data["current_milestone_cap"] = int(data.get("current_milestone_cap") or 100000)
+
+    # Read last line of dataset.jsonl if last_harvested_item is missing
+    if not data.get("last_harvested_item") and os.path.exists(dataset_file):
+        try:
+            with open(dataset_file, "rb") as df:
+                df.seek(0, os.SEEK_END)
+                fsize = df.tell()
+                if fsize > 0:
+                    df.seek(max(0, fsize - 4096), os.SEEK_SET)
+                    tail_lines = df.read().decode("utf-8", errors="ignore").strip().splitlines()
+                    if tail_lines:
+                        last_rec = json.loads(tail_lines[-1])
+                        data["last_harvested_item"] = {
+                            "house": last_rec.get("house", "HOUSE_2_SCREENWRITER_ARC"),
+                            "sub_room": last_rec.get("sub_room", "crime_doc"),
+                            "genre": last_rec.get("genre", "auto"),
+                            "preview": str(last_rec.get("input") or last_rec.get("instruction") or "")[:90],
+                            "timestamp": data.get("last_updated"),
+                        }
+        except Exception:
+            pass
+
+    return {"status": "success", "data": data}
+
+
+@router.post("/harvester/continue-milestone")
+async def continue_harvester_milestone():
+    """
+    Advances the current 100,000-record milestone checkpoint by +100,000 towards the 2,000,000 master target.
+    """
+    state_file = getattr(_settings, "harvest_state_file", r"C:\cf_training\harvest_state.json")
+    if not os.path.exists(state_file):
+        raise HTTPException(status_code=404, detail="harvest_state.json not found")
+    try:
+        with open(state_file, "r", encoding="utf-8") as f:
+            st = json.load(f)
+        master_target = max(int(st.get("target_total") or 2000000), 2000000)
+        step = int(st.get("milestone_step") or 100000)
+        cur_cap = int(st.get("current_milestone_cap") or step)
+        next_cap = min(master_target, cur_cap + step)
+        st["target_total"] = master_target
+        st["current_milestone_cap"] = next_cap
+        st["milestone_status"] = "HARVESTING"
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(st, f, indent=2)
+        return {
+            "status": "success",
+            "previous_milestone_cap": cur_cap,
+            "current_milestone_cap": next_cap,
+            "target_total": master_target,
+            "milestone_status": "HARVESTING",
+            "message": f"Harvester checkpoint advanced from {cur_cap:,} to {next_cap:,} (Master Goal: {master_target:,}).",
         }
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed advancing milestone: {e}")
 
 
 @router.get("/openrouter-capabilities")

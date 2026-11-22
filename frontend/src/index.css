@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
+@custom-variant dark (&:where([data-theme="dark-glass"], [data-theme="dark-glass"] *, [data-theme="classic-dark"], [data-theme="classic-dark"] *));
+
 @theme {
   --color-bg: var(--bg);
   --color-tx: var(--tx);
@@ -19,10 +21,10 @@ html, body, #root {
   min-height: 100%;
 }
 
-/* Custom Scrollbar - Visible & responsive across browsers */
+/* Custom Scrollbar - Adaptive across Light Glass, Dark Glass, and Classic */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -33,9 +35,9 @@ html, body, #root {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(100, 116, 139, 0.32);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(100, 116, 139, 0.55);
 }

@@ -63,23 +63,23 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-md p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="studio-modal-title"
     >
-      <div className="bg-[#0f1422] border border-[var(--ln)] rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="light-adapt-surface acrylic-shell w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         
         {/* Header */}
-        <div className="p-4 border-b border-[var(--ln)] flex items-center justify-between bg-[#151a2d] shrink-0">
+        <div className="p-4 border-b border-[var(--ln-subtle)] flex items-center justify-between bg-[var(--gl)] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-sm">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-sm preserve-white shadow-sm">
               <Film size={18} />
             </div>
             <div>
-              <div id="studio-modal-title" className="font-semibold text-white text-base flex items-center gap-2">
-                9:16 Vertical Inspector: {jobNiche}
-                <Badge variant="success">9:16 Locked</Badge>
+              <div id="studio-modal-title" className="font-bold text-[var(--tx)] text-base flex items-center gap-2">
+                <span>Vertical & Cinema Inspector: {jobNiche}</span>
+                <Badge variant="success">Shot Locked</Badge>
               </div>
               <div className="text-xs text-[var(--mu)]">Frame composition, cut durations, color grading & SFX placement</div>
             </div>
@@ -88,10 +88,10 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowSafeZone(!showSafeZone)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                 showSafeZone
-                  ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50 hover:bg-cyan-900/80'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+                  ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/40'
+                  : 'bg-[var(--gl2)] text-[var(--mu)] border-[var(--input-border)] hover:text-[var(--tx)]'
               }`}
             >
               {showSafeZone ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -101,7 +101,7 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
             <button 
               onClick={onClose}
               aria-label="Close"
-              className="text-[var(--mu)] hover:text-white text-lg p-1.5 rounded-lg hover:bg-white/10 flex items-center justify-center cursor-pointer"
+              className="text-[var(--mu)] hover:text-[var(--tx)] text-lg p-1.5 rounded-lg hover:bg-[var(--gl2)] flex items-center justify-center cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -109,7 +109,7 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
         </div>
 
         {/* Studio Content */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 bg-[#0b0e17]">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 bg-[var(--shell-bg)]">
           
           {/* Responsive Preview Mockup (16:9 or 9:16) */}
           <div className="flex flex-col items-center shrink-0 sticky top-0">
@@ -141,7 +141,7 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
                     /* 9:16 Phone Container */
                     <div className="relative w-[280px] h-[498px] rounded-[32px] p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
                       {/* Dynamic Island / Speaker Notch */}
-                      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-40 border border-white/10" />
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-md z-40 border border-white/10" />
 
                       <div className="relative w-full h-full rounded-[24px] overflow-hidden bg-black flex items-center justify-center">
                         {videoUrl ? (
@@ -303,7 +303,7 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
                     }
                   }}
                   disabled={isApplying || regenerateMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3.5 rounded-lg shadow-sm"
+                  className="bg-blue-600 hover:bg-blue-500 text-white preserve-white flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3.5 rounded-lg shadow-sm"
                 >
                   {isApplying ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                   <span>{isApplying ? 'Re-rendering 9:16 Video...' : 'Apply Beats & Re-render'}</span>

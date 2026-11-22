@@ -1,6 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, AlignEndHorizontal, Vault as VaultIcon, Bot, Settings as SettingsIcon, Menu, HardDrive, Trash2, Globe } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PlusCircle,
+  AlignEndHorizontal,
+  Vault as VaultIcon,
+  Bot,
+  Settings as SettingsIcon,
+  Menu,
+  HardDrive,
+  Trash2,
+  Search,
+  Sun,
+  Moon,
+  RotateCcw,
+  SlidersHorizontal,
+  X
+} from 'lucide-react';
 import { useConnectivity } from './lib/connectivity';
 import { useCacheStatus, useClearCache } from './api/client';
 import Create from './pages/Create';
@@ -14,18 +30,26 @@ import Agents from './pages/Agents';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 
-const NavItem = ({ to, icon: Icon, label, isCollapsed }: any) => {
+export type StudioTheme = 'light-glass' | 'dark-glass' | 'classic-dark';
+
+const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
-    <div 
+    <div
       onClick={() => navigate(to)}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors border border-transparent ${
-        isActive ? 'bg-slate-800 text-white border-slate-700' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+      className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
+        isActive
+          ? isLightGlass
+            ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+            : 'bg-slate-800/90 text-white border-slate-700 shadow-sm'
+          : isLightGlass
+          ? 'text-slate-600 hover:text-slate-900 hover:bg-white/60 border-transparent'
+          : 'text-slate-400 hover:text-white hover:bg-slate-900/60 border-transparent'
       }`}
     >
-      <Icon size={18} className="shrink-0" />
+      <Icon size={17} className="shrink-0" />
       {!isCollapsed && <span className="whitespace-nowrap font-medium text-xs">{label}</span>}
     </div>
   );
@@ -33,83 +57,271 @@ const NavItem = ({ to, icon: Icon, label, isCollapsed }: any) => {
 
 export default function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [theme, setTheme] = useState<StudioTheme>(() => {
+    const saved = localStorage.getItem('cf_studio_theme') as StudioTheme | null;
+    return saved || 'light-glass';
+  });
+  const [globalSearch, setGlobalSearch] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
   const isOnline = useConnectivity();
   const { data: cache } = useCacheStatus();
   const clearCacheMutation = useClearCache();
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cf_studio_theme', theme);
+  }, [theme]);
+
+  const isLightGlass = theme === 'light-glass';
+  const isClassic = theme === 'classic-dark';
+
   return (
-    <div className={`grid h-screen w-full overflow-hidden transition-all duration-200 ${isCollapsed ? 'grid-cols-[64px_1fr]' : 'grid-cols-[210px_1fr]'}`}>
-      
-      {/* Sidebar - Clean industrial navigation */}
-      <aside className="border-r border-slate-800 bg-[#090d16] p-3 flex flex-col gap-1 overflow-y-auto h-full z-20">
-        <div 
-          onClick={() => setIsCollapsed(!isCollapsed)} 
-          className="flex items-center gap-2.5 p-2 rounded-md cursor-pointer mb-2 hover:bg-slate-900"
+    <div
+      className={`grid h-screen w-full overflow-hidden transition-all duration-200 ${
+        isCollapsed ? 'grid-cols-[68px_1fr]' : 'grid-cols-[216px_1fr]'
+      }`}
+    >
+      {/* Sidebar */}
+      <aside
+        className={`p-3 flex flex-col gap-1.5 overflow-y-auto h-full z-20 transition-colors ${
+          isLightGlass
+            ? 'border-r border-white/80 bg-white/55 backdrop-blur-2xl text-slate-800'
+            : 'border-r border-slate-800/80 bg-[#090d16]/90 backdrop-blur-2xl text-slate-200'
+        }`}
+      >
+        <div
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`flex items-center gap-2.5 p-2 rounded-xl cursor-pointer mb-2 transition-colors ${
+            isLightGlass ? 'hover:bg-white/70' : 'hover:bg-slate-900'
+          }`}
           title="Toggle sidebar"
         >
-          <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 shadow-sm">
             <Menu size={15} color="white" />
           </div>
-          {!isCollapsed && <div className="font-semibold text-xs tracking-wider text-white uppercase whitespace-nowrap">Content Factory</div>}
-        </div>
-
-        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} />
-        <NavItem to="/create" icon={PlusCircle} label="Create Video" isCollapsed={isCollapsed} />
-        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" isCollapsed={isCollapsed} />
-        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" isCollapsed={isCollapsed} />
-        <NavItem to="/agents" icon={Bot} label="Agents" isCollapsed={isCollapsed} />
-        <NavItem to="/settings" icon={SettingsIcon} label="Settings" isCollapsed={isCollapsed} />
-
-        <div className="mt-auto flex flex-col gap-2 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
           {!isCollapsed && (
-            <div className="flex items-center justify-between px-1">
-              <Link to="/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
-              <span>·</span>
-              <Link to="/terms" className="hover:text-slate-300 transition-colors">Terms & Conditions</Link>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`font-bold text-xs tracking-wider uppercase whitespace-nowrap ${
+                  isLightGlass ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                Content Factory
+              </span>
             </div>
           )}
-          <div className="flex gap-2 items-center p-1 text-slate-400 whitespace-nowrap">
-            <div className="w-6 h-6 rounded bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-[10px] text-slate-200 shrink-0">CF</div>
-            {!isCollapsed && <div className="truncate text-[11px]">Production Studio</div>}
+        </div>
+
+        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/create" icon={PlusCircle} label="Create Video" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/agents" icon={Bot} label="Agents" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/settings" icon={SettingsIcon} label="Settings" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+
+        <div
+          className={`mt-auto flex flex-col gap-2 pt-3 border-t text-[11px] ${
+            isLightGlass ? 'border-slate-200/80 text-slate-500' : 'border-slate-800 text-slate-500'
+          }`}
+        >
+          {!isCollapsed && (
+            <div className="flex items-center justify-between px-1">
+              <Link to="/privacy" className="hover:underline">Privacy</Link>
+              <span>·</span>
+              <Link to="/terms" className="hover:underline">Terms & Conditions</Link>
+            </div>
+          )}
+          <div className="flex gap-2 items-center p-1 whitespace-nowrap">
+            <div
+              className={`w-6 h-6 rounded-lg border flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                isLightGlass
+                  ? 'bg-white border-slate-200 text-slate-800 shadow-2xs'
+                  : 'bg-slate-800 border-slate-700 text-slate-200'
+              }`}
+            >
+              CF
+            </div>
+            {!isCollapsed && (
+              <div className={`truncate text-[11px] font-medium ${isLightGlass ? 'text-slate-700' : 'text-slate-400'}`}>
+                Production Studio
+              </div>
+            )}
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-col min-w-0 h-full overflow-hidden relative bg-[#0b0f19]">
-        {/* Top bar */}
-        <header className="flex items-center justify-between gap-3 px-5 py-2.5 border-b border-slate-800 bg-[#090d16] z-20 shrink-0">
-          <div className="text-xs text-slate-400 font-medium flex items-center gap-2">
-            <span className="text-white font-semibold">Content Factory</span>
-            <span className="text-slate-600">/</span>
-            <span>Production Engine</span>
+      <div className="flex flex-col min-w-0 h-full overflow-hidden relative">
+        {/* 01 | TOP COMMAND HEADER */}
+        <header
+          className={`flex items-center justify-between gap-4 px-6 py-3 z-20 shrink-0 transition-colors ${
+            isLightGlass
+              ? 'border-b border-white/80 bg-white/60 backdrop-blur-xl'
+              : 'border-b border-slate-800/80 bg-[#090d16]/85 backdrop-blur-xl'
+          }`}
+        >
+          {/* Left: Brand Title & Micro Badge */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+              CF
+            </div>
+            <span className={`font-bold text-sm tracking-tight ${isLightGlass ? 'text-slate-900' : 'text-white'}`}>
+              CONTENT-FACTORY
+            </span>
+            <span
+              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${
+                isLightGlass
+                  ? 'bg-slate-200/80 text-slate-700 border-white'
+                  : 'bg-slate-800 text-slate-300 border-slate-700'
+              }`}
+            >
+              studio
+            </span>
           </div>
-          
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            {/* Custom Domain Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900 text-slate-300 font-mono text-[11px]">
-              <Globe size={13} className="text-blue-400" />
-              <span>localhost:3000</span>
+
+          {/* Center: Global Frosted Search Input */}
+          <div className="flex-1 max-w-md mx-2">
+            <div
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border transition-all ${
+                isLightGlass
+                  ? 'bg-white/75 border-white shadow-inner text-slate-800 focus-within:bg-white focus-within:border-blue-400'
+                  : 'bg-slate-900/80 border-slate-700/80 text-slate-200 focus-within:border-blue-500'
+              }`}
+            >
+              <Search size={14} className={isLightGlass ? 'text-slate-400' : 'text-slate-500'} />
+              <input
+                type="text"
+                value={globalSearch}
+                onChange={(e) => {
+                  setGlobalSearch(e.target.value);
+                  window.dispatchEvent(new CustomEvent('cf-global-search', { detail: e.target.value }));
+                  if (location.pathname !== '/') navigate('/');
+                }}
+                placeholder="Search jobs, assets or reflexion rules..."
+                className="w-full bg-transparent text-xs outline-none placeholder:text-slate-400"
+              />
+              {globalSearch && (
+                <button
+                  onClick={() => {
+                    setGlobalSearch('');
+                    window.dispatchEvent(new CustomEvent('cf-global-search', { detail: '' }));
+                  }}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Theme Switcher (Light Glass / Dark Glass / Classic Revert) + Telemetry + Avatar */}
+          <div className="flex items-center gap-2.5 text-xs">
+            {/* 3-Way Theme Toggle Pill */}
+            <div
+              className={`flex items-center p-0.5 rounded-xl border ${
+                isLightGlass ? 'bg-slate-200/75 border-white' : 'bg-slate-900 border-slate-800'
+              }`}
+              title="Switch between Light Frosted Glass, Dark Obsidian Glass, or revert to Classic Dark UI"
+            >
+              <button
+                onClick={() => setTheme('light-glass')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                  theme === 'light-glass'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <Sun size={12} />
+                <span>Light Glass</span>
+              </button>
+              <button
+                onClick={() => setTheme('dark-glass')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                  theme === 'dark-glass'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : isLightGlass
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Moon size={12} />
+                <span>Dark Glass</span>
+              </button>
+              <button
+                onClick={() => setTheme('classic-dark')}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                  theme === 'classic-dark'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : isLightGlass
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Instant 1-Click Revert to Previous Classic UI"
+              >
+                <RotateCcw size={11} />
+                <span>Classic</span>
+              </button>
             </div>
 
             {/* Online/Offline Status */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900 text-slate-300 text-xs">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-medium ${
+                isLightGlass
+                  ? 'bg-white/80 border-white text-slate-700 shadow-2xs'
+                  : 'bg-slate-900 border-slate-800 text-slate-300'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-xs ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               <span>{isOnline ? 'Online' : 'Offline'}</span>
             </div>
-            
-            {/* Real Temp Folder & Cache Counter */}
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900 text-xs text-slate-400">
-              <HardDrive size={13} className="text-blue-400 shrink-0" />
-              <span>Cache: <b className="text-slate-200 font-mono">{cache?.temp_mb ?? '0.0'} MB</b></span>
+
+            {/* Cache Counter */}
+            <div
+              className={`hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-xl border text-xs ${
+                isLightGlass
+                  ? 'bg-white/80 border-white text-slate-600 shadow-2xs'
+                  : 'bg-slate-900 border-slate-800 text-slate-400'
+              }`}
+            >
+              <HardDrive size={13} className="text-blue-500 shrink-0" />
+              <span>
+                Cache: <b className={`font-mono ${isLightGlass ? 'text-slate-900' : 'text-slate-200'}`}>{cache?.temp_mb ?? '0.0'} MB</b>
+              </span>
               <button
                 onClick={() => clearCacheMutation.mutate()}
                 disabled={clearCacheMutation.isPending || !(cache?.temp_mb > 0)}
                 title="Clear temporary frames and cache"
-                className="ml-1 text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
+                className="ml-1 text-[11px] hover:text-red-500 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
               >
                 <Trash2 size={12} />
-                <span>{clearCacheMutation.isPending ? 'Clearing...' : 'Clear'}</span>
+              </button>
+            </div>
+
+            {/* Studio Director Avatar & Utility Button */}
+            <div className="flex items-center gap-1.5 pl-1">
+              <div
+                onClick={() => navigate('/settings')}
+                className={`w-8 h-8 rounded-xl border flex items-center justify-center font-bold text-xs cursor-pointer shadow-xs transition-transform hover:scale-105 ${
+                  isLightGlass
+                    ? 'bg-gradient-to-br from-slate-800 to-slate-950 text-white border-white'
+                    : 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white border-slate-700'
+                }`}
+                title="Director Profile & Studio Settings"
+              >
+                DR
+              </div>
+              <button
+                onClick={() => navigate('/settings')}
+                className={`p-1.5 rounded-lg border cursor-pointer transition-colors ${
+                  isLightGlass
+                    ? 'bg-white/70 border-white text-slate-600 hover:text-slate-900'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+                title="System Preferences"
+              >
+                <SlidersHorizontal size={14} />
               </button>
             </div>
           </div>
@@ -117,26 +329,28 @@ export default function App() {
 
         {/* Offline Notice */}
         {!isOnline && (
-          <div className="px-5 py-2 bg-amber-950/40 border-b border-amber-500/30 text-amber-300 text-xs shrink-0">
+          <div className="px-6 py-2 bg-amber-500/15 border-b border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs shrink-0">
             System is offline. Cloud requests are suspended. Jobs will execute using local engines.
           </div>
         )}
 
-        {/* Routes */}
-        <main className="flex-1 overflow-y-auto p-5 relative bg-transparent">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/copilot" element={<Copilot />} />
-            <Route path="/copilot/:mode" element={<Copilot />} />
-            <Route path="/pipeline" element={<Pipeline />} />
-            <Route path="/qc1/:id" element={<QC1 />} />
-            <Route path="/vault" element={<Vault />} />
-            <Route path="/agents" element={<Agents />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-          </Routes>
+        {/* Main Workspace Container */}
+        <main className={`flex-1 overflow-y-auto ${isClassic ? 'p-5' : 'p-4 md:p-6'} relative`}>
+          <div className={isClassic ? 'min-h-full' : 'acrylic-shell min-h-full p-5 md:p-7'}>
+            <Routes>
+              <Route path="/" element={<Dashboard theme={theme} globalSearch={globalSearch} />} />
+              <Route path="/create" element={<Create />} />
+              <Route path="/copilot" element={<Copilot />} />
+              <Route path="/copilot/:mode" element={<Copilot />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/qc1/:id" element={<QC1 />} />
+              <Route path="/vault" element={<Vault />} />
+              <Route path="/agents" element={<Agents />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+            </Routes>
+          </div>
         </main>
       </div>
     </div>

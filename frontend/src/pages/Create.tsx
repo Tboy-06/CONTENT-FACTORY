@@ -1,8 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, ListPlus, Loader2, Film, CheckCircle2, ArrowRight, Trash2, AlertCircle, Upload, Image as ImageIcon, X, Sparkles, ShieldAlert, Smile, Flame, Clapperboard, Cpu } from 'lucide-react';
+import {
+  Zap,
+  ListPlus,
+  Loader2,
+  Film,
+  CheckCircle2,
+  ArrowRight,
+  Trash2,
+  AlertCircle,
+  Upload,
+  Image as ImageIcon,
+  X,
+  Sparkles,
+  ShieldAlert,
+  Smile,
+  Flame,
+  Clapperboard,
+  Cpu,
+  Download,
+  SlidersHorizontal
+} from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
-import { useCreateInstantJob, useBrainstormHooks, useJobs, useDeleteJob, useClearAllJobs, useUploadAnchor, api } from '../api/client';
+import {
+  useCreateInstantJob,
+  useBrainstormHooks,
+  useJobs,
+  useDeleteJob,
+  useClearAllJobs,
+  useUploadAnchor,
+  useSpend,
+  api
+} from '../api/client';
 import DirectorChatDrawer from '../components/DirectorChatDrawer';
 
 const stylePresets = [
@@ -20,19 +49,19 @@ const voices = [
 ];
 
 const genres = [
-  { id: 'auto', label: 'Auto Detect', Icon: Cpu, desc: 'Auto-detect genre physics from topic' },
-  { id: 'crime_doc', label: 'Crime/Doc', Icon: ShieldAlert, desc: 'Forensic canvas, 18-24 CPM, radio voice filter' },
-  { id: 'comedy_skit', label: 'Comedy/Skit', Icon: Smile, desc: '25-35 CPM, 1.35x snap-zooms, 0.3s dead air' },
-  { id: 'action_hype', label: 'Action/Hype', Icon: Flame, desc: '40-55 CPM, handheld camera-shake, slam titles' },
-  { id: 'movie_cinema', label: 'Movie/Cinema', Icon: Clapperboard, desc: '12-18 CPM, 2.35:1 letterbox, 35mm scope' },
-  { id: 'viral_edu', label: 'Viral Edu', Icon: Zap, desc: '28-38 CPM, stat counters & workflow cards' }
+  { id: 'auto', label: 'Auto Detect', Icon: Cpu, desc: 'Auto-detect genre physics from topic', cpm: 'Dynamic pacing' },
+  { id: 'crime_doc', label: 'Crime / Doc', Icon: ShieldAlert, desc: 'Forensic canvas, 18-24 cuts/min, radio voice filter', cpm: '18-24 cuts/min' },
+  { id: 'comedy_skit', label: 'Comedy / Skit', Icon: Smile, desc: '25-35 cuts/min, 1.35x snap-zooms, 0.3s dead air', cpm: '25-35 cuts/min' },
+  { id: 'action_hype', label: 'Action / Hype', Icon: Flame, desc: '40-55 cuts/min, handheld camera-shake, slam titles', cpm: '40-55 cuts/min' },
+  { id: 'movie_cinema', label: 'Movie / Cinema', Icon: Clapperboard, desc: '12-18 cuts/min, 2.35:1 letterbox, 35mm scope', cpm: '12-18 cuts/min' },
+  { id: 'viral_edu', label: 'Viral Edu', Icon: Zap, desc: '28-38 cuts/min, stat counters & workflow cards', cpm: '28-38 cuts/min' }
 ];
 
 const pipelineSteps = [
   { id: 1, name: 'Writing Script', stage: 'SCRIPT' },
   { id: 2, name: 'Generating Voice & Subs', stage: 'AUDIO' },
   { id: 3, name: 'Rendering Visual Plates', stage: 'PLATES' },
-  { id: 4, name: 'FFmpeg 9:16 Render', stage: 'FFMPEG' }
+  { id: 4, name: 'FFmpeg Video Render', stage: 'FFMPEG' }
 ];
 
 export default function Create() {
@@ -52,11 +81,15 @@ export default function Create() {
   const [isDirectorChatOpen, setIsDirectorChatOpen] = useState(false);
 
   const { data: recentJobs = [] } = useJobs();
+  const { data: liveSpend } = useSpend();
   const instantMutation = useCreateInstantJob();
   const brainstormMutation = useBrainstormHooks();
   const deleteJobMutation = useDeleteJob();
   const clearAllMutation = useClearAllJobs();
   const uploadAnchorMutation = useUploadAnchor();
+
+  const selectedGenreObj = genres.find((g) => g.id === genre) || genres[0];
+  const spentAmount = typeof liveSpend === 'number' ? liveSpend : 0;
 
   const handleBrainstorm = async () => {
     const query = topic.trim() || 'Stoic Mindset';
@@ -77,11 +110,11 @@ export default function Create() {
     setActiveStepIndex(0);
 
     const stageMap: Record<string, number> = {
-      'SCRIPT': 0,
-      'AUDIO': 1,
-      'PLATES': 2,
-      'FFMPEG': 3,
-      'QC1': 4
+      SCRIPT: 0,
+      AUDIO: 1,
+      PLATES: 2,
+      FFMPEG: 3,
+      QC1: 4
     };
 
     try {
@@ -106,14 +139,12 @@ export default function Create() {
 
       const startTime = Date.now();
 
-      // Poll real job stage from backend
       const interval = setInterval(async () => {
         try {
           const jobs = await api.get('/api/jobs');
           const currentJob = jobs.find((j: any) => j.id === jobId);
 
           if (currentJob) {
-            // Update active stage based on real backend progress
             if (currentJob.current_stage && currentJob.current_stage in stageMap) {
               setActiveStepIndex(stageMap[currentJob.current_stage]);
             }
@@ -127,21 +158,23 @@ export default function Create() {
             } else if (currentJob.status === 'FAILED') {
               clearInterval(interval);
               setIsGenerating(false);
-              setErrorMsg(currentJob.current_stage ? `Pipeline failed at stage: ${currentJob.current_stage}` : 'Generation encountered an error. Please try again.');
+              setErrorMsg(
+                currentJob.current_stage
+                  ? `Pipeline failed at stage: ${currentJob.current_stage}`
+                  : 'Generation encountered an error. Please try again.'
+              );
             }
           }
         } catch {
-          // ignore transient errors
+          // ignore transient poll errors
         }
 
-        // Safety timeout of 360s (supports 4-Act long-form & cold-boot local GGUF renders)
         if (Date.now() - startTime > 360000) {
           clearInterval(interval);
           setIsGenerating(false);
           setErrorMsg('Generation timed out. Check Pipeline tab for background progress.');
         }
       }, 1000);
-
     } catch (e: any) {
       console.error(e);
       setIsGenerating(false);
@@ -150,19 +183,20 @@ export default function Create() {
   };
 
   return (
-    <div className="animate-in fade-in min-h-full flex flex-col pb-12 space-y-6 max-w-5xl mx-auto">
-      
+    <div className="animate-in fade-in min-h-full flex flex-col pb-12 space-y-5 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center flex-wrap gap-2">
+      <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Video Launchpad</h1>
-          <p className="text-[13px] text-[var(--mu)]">Zero-cost local short video production engine (Edge-TTS + FFmpeg + Pillow).</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--tx)]">Video Launchpad</h1>
+          <p className="text-xs text-[var(--mu)] mt-0.5">
+            Zero-cost documentary & vertical short assembly engine (Edge-TTS + FFmpeg + Pillow + Beat Cache).
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="success">Zero API Cost</Badge>
           <Button
             onClick={() => setIsDirectorChatOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold !py-1.5 !px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm rounded-md transition-all"
+            className="flex items-center gap-1.5 text-xs font-semibold !py-2 !px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm rounded-xl transition-all"
             title="Open AI Director Command Studio to clone styles or analyze videos"
           >
             <Sparkles size={14} className="text-slate-950" />
@@ -171,31 +205,85 @@ export default function Create() {
         </div>
       </div>
 
-      {/* View 1: The "New Video" Launchpad Card */}
-      <Card className="!p-6 bg-slate-900/70 border-slate-700/80 space-y-5 shadow-xl">
-        
-        {/* Topic Input Box & Viral Hook Button */}
+      {/* Unified 3-Zone Studio Telemetry Strip */}
+      <div className="glass-panel p-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 md:divide-x divide-[var(--ln-subtle)]">
+        <div className="md:pr-5">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--mu)]">
+            Selected Editing Physics
+          </div>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-lg font-bold text-[var(--tx)]">{selectedGenreObj.label}</span>
+            <span className="text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400">
+              {selectedGenreObj.cpm}
+            </span>
+          </div>
+          <div className="text-[11px] text-[var(--mu)] truncate mt-0.5">{selectedGenreObj.desc}</div>
+        </div>
+
+        <div className="md:px-5">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--mu)]">
+            Output Target & Grade
+          </div>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-lg font-bold text-[var(--tx)]">
+              {aspectRatio} · {duration}
+            </span>
+            <Badge variant="info">{stylePreset}</Badge>
+          </div>
+          <div className="text-[11px] text-[var(--mu)] mt-0.5">
+            Voice: {voice.split('-')[2]?.replace('Neural', '') || 'Aria'} Neural (-14 LUFS)
+          </div>
+        </div>
+
+        <div className="md:pl-5 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--mu)]">
+              Session Spend & Library
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                ${spentAmount.toFixed(2)}
+              </span>
+              <span className="text-xs font-medium text-[var(--mu)]">
+                ({recentJobs.length} {recentJobs.length === 1 ? 'project' : 'projects'})
+              </span>
+            </div>
+            <div className="text-[11px] text-[var(--mu)] mt-0.5">Beat-Level SHA-256 Cache Active</div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <SlidersHorizontal size={18} />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Frosted Launchpad Card */}
+      <Card className="!p-6 space-y-6">
+        {/* 1. Topic Input Box & Viral Hook Generator */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-            1. Topic or Idea
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
+            1. Topic or Investigation Idea
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2.5">
             <input
               type="text"
-              placeholder='e.g. "3 psychological tricks people use on you" or "Why waking up at 5 AM actually works"'
+              placeholder='e.g. "CIA Project Azorian" or "3 psychological tricks people use on you"'
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               disabled={isGenerating}
-              className="flex-1 px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 text-sm outline-none focus:border-blue-500 transition-colors"
+              className="glass-input flex-1 px-4 py-3 text-sm"
             />
             <Button
               variant="secondary"
               onClick={handleBrainstorm}
               disabled={brainstormMutation.isPending || isGenerating}
-              className="flex items-center gap-1.5 whitespace-nowrap !py-3 !px-4 text-xs font-medium border-slate-700"
+              className="whitespace-nowrap !py-3 !px-4 text-xs font-semibold"
             >
-              {brainstormMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <ListPlus size={14} className="text-blue-400" />}
+              {brainstormMutation.isPending ? (
+                <Loader2 size={14} className="animate-spin text-blue-500" />
+              ) : (
+                <ListPlus size={14} className="text-blue-600 dark:text-blue-400" />
+              )}
               <span>Generate 3 Hooks</span>
             </Button>
           </div>
@@ -203,8 +291,10 @@ export default function Create() {
           {/* Suggested Hook Angles */}
           {suggestedHooks.length > 0 && (
             <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-medium text-slate-400">Select hook angle to insert:</span>
-              <div className="grid grid-cols-1 gap-1.5">
+              <span className="text-[11px] font-medium text-[var(--mu)]">
+                Select a generated hook to launch immediately:
+              </span>
+              <div className="grid grid-cols-1 gap-2">
                 {suggestedHooks.map((hook, i) => (
                   <button
                     key={i}
@@ -213,10 +303,13 @@ export default function Create() {
                       handleGenerate(hook);
                     }}
                     disabled={isGenerating}
-                    className="text-left text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-between group cursor-pointer"
+                    className="glass-subcard text-left text-xs p-3 flex items-center justify-between group cursor-pointer"
                   >
-                    <span>"{hook}"</span>
-                    <ArrowRight size={14} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+                    <span className="font-medium text-[var(--tx)]">"{hook}"</span>
+                    <ArrowRight
+                      size={14}
+                      className="text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 ml-2"
+                    />
                   </button>
                 ))}
               </div>
@@ -225,16 +318,16 @@ export default function Create() {
         </div>
 
         {/* 2. Genre Editing Physics Pill Selector */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <span>2. Genre Editing Physics</span>
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
+              2. Genre Editing Physics
             </label>
-            <span className="text-[11px] text-amber-400/90 font-mono">
-              {genres.find(g => g.id === genre)?.desc}
+            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-mono font-medium">
+              {selectedGenreObj.desc}
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {genres.map((g) => {
               const active = genre === g.id;
               const GenreIcon = g.Icon;
@@ -244,10 +337,10 @@ export default function Create() {
                   type="button"
                   onClick={() => setGenre(g.id)}
                   disabled={isGenerating}
-                  className={`px-3 py-2.5 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                  className={`px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                     active
-                      ? 'bg-amber-500/15 border-amber-500 text-amber-300 shadow-sm'
-                      : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-600/25'
+                      : 'bg-[var(--gl2)] border-[var(--input-border)] text-[var(--mu)] hover:text-[var(--tx)] hover:border-blue-500/45'
                   }`}
                 >
                   <GenreIcon size={14} className="shrink-0" />
@@ -258,19 +351,17 @@ export default function Create() {
           </div>
         </div>
 
-        {/* Style Preset & Voice Controls */}
+        {/* 3-6. Style Preset, Voice, Format & Duration Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-          
-          {/* 3. Visual Style Preset Dropdown */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
               3. Visual Aesthetic Preset
             </label>
             <select
               value={stylePreset}
               onChange={(e) => setStylePreset(e.target.value)}
               disabled={isGenerating}
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+              className="glass-input w-full px-3.5 py-2.5 text-xs cursor-pointer"
             >
               {stylePresets.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -280,49 +371,48 @@ export default function Create() {
             </select>
           </div>
 
-          {/* 4. Voice Selector Dropdown */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
               4. Voice Narration (Edge-TTS)
             </label>
             <select
               value={voice}
               onChange={(e) => setVoice(e.target.value)}
               disabled={isGenerating}
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+              className="glass-input w-full px-3.5 py-2.5 text-xs cursor-pointer"
             >
               {voices.map((v) => (
-                <option key={v.id} value={v.id}>{v.label}</option>
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* 5. Aspect Ratio & Format */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
               5. Format & Ratio
             </label>
             <select
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
               disabled={isGenerating}
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+              className="glass-input w-full px-3.5 py-2.5 text-xs cursor-pointer"
             >
               <option value="9:16">9:16 Vertical (Shorts, Reels, TikTok)</option>
               <option value="16:9">16:9 Horizontal (YouTube Channel, Video Essay)</option>
             </select>
           </div>
 
-          {/* 6. Target Duration */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
               6. Target Duration
             </label>
             <select
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               disabled={isGenerating}
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white outline-none focus:border-blue-500 cursor-pointer"
+              className="glass-input w-full px-3.5 py-2.5 text-xs cursor-pointer"
             >
               <option value="45s">45 Seconds (High-Tempo Short)</option>
               <option value="60s">60 Seconds (Full Short)</option>
@@ -334,22 +424,30 @@ export default function Create() {
           {/* 7. Custom Visual Anchor (Optional Style Reference) */}
           <div className="col-span-full space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <ImageIcon size={13} className="text-blue-400" />
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)] flex items-center gap-1.5">
+                <ImageIcon size={13} className="text-blue-600 dark:text-blue-400" />
                 <span>7. Visual Anchor / Reference Image (Optional)</span>
               </label>
               {anchorFile && (
-                <span className="text-[10px] text-emerald-400 font-mono">Anchor attached</span>
+                <Badge variant="success">Anchor Attached</Badge>
               )}
             </div>
-            
+
             {anchorPreview ? (
-              <div className="relative rounded-xl border border-blue-500/40 bg-slate-950/80 p-2 flex items-center justify-between">
+              <div className="glass-subcard p-2.5 flex items-center justify-between border-blue-500/40">
                 <div className="flex items-center gap-3">
-                  <img src={anchorPreview} alt="Anchor preview" className="w-12 h-12 rounded-lg object-cover border border-slate-700" />
+                  <img
+                    src={anchorPreview}
+                    alt="Anchor preview"
+                    className="w-12 h-12 rounded-lg object-cover border border-[var(--input-border)]"
+                  />
                   <div>
-                    <div className="text-xs font-medium text-white truncate max-w-[200px]">{anchorFile?.name}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{(anchorFile?.size ? (anchorFile.size / 1024).toFixed(0) : 0)} KB • Style Reference</div>
+                    <div className="text-xs font-semibold text-[var(--tx)] truncate max-w-[240px]">
+                      {anchorFile?.name}
+                    </div>
+                    <div className="text-[11px] text-[var(--mu)] font-mono">
+                      {anchorFile?.size ? (anchorFile.size / 1024).toFixed(0) : 0} KB · Style Reference
+                    </div>
                   </div>
                 </div>
                 <button
@@ -358,16 +456,18 @@ export default function Create() {
                     setAnchorFile(null);
                     setAnchorPreview(null);
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="p-1.5 rounded-lg text-[var(--mu)] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                   title="Remove visual anchor"
                 >
                   <X size={15} />
                 </button>
               </div>
             ) : (
-              <label className="cursor-pointer border border-dashed border-slate-700 hover:border-blue-500/60 rounded-xl p-3 bg-slate-950/50 hover:bg-slate-900/50 transition-all flex items-center justify-center gap-2.5 text-slate-400 hover:text-slate-200">
-                <Upload size={14} className="text-blue-400" />
-                <span className="text-xs">Upload style reference image (.png, .jpg) to anchor scene plates</span>
+              <label className="cursor-pointer border border-dashed border-[var(--input-border)] hover:border-blue-500/70 rounded-xl p-3.5 bg-[var(--input-bg)] hover:bg-[var(--gl2)] transition-all flex items-center justify-center gap-2.5 text-[var(--mu)] hover:text-[var(--tx)]">
+                <Upload size={14} className="text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-medium">
+                  Upload style reference image (.png, .jpg) to anchor scene plates
+                </span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -383,53 +483,58 @@ export default function Create() {
               </label>
             )}
           </div>
-
         </div>
 
-        {/* 5. Action Button: Generate Short */}
-        <div className="pt-2">
+        {/* Launch Action Button */}
+        <div className="pt-1">
           <Button
             onClick={() => handleGenerate()}
             disabled={!topic.trim() || isGenerating}
-            className="w-full py-3.5 text-sm font-semibold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/25 transition-all"
+            className="w-full !py-3.5 text-sm font-bold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/25 transition-all"
           >
             {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
-            <span>{isGenerating ? 'Assembling Video...' : 'Generate Short (9:16 Vertical)'}</span>
+            <span>
+              {isGenerating
+                ? 'Assembling Documentary Pipeline...'
+                : `Generate ${aspectRatio === '16:9' ? '16:9 Widescreen Documentary' : '9:16 Vertical Short'} (${duration})`}
+            </span>
           </Button>
         </div>
 
         {/* Live 4-Step Status Bar */}
         {isGenerating && (
-          <div className="pt-3 space-y-3 border-t border-slate-800">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-300">
+          <div className="pt-4 space-y-3 border-t border-[var(--ln-subtle)]">
+            <div className="flex items-center justify-between text-xs font-semibold text-[var(--tx)]">
               <span>Assembly Pipeline Progress</span>
-              <span className="font-mono text-blue-400">Step {Math.min(activeStepIndex + 1, 4)} of 4</span>
+              <span className="font-mono text-blue-600 dark:text-blue-400">
+                Step {Math.min(activeStepIndex + 1, 4)} of 4
+              </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {pipelineSteps.map((step, idx) => {
                 const isPast = idx < activeStepIndex;
                 const isCurrent = idx === activeStepIndex;
                 return (
                   <div
                     key={step.id}
-                    className={`p-2.5 rounded-lg border text-xs flex flex-col justify-between transition-all ${
+                    className={`p-3 rounded-xl border text-xs flex flex-col justify-between transition-all ${
                       isPast
-                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
                         : isCurrent
-                        ? 'bg-blue-950/60 border-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)] animate-pulse'
-                        : 'bg-slate-950/40 border-slate-800 text-slate-500'
+                        ? 'bg-blue-600/15 border-blue-500 text-[var(--tx)] shadow-sm animate-pulse'
+                        : 'bg-[var(--gl2)] border-[var(--ln-subtle)] text-[var(--mu)]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px]">0{step.id}</span>
+                      <span className="font-mono text-[10px] font-bold">0{step.id}</span>
                       {isPast ? (
-                        <CheckCircle2 size={12} className="text-emerald-400" />
+                        <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
                       ) : isCurrent ? (
-                        <Loader2 size={12} className="animate-spin text-blue-400" />
+                        <Loader2 size={13} className="animate-spin text-blue-600 dark:text-blue-400" />
                       ) : null}
                     </div>
-                    <span className="font-medium text-[11px] leading-tight">{step.name}</span>
+                    <span className="font-semibold text-[11px] leading-tight">{step.name}</span>
                   </div>
                 );
               })}
@@ -437,34 +542,38 @@ export default function Create() {
           </div>
         )}
 
-        {/* Error Alert if Generation Failed */}
+        {/* Error Alert */}
         {errorMsg && (
-          <div className="p-3 bg-red-950/70 border border-red-500/40 rounded-xl flex items-center justify-between text-xs text-red-300">
+          <div className="p-3.5 bg-red-500/12 border border-red-500/40 rounded-xl flex items-center justify-between text-xs text-red-700 dark:text-red-300">
             <div className="flex items-center gap-2">
-              <AlertCircle size={16} className="text-red-400 shrink-0" />
-              <span>{errorMsg}</span>
+              <AlertCircle size={16} className="text-red-600 dark:text-red-400 shrink-0" />
+              <span className="font-medium">{errorMsg}</span>
             </div>
-            <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-white ml-2 text-sm">&times;</button>
+            <button
+              onClick={() => setErrorMsg(null)}
+              className="text-red-600 dark:text-red-300 hover:opacity-75 ml-2 text-base font-bold cursor-pointer"
+            >
+              &times;
+            </button>
           </div>
         )}
-
       </Card>
 
       {/* Recent Video Projects Quick Access */}
       {recentJobs.length > 0 && (
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300">Recent Videos Ready for Review</h2>
+            <h2 className="text-sm font-bold text-[var(--tx)]">Recent Videos Ready for Review</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-[var(--mu)]">{recentJobs.length} Projects Total</span>
+              <span className="text-xs font-mono text-[var(--mu)]">{recentJobs.length} Projects Total</span>
               <button
                 onClick={() => {
-                  if (confirm("Clear all recent jobs?")) {
+                  if (confirm('Clear all recent jobs?')) {
                     clearAllMutation.mutate();
                   }
                 }}
                 disabled={clearAllMutation.isPending}
-                className="text-[11px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors"
+                className="text-[11px] font-semibold text-[var(--mu)] hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 transition-colors cursor-pointer"
                 title="Clear all job history"
               >
                 <Trash2 size={12} />
@@ -473,7 +582,7 @@ export default function Create() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {recentJobs.slice(0, 9).map((j: any) => {
               const videoAsset = j.assets?.find((a: any) => a.type === 'VIDEO' || a.type === 'video');
               const hasVideo = !!videoAsset;
@@ -481,33 +590,41 @@ export default function Create() {
                 <div
                   key={j.id}
                   onClick={() => navigate(`/qc1/${j.id}`)}
-                  className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/60 cursor-pointer transition-all flex items-center justify-between group relative"
+                  className="glass-subcard p-3.5 cursor-pointer flex items-center justify-between group relative hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3 truncate pr-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 flex items-center justify-center shrink-0">
                       <Film size={16} />
                     </div>
                     <div className="truncate">
-                      <div className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
+                      <div className="text-xs font-bold text-[var(--tx)] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                         {j.niche}
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        Job #{j.id} | {j.current_stage || j.status}
+                      <div className="text-[10px] text-[var(--mu)] font-mono mt-0.5">
+                        Job #{j.id} · {j.current_stage || j.status}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${
-                      hasVideo ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-amber-400 border-amber-500/30 bg-amber-950/40'
-                    }`}>
-                      {hasVideo ? '9:16 MP4' : (j.status === 'FAILED' ? 'Failed' : 'Pending')}
-                    </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant={hasVideo ? 'success' : j.status === 'FAILED' ? 'danger' : 'warning'}>
+                      {hasVideo ? (j.config?.format || '9:16') : j.status === 'FAILED' ? 'Failed' : 'Pending'}
+                    </Badge>
+                    {hasVideo && (
+                      <a
+                        href={`/api/jobs/${j.id}/export`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 rounded-lg text-[var(--mu)] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                        title="Download Publish-Ready .ZIP Pack"
+                      >
+                        <Download size={13} />
+                      </a>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteJobMutation.mutate(j.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition-all rounded hover:bg-slate-800"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--mu)] hover:text-red-500 transition-all rounded-lg hover:bg-red-500/10 cursor-pointer"
                       title="Delete this project"
                     >
                       <Trash2 size={13} />
@@ -521,11 +638,7 @@ export default function Create() {
       )}
 
       {/* AI Director Command Studio Drawer */}
-      <DirectorChatDrawer
-        isOpen={isDirectorChatOpen}
-        onClose={() => setIsDirectorChatOpen(false)}
-      />
-
+      <DirectorChatDrawer isOpen={isDirectorChatOpen} onClose={() => setIsDirectorChatOpen(false)} />
     </div>
   );
 }

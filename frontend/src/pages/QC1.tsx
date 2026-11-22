@@ -1,20 +1,18 @@
-import React, { useState, useMemo, useEffect, ChangeEvent } from 'react';
+import { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Play, 
-  RotateCw, 
-  Mic, 
-  Check, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
-  ExternalLink, 
-  ShieldCheck, 
-  Loader2, 
-  AlertCircle, 
-  Download, 
-  Upload, 
-  Image as ImageIcon, 
+import {
+  RotateCw,
+  Mic,
+  Check,
+  Trash2,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  ShieldCheck,
+  Loader2,
+  Download,
+  Upload,
+  Image as ImageIcon,
   Sparkles,
   Copy,
   ShieldAlert,
@@ -22,13 +20,14 @@ import {
   Flame,
   Clapperboard,
   Zap,
-  Cpu
+  Cpu,
+  Package
 } from 'lucide-react';
-import { 
-  useJobs, 
-  useRerollVisual, 
-  useRegenerateAudio, 
-  usePublishJob, 
+import {
+  useJobs,
+  useRerollVisual,
+  useRegenerateAudio,
+  usePublishJob,
   useDeleteJobTemp,
   useUploadAnchor,
   useUploadCustomSceneMedia,
@@ -74,13 +73,14 @@ export default function QC1() {
 
   const job = useMemo(() => jobs.find((j: any) => String(j.id) === id), [jobs, id]);
 
-  const videoAsset = job?.assets?.find((a: any) => a.type === 'VIDEO');
+  const videoAsset = job?.assets?.find((a: any) => a.type === 'VIDEO' || a.type === 'video');
   const jobMeta = videoAsset?.metadata || {};
-  const videoUrl = jobMeta.video_url || (videoAsset?.path ? `/output/${videoAsset.path.split(/[\\/]/).pop()}` : null);
+  const videoUrl =
+    jobMeta.video_url ||
+    (videoAsset?.path ? `/output/${videoAsset.path.split(/[\\/]/).pop()}` : null);
   const activeVideoUrl = overrideVideoUrl || videoUrl;
   const rawScenes = jobMeta.scenes || [];
 
-  // Sync scenes into editable state whenever job or video changes
   useEffect(() => {
     if (rawScenes.length > 0) {
       setEditedScenes(rawScenes);
@@ -89,27 +89,33 @@ export default function QC1() {
 
   if (!job) {
     return (
-      <div className="p-12 text-center text-slate-400">
-        <Loader2 size={24} className="animate-spin mx-auto mb-2 text-blue-500" />
-        <p className="text-sm">Loading storyboard details for Job #{id}...</p>
+      <div className="p-12 text-center text-[var(--mu)]">
+        <Loader2 size={24} className="animate-spin mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+        <p className="text-sm font-medium">Loading storyboard details for Job #{id}...</p>
       </div>
     );
   }
 
-  const isPublished = publishedStatus || job.current_stage === 'PUBLISHED' || job.status === 'COMPLETED';
+  const isPublished = job.current_stage === 'PUBLISHED' || job.status === 'PUBLISHED';
+  const isReadyToPublish =
+    !!publishedStatus ||
+    job.current_stage === 'READY_TO_PUBLISH' ||
+    job.status === 'COMPLETED';
   const displayScenes = editedScenes.length > 0 ? editedScenes : rawScenes;
   const stylePreset = jobMeta.style_preset || job.config?.style_preset || 'Dark Documentary';
   const voiceName = jobMeta.voice || job.config?.voice || 'en-US-AriaNeural';
-  const totalDuration = jobMeta.duration ? `${Math.round(jobMeta.duration)}s` : (job.config?.duration || '45s');
+  const totalDuration = jobMeta.duration
+    ? `${Math.round(jobMeta.duration)}s`
+    : job.config?.duration || 'Pending';
   const currentGenre = jobMeta.genre || job.config?.genre || 'auto';
 
-  const genreBadgeConfig: Record<string, { label: string; Icon: any; style: string }> = {
-    crime_doc: { label: 'Crime/Doc', Icon: ShieldAlert, style: 'bg-red-950/70 border-red-500/50 text-red-300' },
-    comedy_skit: { label: 'Comedy/Skit', Icon: Smile, style: 'bg-amber-950/70 border-amber-500/50 text-amber-300' },
-    action_hype: { label: 'Action/Hype', Icon: Flame, style: 'bg-orange-950/70 border-orange-500/50 text-orange-300' },
-    movie_cinema: { label: 'Movie/Cinema', Icon: Clapperboard, style: 'bg-cyan-950/70 border-cyan-500/50 text-cyan-300' },
-    viral_edu: { label: 'Viral Edu', Icon: Zap, style: 'bg-blue-950/70 border-blue-500/50 text-blue-300' },
-    auto: { label: 'Auto Detect', Icon: Cpu, style: 'bg-slate-900 border-slate-700 text-slate-300' }
+  const genreBadgeConfig: Record<string, { label: string; Icon: any; variant: string }> = {
+    crime_doc: { label: 'Crime / Doc', Icon: ShieldAlert, variant: 'danger' },
+    comedy_skit: { label: 'Comedy / Skit', Icon: Smile, variant: 'warning' },
+    action_hype: { label: 'Action / Hype', Icon: Flame, variant: 'warning' },
+    movie_cinema: { label: 'Movie / Cinema', Icon: Clapperboard, variant: 'info' },
+    viral_edu: { label: 'Viral Edu', Icon: Zap, variant: 'info' },
+    auto: { label: 'Auto Detect', Icon: Cpu, variant: 'neutral' }
   };
 
   const handleSceneTextChange = (index: number, newText: string) => {
@@ -164,7 +170,11 @@ export default function QC1() {
     if (!file || !id) return;
     setActiveUploadingIndex(index);
     try {
-      const res = await uploadCustomMediaMutation.mutateAsync({ jobId: id, sceneIndex: index, file });
+      const res = await uploadCustomMediaMutation.mutateAsync({
+        jobId: id,
+        sceneIndex: index,
+        file
+      });
       if (res?.scene) {
         setEditedScenes((prev) => {
           const updated = [...prev];
@@ -180,7 +190,7 @@ export default function QC1() {
     }
   };
 
-  const handleRegenerateAudio = async (sceneIndex?: number) => {
+  const handleRegenerateAudio = async () => {
     if (!id || audioMutation.isPending) return;
     try {
       await audioMutation.mutateAsync({
@@ -201,7 +211,7 @@ export default function QC1() {
         jobId: id,
         platforms: selectedPlatforms
       });
-      setPublishedStatus(res.message || 'Published');
+      setPublishedStatus(res.message || 'Ready to Publish');
     } catch (e) {
       console.error(e);
     } finally {
@@ -224,50 +234,56 @@ export default function QC1() {
     );
   };
 
+  const abTitles: string[] =
+    thumbnailData?.ab_titles && thumbnailData.ab_titles.length > 0
+      ? thumbnailData.ab_titles
+      : [
+          `${job.niche}: The Untold Evidence File`,
+          `Inside ${job.niche} (Full Documentary Breakdown)`,
+          `What Really Happened During ${job.niche}`
+        ];
+
   return (
     <div className="animate-in fade-in min-h-full flex flex-col pb-12 max-w-7xl mx-auto space-y-6">
-      
       {/* Top Header */}
-      <div className="flex justify-between items-center flex-wrap gap-3 pb-2 border-b border-slate-800">
+      <div className="flex justify-between items-center flex-wrap gap-3 pb-4 border-b border-[var(--ln-subtle)]">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-white">{job.niche}</h1>
+          <div className="flex items-center flex-wrap gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--tx)]">{job.niche}</h1>
             {isPublished ? (
-              <Badge variant="success">Published · Active</Badge>
+              <Badge variant="success">Published</Badge>
+            ) : isReadyToPublish ? (
+              <Badge variant="success">Ready to Publish</Badge>
             ) : (
               <Badge variant="warning">QC1 Review Stage</Badge>
             )}
             {jobMeta.fact_dossier && (
-              <span 
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 flex items-center gap-1 shadow-sm"
-                title={`Fact Dossier: ${jobMeta.fact_dossier.canonical_title} | Coords: ${jobMeta.fact_dossier.coordinates || 'N/A'}`}
-              >
-                <ShieldCheck size={11} className="text-emerald-400" />
-                Verified Fact Dossier
-              </span>
+              <Badge variant="success">
+                <ShieldCheck size={11} />
+                <span>Verified Fact Dossier</span>
+              </Badge>
             )}
-            {genreBadgeConfig[currentGenre] && (() => {
-              const GIcon = genreBadgeConfig[currentGenre].Icon;
-              return (
-                <span 
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 shadow-sm ${genreBadgeConfig[currentGenre].style}`}
-                  title={`Genre: ${genreBadgeConfig[currentGenre].label}`}
-                >
-                  <GIcon size={11} />
-                  <span>{genreBadgeConfig[currentGenre].label}</span>
-                </span>
-              );
-            })()}
+            {genreBadgeConfig[currentGenre] &&
+              (() => {
+                const GIcon = genreBadgeConfig[currentGenre].Icon;
+                return (
+                  <Badge variant={genreBadgeConfig[currentGenre].variant}>
+                    <GIcon size={11} />
+                    <span>{genreBadgeConfig[currentGenre].label}</span>
+                  </Badge>
+                );
+              })()}
           </div>
-          <p className="text-xs text-[var(--mu)] mt-0.5">
-            Job #{job.id} · Genre: {genreBadgeConfig[currentGenre]?.label || currentGenre} · {stylePreset} · {totalDuration} · Voice: {voiceName.split('-')[2] || 'Aria'}
+          <p className="text-xs text-[var(--mu)] mt-1">
+            Job #{job.id} · Genre: {genreBadgeConfig[currentGenre]?.label || currentGenre} ·{' '}
+            {stylePreset} · {totalDuration} · Voice: {voiceName.split('-')[2] || 'Aria'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <Button
             onClick={() => setIsDirectorChatOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold !py-2 !px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm rounded-md transition-all"
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm"
             title="Open AI Director Command Studio"
           >
             <Sparkles size={14} className="text-slate-950" />
@@ -276,55 +292,58 @@ export default function QC1() {
 
           {activeVideoUrl && (
             <a
-              href={activeVideoUrl}
-              download={`${job.niche.replace(/[^a-zA-Z0-9_-]/g, '_')}_9x16.mp4`}
-              className="inline-flex items-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
-              title="Download 9:16 vertical MP4 video"
+              href={`/api/jobs/${id}/export`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white border border-blue-500 shadow-sm transition-colors cursor-pointer"
+              title="Download Publish-Ready .ZIP Pack (MP4 + Thumb + Captions + Upload Copy)"
             >
-              <Download size={14} />
-              <span>Download MP4</span>
+              <Package size={14} />
+              <span>Export .ZIP Pack</span>
             </a>
           )}
 
-          <Button
-            variant="secondary"
-            onClick={() => setIsStudioOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-medium !py-2 !px-3 border-slate-700"
-          >
+          {activeVideoUrl && (
+            <a
+              href={activeVideoUrl}
+              download={`${String(job.niche || 'video').replace(/[^a-zA-Z0-9_-]/g, '_')}_9x16.mp4`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 shadow-sm transition-colors cursor-pointer"
+              title="Download MP4 video"
+            >
+              <Download size={14} />
+              <span>MP4</span>
+            </a>
+          )}
+
+          <Button variant="secondary" onClick={() => setIsStudioOpen(true)}>
             <ExternalLink size={14} />
-            <span>Open Studio Inspector</span>
+            <span>Studio Inspector</span>
           </Button>
 
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/create')}
-            className="text-xs text-slate-400 hover:text-white !py-2 !px-3"
-          >
+          <Button variant="ghost" onClick={() => navigate('/create')}>
             + New Video
           </Button>
         </div>
       </div>
 
-      {/* Main Grid: Left 9:16 Video Player | Right Storyboard Grid */}
+      {/* Main Grid: Left Video Player | Right Storyboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
-        
-        {/* Left Column: Video Player (Responsive for 16:9 and 9:16) */}
-        <div className="flex flex-col items-center space-y-3 sticky top-20">
+        {/* Left Column: Video Player */}
+        <div className="flex flex-col items-center space-y-3 sticky top-6">
           {(() => {
-            const isWidescreen = job.config?.format === '16:9' || (job.config as any)?.aspect_ratio === '16:9';
+            const isWidescreen =
+              job.config?.format === '16:9' || (job.config as any)?.aspect_ratio === '16:9';
             return (
               <>
                 <div className="w-full flex items-center justify-between px-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    {isWidescreen ? '16:9 Widescreen Cinema Player' : '9:16 Reel Player'}
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--mu)]">
+                    {isWidescreen ? '16:9 Cinema Player' : '9:16 Reel Player'}
                   </span>
                   {!isWidescreen && (
                     <button
                       onClick={() => setShowSafeZone(!showSafeZone)}
-                      className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded border transition-colors ${
+                      className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
                         showSafeZone
-                          ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50 hover:bg-cyan-900/80'
-                          : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                          ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/40'
+                          : 'bg-[var(--gl2)] text-[var(--mu)] border-[var(--input-border)] hover:text-[var(--tx)]'
                       }`}
                     >
                       {showSafeZone ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -334,7 +353,6 @@ export default function QC1() {
                 </div>
 
                 {isWidescreen ? (
-                  /* 16:9 Widescreen Cinema Container */
                   <div className="relative w-full max-w-[560px] aspect-video rounded-2xl p-2 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
                     <div className="relative w-full h-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
                       {activeVideoUrl ? (
@@ -348,7 +366,7 @@ export default function QC1() {
                           className="w-full h-full object-contain"
                         />
                       ) : (
-                        <div className="text-center p-6 text-slate-500 text-xs flex flex-col items-center gap-2">
+                        <div className="text-center p-6 text-slate-400 text-xs flex flex-col items-center gap-2">
                           <Loader2 size={24} className="animate-spin text-blue-500" />
                           <span>Assembling 16:9 widescreen video stream...</span>
                         </div>
@@ -356,11 +374,8 @@ export default function QC1() {
                     </div>
                   </div>
                 ) : (
-                  /* 9:16 Phone Container */
                   <div className="relative w-[320px] h-[568px] rounded-[36px] p-2.5 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 border-2 border-slate-600 shadow-2xl flex items-center justify-center overflow-hidden">
-                    {/* Dynamic Island Notch */}
-                    <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 border border-white/10" />
-
+                    <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-md z-40 border border-white/10" />
                     <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-black flex items-center justify-center">
                       {activeVideoUrl ? (
                         <video
@@ -373,13 +388,12 @@ export default function QC1() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-center p-6 text-slate-500 text-xs flex flex-col items-center gap-2">
+                        <div className="text-center p-6 text-slate-400 text-xs flex flex-col items-center gap-2">
                           <Loader2 size={24} className="animate-spin text-blue-500" />
                           <span>Assembling 9:16 video stream...</span>
                         </div>
                       )}
 
-                      {/* Toggleable Safe Zone Overlay */}
                       <SafeZoneOverlay
                         visible={showSafeZone}
                         caption={jobMeta.script?.hook || `The breakdown of ${job.niche}`}
@@ -388,8 +402,8 @@ export default function QC1() {
                   </div>
                 )}
 
-                <div className="w-full flex items-center justify-between text-[11px] text-slate-500 px-2 font-mono">
-                  <span>{isWidescreen ? '1920 × 1080 Widescreen MP4' : '1080 × 1920 MP4'}</span>
+                <div className="w-full flex items-center justify-between text-[11px] text-[var(--mu)] px-2 font-mono">
+                  <span>{isWidescreen ? '1920 x 1080 Widescreen MP4' : '1080 x 1920 MP4'}</span>
                   <span>-14 LUFS Audio</span>
                 </div>
               </>
@@ -397,48 +411,44 @@ export default function QC1() {
           })()}
         </div>
 
-        {/* Right Column: Storyboard Grid (Shot Cards) */}
-        <div className="space-y-4">
-          
-          {/* Automated High-CTR Thumbnail & Title Packager Strip */}
-          <Card className="!p-4 bg-slate-900/80 border-slate-700/80 space-y-4 shadow-lg">
-            <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+        {/* Right Column: Thumbnails & Storyboard Grid */}
+        <div className="space-y-5">
+          {/* High-CTR Thumbnail & Title Packager */}
+          <Card className="!p-5 space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[var(--ln-subtle)]">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                   <ImageIcon size={16} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    High-CTR Thumbnail & Title Packager
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-500/40 text-amber-300">
-                      3 A/B Variants
-                    </span>
+                  <h3 className="text-sm font-bold text-[var(--tx)] flex items-center gap-2">
+                    <span>High-CTR Thumbnail & Title Packager</span>
+                    <Badge variant="warning">3 A/B Variants</Badge>
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Scroll-stopping covers with subject isolation, neon rim outline, and curiosity badges.
+                  <p className="text-[11px] text-[var(--mu)]">
+                    Generated 16:9 and 9:16 cover variants with subject cutout, contrast rim lighting, and title badges.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {/* 16:9 vs 9:16 Aspect Toggle */}
-                <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+                <div className="flex items-center bg-[var(--gl2)] p-0.5 rounded-xl border border-[var(--input-border)] text-[11px]">
                   <button
                     onClick={() => setThumbAspect('16:9')}
-                    className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                       thumbAspect === '16:9'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-[var(--mu)] hover:text-[var(--tx)]'
                     }`}
                   >
                     16:9 Landscape
                   </button>
                   <button
                     onClick={() => setThumbAspect('9:16')}
-                    className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                       thumbAspect === '9:16'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-[var(--mu)] hover:text-[var(--tx)]'
                     }`}
                   >
                     9:16 Vertical
@@ -449,93 +459,105 @@ export default function QC1() {
                   variant="secondary"
                   onClick={() => id && regenerateThumbsMutation.mutate(id)}
                   disabled={regenerateThumbsMutation.isPending || isThumbLoading}
-                  className="flex items-center gap-1.5 text-xs !py-1 !px-2.5 border-slate-700 text-slate-300 hover:text-white"
+                  className="!py-1.5 !px-3"
                   title="Re-render all 3 thumbnail variants"
                 >
-                  <RotateCw size={12} className={regenerateThumbsMutation.isPending ? 'animate-spin text-amber-400' : 'text-amber-400'} />
+                  <RotateCw
+                    size={12}
+                    className={
+                      regenerateThumbsMutation.isPending
+                        ? 'animate-spin text-amber-500'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }
+                  />
                   <span>{regenerateThumbsMutation.isPending ? 'Rendering...' : 'Regen Covers'}</span>
                 </Button>
               </div>
             </div>
 
-            {/* 3 Thumbnail Variants Preview Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {(thumbnailData?.variants || [
-                { id: 1, name: 'Curiosity Shock', thumb_16x9: `/output/thumb_${id}_v1_16x9.jpg`, thumb_9x16: `/output/thumb_${id}_v1_9x16.jpg`, style: 'High-contrast saturated hero with bold yellow stroke text', badge: 'THEY HID THIS!' },
-                { id: 2, name: 'Forensic Classified', thumb_16x9: `/output/thumb_${id}_v2_16x9.jpg`, thumb_9x16: `/output/thumb_${id}_v2_9x16.jpg`, style: 'Declassified dossier with redacted bars & yellow highlighter', badge: 'TOP SECRET' },
-                { id: 3, name: 'Cinematic Neon Object', thumb_16x9: `/output/thumb_${id}_v3_16x9.jpg`, thumb_9x16: `/output/thumb_${id}_v3_9x16.jpg`, style: 'Subject cutout with glowing cyan rim outline & noir grade', badge: 'CLASSIFIED' }
-              ]).map((v: any) => {
-                const imgUrl = thumbAspect === '16:9' ? v.thumb_16x9 : v.thumb_9x16;
-                const aspectClass = thumbAspect === '16:9' ? 'aspect-video' : 'aspect-[9/16] max-h-[220px] mx-auto';
+            {/* 3 Thumbnail Variants */}
+            {thumbnailData?.variants && thumbnailData.variants.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {thumbnailData.variants.map((v: any) => {
+                  const imgUrl = thumbAspect === '16:9' ? v.thumb_16x9 : v.thumb_9x16;
+                  const aspectClass =
+                    thumbAspect === '16:9' ? 'aspect-video' : 'aspect-[9/16] max-h-[220px] mx-auto';
 
-                return (
-                  <div
-                    key={v.id}
-                    className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between space-y-2 group hover:border-slate-700 transition-all shadow-md"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wider">
-                          Variant #{v.id} · {v.name}
-                        </span>
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">
-                          {thumbAspect}
-                        </span>
-                      </div>
-
-                      <div className={`relative rounded-lg overflow-hidden border border-slate-800/80 bg-black ${aspectClass} flex items-center justify-center`}>
-                        <img
-                          src={imgUrl}
-                          alt={v.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = `https://picsum.photos/seed/thumb${v.id}/800/450`;
-                          }}
-                        />
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 mt-1.5 line-clamp-1" title={v.style}>
-                        {v.style}
-                      </p>
-                    </div>
-
-                    <a
-                      href={imgUrl}
-                      download={`thumb_job${id}_v${v.id}_${thumbAspect.replace(':', 'x')}.jpg`}
-                      className="w-full flex items-center justify-center gap-1.5 text-[11px] font-medium py-1.5 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white transition-colors"
+                  return (
+                    <div
+                      key={v.id}
+                      className="glass-subcard p-2.5 flex flex-col justify-between space-y-2 group"
                     >
-                      <Download size={11} />
-                      <span>Download {thumbAspect}</span>
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-bold text-[var(--tx)] uppercase tracking-wider truncate">
+                            #{v.id} · {v.name}
+                          </span>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--input-bg)] text-amber-600 dark:text-amber-400 border border-[var(--input-border)]">
+                            {thumbAspect}
+                          </span>
+                        </div>
+
+                        <div
+                          className={`relative rounded-lg overflow-hidden border border-[var(--ln-subtle)] bg-black ${aspectClass} flex items-center justify-center`}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={v.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+
+                        <p className="text-[10px] text-[var(--mu)] mt-1.5 line-clamp-1" title={v.style}>
+                          {v.style}
+                        </p>
+                      </div>
+
+                      <a
+                        href={imgUrl}
+                        download={`thumb_job${id}_v${v.id}_${thumbAspect.replace(':', 'x')}.jpg`}
+                        className="w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] hover:bg-blue-600 hover:border-blue-500 text-[var(--tx)] hover:text-white transition-colors"
+                      >
+                        <Download size={11} />
+                        <span>Download {thumbAspect}</span>
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="glass-subcard p-5 text-center text-xs text-[var(--mu)]">
+                {isThumbLoading
+                  ? 'Loading rendered thumbnail variants...'
+                  : 'No thumbnail variants rendered yet for this job. Click Regen Covers to generate them.'}
+              </div>
+            )}
 
             {/* A/B Test Title Suggestions */}
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/90 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+            <div className="glass-subcard p-3.5 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-[var(--tx)]">
                 <span className="flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-amber-400" />
-                  Curiosity A/B Title Suggestions (Verified Fact Dossier)
+                  <Sparkles size={13} className="text-amber-600 dark:text-amber-400" />
+                  <span>Curiosity A/B Title Suggestions</span>
                 </span>
-                <span className="text-[10px] text-slate-500 font-normal">Click to copy</span>
+                <span className="text-[10px] text-[var(--mu)] font-normal">Click to copy</span>
               </div>
 
               <div className="space-y-1.5">
-                {(thumbnailData?.ab_titles || [
-                  `The $3.8 Billion Secret They Tried to Erase (${job?.niche || 'Classified'})`,
-                  `Why Nobody Talks About the 1974 ${job?.niche || 'Covert'} Operation`,
-                  `Declassified: What Actually Happened at 16,000 Feet`
-                ]).map((title: string, tIdx: number) => {
+                {abTitles.map((title: string, tIdx: number) => {
                   const isCopied = copiedTitleIdx === tIdx;
                   return (
                     <div
                       key={tIdx}
-                      className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 text-xs text-slate-200 hover:border-slate-700 transition-colors"
+                      className="p-2 rounded-lg bg-[var(--input-bg)] border border-[var(--ln-subtle)] flex items-center justify-between gap-3 text-xs"
                     >
-                      <span className="font-sans text-[11px] text-slate-300 truncate">
-                        <span className="text-amber-400 font-bold mr-1.5">#{tIdx + 1}</span>
+                      <span className="text-[11px] text-[var(--tx)] font-medium truncate">
+                        <span className="text-amber-600 dark:text-amber-400 font-bold mr-1.5">
+                          #{tIdx + 1}
+                        </span>
                         {title}
                       </span>
                       <button
@@ -544,14 +566,14 @@ export default function QC1() {
                           setCopiedTitleIdx(tIdx);
                           setTimeout(() => setCopiedTitleIdx(null), 2000);
                         }}
-                        className={`px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 transition-colors shrink-0 ${
+                        className={`px-2 py-1 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-colors shrink-0 cursor-pointer border ${
                           isCopied
-                            ? 'bg-emerald-900/60 border border-emerald-500/50 text-emerald-300'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
+                            : 'bg-[var(--gl2)] border-[var(--input-border)] text-[var(--tx)] hover:border-blue-500'
                         }`}
                       >
-                        {isCopied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
-                        <span>{isCopied ? 'Copied!' : 'Copy'}</span>
+                        {isCopied ? <Check size={11} /> : <Copy size={11} />}
+                        <span>{isCopied ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
                   );
@@ -560,18 +582,23 @@ export default function QC1() {
             </div>
           </Card>
 
-          <div className="flex items-center justify-between pb-1">
+          {/* Storyboard Header */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-base font-semibold text-white">Storyboard & Shot Inspector</h2>
+              <h2 className="text-base font-bold text-[var(--tx)]">Storyboard & Shot Inspector</h2>
               <p className="text-xs text-[var(--mu)]">
-                Edit script lines, adjust image prompts, or re-roll visuals in 8 seconds.
+                Edit narration lines, adjust image prompts, or re-roll individual cached beats.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="cursor-pointer flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
-                {uploadAnchorMutation.isPending ? <Loader2 size={13} className="animate-spin text-blue-400" /> : <Upload size={13} className="text-blue-400" />}
-                <span>{uploadAnchorMutation.isPending ? 'Uploading...' : 'Upload Style Anchor'}</span>
+              <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-colors">
+                {uploadAnchorMutation.isPending ? (
+                  <Loader2 size={13} className="animate-spin text-blue-500" />
+                ) : (
+                  <Upload size={13} className="text-blue-600 dark:text-blue-400" />
+                )}
+                <span>{uploadAnchorMutation.isPending ? 'Uploading...' : 'Style Anchor'}</span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -583,7 +610,7 @@ export default function QC1() {
                         await uploadAnchorMutation.mutateAsync({ jobId: id, file: f });
                         setAnchorUploadMsg('Style anchor attached!');
                         setTimeout(() => setAnchorUploadMsg(null), 3000);
-                      } catch (err) {
+                      } catch {
                         setAnchorUploadMsg('Upload failed');
                       }
                     }
@@ -595,9 +622,12 @@ export default function QC1() {
                 variant="secondary"
                 onClick={() => handleRegenerateAudio()}
                 disabled={audioMutation.isPending}
-                className="flex items-center gap-1.5 text-xs !py-1.5 !px-3 border-slate-700"
               >
-                {audioMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Mic size={13} className="text-emerald-400" />}
+                {audioMutation.isPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Mic size={13} className="text-emerald-600 dark:text-emerald-400" />
+                )}
                 <span>{audioMutation.isPending ? 'Syncing...' : 'Regenerate Voiceover'}</span>
               </Button>
             </div>
@@ -605,15 +635,19 @@ export default function QC1() {
 
           {/* Active Style Anchor Banner */}
           {(job?.config?.anchor_url || anchorUploadMsg) && (
-            <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-blue-950/30 border border-blue-500/30 text-xs">
-              <div className="flex items-center gap-2.5">
-                {job?.config?.anchor_url && (
-                  <img src={job.config.anchor_url} alt="Style Anchor" className="w-8 h-8 rounded-lg object-cover border border-blue-500/40" />
-                )}
-                <div>
-                  <span className="font-semibold text-blue-300">Style Reference Active: </span>
-                  <span className="text-slate-300">{anchorUploadMsg || 'Reference image attached to guide visuals'}</span>
-                </div>
+            <div className="glass-subcard p-3 border-blue-500/40 flex items-center gap-2.5 text-xs">
+              {job?.config?.anchor_url && (
+                <img
+                  src={job.config.anchor_url}
+                  alt="Style Anchor"
+                  className="w-8 h-8 rounded-lg object-cover border border-blue-500/40"
+                />
+              )}
+              <div>
+                <span className="font-bold text-blue-600 dark:text-blue-400">Style Reference Active: </span>
+                <span className="text-[var(--tx)]">
+                  {anchorUploadMsg || 'Reference image attached to guide visuals'}
+                </span>
               </div>
             </div>
           )}
@@ -625,31 +659,25 @@ export default function QC1() {
               const thumbUrl = sc.image_path ? `/${sc.image_path.replace(/\\/g, '/')}` : null;
 
               return (
-                <Card
-                  key={idx}
-                  className="!p-4 bg-slate-900/70 border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-slate-600 transition-all shadow-md"
-                >
-                  {/* Card Header & Badge */}
+                <Card key={idx} className="!p-4 flex flex-col justify-between space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-md bg-blue-600/20 border border-blue-500/30 text-blue-400 font-bold text-xs flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center">
                         {idx + 1}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-sky-300">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
                         {sc.badge || `SHOT ${idx + 1}`}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
-                      {sc.duration ? `${sc.duration}s` : '4s'}
+                    <span className="text-[11px] font-mono text-[var(--mu)] bg-[var(--gl2)] px-2 py-0.5 rounded-lg border border-[var(--ln-subtle)]">
+                      {sc.duration ? `${sc.duration}s` : '--'}
                     </span>
                   </div>
 
-                  {/* Thumbnail & Prompt Preview */}
                   <div className="flex gap-3">
-                    {/* Visual Plate Thumbnail */}
-                    <div className="relative w-24 h-36 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="relative w-24 h-36 rounded-xl bg-slate-950 border border-[var(--ln-subtle)] overflow-hidden shrink-0 flex items-center justify-center">
                       {sc.video_path && (
-                        <span className="absolute top-1 right-1 z-10 bg-amber-500/90 text-slate-950 font-black text-[9px] px-1 py-0.5 rounded shadow">
+                        <span className="absolute top-1 right-1 z-10 bg-amber-500 text-slate-950 font-black text-[9px] px-1 py-0.5 rounded shadow">
                           VIDEO
                         </span>
                       )}
@@ -663,64 +691,63 @@ export default function QC1() {
                           }}
                         />
                       ) : (
-                        <div className="text-[10px] text-slate-500 font-mono text-center p-1">9:16 Plate</div>
+                        <div className="text-[10px] text-slate-400 font-mono text-center p-1">
+                          9:16 Plate
+                        </div>
                       )}
                       {(isRerolling || activeUploadingIndex === idx) && (
                         <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center gap-1 text-[10px] text-blue-300 z-20">
                           <Loader2 size={16} className="animate-spin text-blue-400" />
-                          <span>{activeUploadingIndex === idx ? 'Stitching Media...' : 'Re-rolling...'}</span>
+                          <span>{activeUploadingIndex === idx ? 'Stitching...' : 'Re-rolling...'}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Editable Spoken Script & Prompt */}
                     <div className="flex-1 flex flex-col justify-between space-y-2 text-xs">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--mu)]">
                           Spoken Voiceover
                         </label>
                         <textarea
                           rows={2}
                           value={sc.text || ''}
                           onChange={(e) => handleSceneTextChange(idx, e.target.value)}
-                          className="w-full p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-200 text-xs outline-none focus:border-blue-500 resize-none"
+                          className="glass-input w-full p-2 text-xs resize-none"
                           placeholder="Spoken narration for this shot..."
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--mu)]">
                           Image Prompt
                         </label>
                         <textarea
                           rows={2}
                           value={sc.prompt || `${sc.text}, ${stylePreset}`}
                           onChange={(e) => handleScenePromptChange(idx, e.target.value)}
-                          className="w-full p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-400 text-[11px] outline-none focus:border-blue-500 resize-none font-mono"
+                          className="glass-input w-full p-2 text-[11px] resize-none font-mono"
                           placeholder="Visual prompt for this scene..."
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Quick Action Buttons: Re-roll Visual, Custom Clip Upload, Regenerate Audio */}
-                  <div className="flex items-center gap-1.5 pt-2 border-t border-slate-800">
+                  <div className="flex items-center gap-1.5 pt-2.5 border-t border-[var(--ln-subtle)]">
                     <Button
                       variant="secondary"
                       onClick={() => handleRerollVisual(idx)}
                       disabled={isRerolling || rerollMutation.isPending || activeUploadingIndex === idx}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs !py-1.5 border-slate-700 hover:border-blue-500 text-slate-200"
+                      className="flex-1 !py-1.5"
                     >
-                      <RotateCw size={12} className={isRerolling ? 'animate-spin text-blue-400' : 'text-blue-400'} />
+                      <RotateCw
+                        size={12}
+                        className={isRerolling ? 'animate-spin text-blue-500' : 'text-blue-600 dark:text-blue-400'}
+                      />
                       <span>{isRerolling ? 'Stitching...' : 'Re-roll'}</span>
                     </Button>
 
                     <label
-                      className={`flex items-center justify-center gap-1 text-xs !py-1.5 px-2.5 rounded-lg border transition-all cursor-pointer ${
-                        activeUploadingIndex === idx
-                          ? 'bg-blue-900/40 border-blue-500 text-blue-300'
-                          : 'bg-slate-800/70 border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white'
-                      }`}
+                      className="inline-flex items-center justify-center gap-1 text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-all cursor-pointer"
                       title="Upload custom video clip (.mp4, .mov) or image"
                     >
                       <input
@@ -731,50 +758,45 @@ export default function QC1() {
                         onChange={(e) => handleUploadCustomMedia(idx, e)}
                       />
                       {activeUploadingIndex === idx ? (
-                        <Loader2 size={12} className="animate-spin text-amber-400" />
+                        <Loader2 size={12} className="animate-spin text-amber-500" />
                       ) : (
-                        <Upload size={12} className="text-amber-400" />
+                        <Upload size={12} className="text-amber-600 dark:text-amber-400" />
                       )}
                       <span>Clip</span>
                     </label>
 
                     <Button
                       variant="ghost"
-                      onClick={() => handleRegenerateAudio(idx)}
+                      onClick={() => handleRegenerateAudio()}
                       disabled={audioMutation.isPending}
-                      className="flex items-center justify-center gap-1 text-xs !py-1.5 px-2 text-slate-400 hover:text-white"
-                      title="Regenerate voiceover for this shot"
+                      className="!py-1.5 !px-2.5"
+                      title="Regenerate voiceover"
                     >
-                      <Mic size={12} className="text-emerald-400" />
+                      <Mic size={12} className="text-emerald-600 dark:text-emerald-400" />
                       <span>Voice</span>
                     </Button>
                   </div>
-
                 </Card>
               );
             })}
           </div>
-
         </div>
-
       </div>
 
       {/* Bottom Action Bar */}
-      <Card className="!p-4 bg-slate-900/90 border-slate-700/90 sticky bottom-4 z-20 shadow-2xl backdrop-blur-md">
+      <Card className="!p-4 sticky bottom-4 z-20 shadow-xl">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          
-          {/* Platform Checkboxes & Cookie Status */}
-          <div className="flex items-center flex-wrap gap-4 text-xs">
-            <span className="font-semibold text-slate-300">Platforms:</span>
+          <div className="flex items-center flex-wrap gap-2.5 text-xs">
+            <span className="font-bold text-[var(--tx)]">Target Platforms:</span>
             {['TikTok', 'YouTube Shorts', 'Instagram Reels'].map((p) => {
               const isChecked = selectedPlatforms.includes(p);
               return (
                 <label
                   key={p}
-                  className={`flex items-center gap-2 cursor-pointer px-2.5 py-1.5 rounded-lg border transition-colors select-none ${
+                  className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-xl border transition-colors select-none font-medium ${
                     isChecked
-                      ? 'bg-blue-950/60 border-blue-500/60 text-white'
-                      : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-blue-600/15 border-blue-500/50 text-[var(--tx)]'
+                      : 'bg-[var(--gl2)] border-[var(--input-border)] text-[var(--mu)] hover:text-[var(--tx)]'
                   }`}
                 >
                   <input
@@ -787,48 +809,52 @@ export default function QC1() {
                 </label>
               );
             })}
-
-            {/* Cookie Status Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs font-medium">
-              <ShieldCheck size={14} className="text-emerald-400" />
-              <span>Cookie Status: Active</span>
-            </div>
           </div>
 
-          {/* Action Buttons: Approve & Publish + Clean Temp */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center flex-wrap gap-2.5 w-full sm:w-auto justify-end">
             <Button
               variant="ghost"
               onClick={handleDeleteTemp}
               disabled={deleteTempMutation.isPending}
-              className="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1.5 !py-2"
+              className="hover:!text-red-500"
               title="Delete intermediate frames and temp files"
             >
               <Trash2 size={14} />
-              <span>{deleteTempMutation.isPending ? 'Cleaning...' : 'Delete & Clean Temp Files'}</span>
+              <span>{deleteTempMutation.isPending ? 'Cleaning...' : 'Clean Temp'}</span>
             </Button>
+
+            {activeVideoUrl && (
+              <a
+                href={`/api/jobs/${id}/export`}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5 rounded-xl bg-[var(--gl2)] border border-[var(--input-border)] text-[var(--tx)] hover:border-blue-500 transition-colors"
+              >
+                <Package size={14} className="text-blue-600 dark:text-blue-400" />
+                <span>Download .ZIP Pack</span>
+              </a>
+            )}
 
             <Button
               onClick={handlePublish}
               disabled={isPublishing || selectedPlatforms.length === 0}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2 text-xs font-semibold !py-2.5 !px-5 rounded-xl shadow-lg shadow-emerald-600/25 transition-all"
+              className="!bg-emerald-600 hover:!bg-emerald-500 !border-emerald-500 text-white !py-2.5 !px-5 shadow-md shadow-emerald-600/20"
             >
               {isPublishing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              <span>{isPublishing ? 'Publishing...' : isPublished ? 'Approved & Published' : 'Approve & Publish'}</span>
+              <span>
+                {isPublishing
+                  ? 'Preparing Pack...'
+                  : isPublished
+                  ? 'Published'
+                  : isReadyToPublish
+                  ? 'Ready to Publish'
+                  : 'Approve & Prepare Pack'}
+              </span>
             </Button>
           </div>
-
         </div>
       </Card>
 
-      {/* 9:16 Studio Inspector Modal */}
-      <VideoStudioModal
-        isOpen={isStudioOpen}
-        onClose={() => setIsStudioOpen(false)}
-        job={job}
-      />
+      <VideoStudioModal isOpen={isStudioOpen} onClose={() => setIsStudioOpen(false)} job={job} />
 
-      {/* AI Director Command Studio Drawer */}
       <DirectorChatDrawer
         isOpen={isDirectorChatOpen}
         onClose={() => setIsDirectorChatOpen(false)}
@@ -837,7 +863,6 @@ export default function QC1() {
           setOverrideVideoUrl(newUrl);
         }}
       />
-
     </div>
   );
 }

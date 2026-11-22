@@ -389,10 +389,10 @@ EXCLUDE_COMMENT_PATTERNS = re.compile(
 )
 
 TASK_BALANCED_TARGETS = {
-    "editing": 2500,
-    "hooks": 1500,
-    "storytelling": 1500,
-    "visual_audio": 1000
+    "editing": 800000,
+    "hooks": 400000,
+    "storytelling": 400000,
+    "visual_audio": 400000
 }
 
 TASK_QUERIES = {
@@ -512,59 +512,60 @@ TASK_QUERIES = {
 
 
 # ==============================================================================
-# 5-HOUSE 100,000-QUOTA ARCHITECTURE & CHECKPOINT MANAGEMENT
+# 5-HOUSE 2,000,000-QUOTA ARCHITECTURE & 100,000-MILESTONE CHECKPOINT MANAGEMENT
 # ==============================================================================
 
 HOUSES_SCHEMA = {
     "HOUSE_1_HOOK_PSYCHOLOGY": {
-        "target": 20000,
+        "target": 400000,
         "sub_rooms": {
-            "curiosity_gap": 4000,
-            "negative_bias": 4000,
-            "counter_intuitive": 4000,
-            "visual_shock": 4000,
-            "title_thumbnail_ab": 4000
+            "curiosity_gap": 80000,
+            "negative_bias": 80000,
+            "counter_intuitive": 80000,
+            "visual_shock": 80000,
+            "title_thumbnail_ab": 80000
         }
     },
     "HOUSE_2_SCREENWRITER_ARC": {
-        "target": 20000,
+        "target": 400000,
         "sub_rooms": {
-            "crime_doc": 4000,
-            "comedy_skit": 4000,
-            "action_hype": 4000,
-            "movie_cinema": 4000,
-            "viral_edu": 4000
+            "crime_doc": 80000,
+            "comedy_skit": 80000,
+            "action_hype": 80000,
+            "movie_cinema": 80000,
+            "viral_edu": 80000
         }
     },
     "HOUSE_3_VISUAL_DIRECTOR": {
-        "target": 20000,
+        "target": 400000,
         "sub_rooms": {
-            "depth_3d_shaders": 4000,
-            "forensic_canvas": 4000,
-            "motion_hud_cards": 4000,
-            "color_grade_lighting": 4000,
-            "broll_composition": 4000
+            "depth_3d_shaders": 80000,
+            "forensic_canvas": 80000,
+            "motion_hud_cards": 80000,
+            "color_grade_lighting": 80000,
+            "broll_composition": 80000
         }
     },
     "HOUSE_4_SOUND_AND_CUT_EDITOR": {
-        "target": 20000,
+        "target": 400000,
         "sub_rooms": {
-            "cut_velocity_cpm": 4000,
-            "sfx_riser_impacts": 4000,
-            "comedic_silence_timing": 4000,
-            "multi_voice_archival": 4000,
-            "lufs_ducking_mix": 4000
+            "cut_velocity_cpm": 80000,
+            "sfx_riser_impacts": 80000,
+            "comedic_silence_timing": 80000,
+            "multi_voice_archival": 80000,
+            "lufs_ducking_mix": 80000
         }
     },
     "HOUSE_5_COPILOT_AND_REFLEXION": {
-        "target": 20000,
+        "target": 400000,
         "sub_rooms": {
-            "director_chat_commands": 10000,
-            "reflexion_mistake_fixes": 10000
+            "director_chat_commands": 200000,
+            "reflexion_mistake_fixes": 200000
         }
     }
 }
-TOTAL_CAP = 100000
+TOTAL_CAP = 2000000
+MILESTONE_STEP = 100000
 
 
 def load_harvest_state() -> Dict[str, Any]:
@@ -572,6 +573,10 @@ def load_harvest_state() -> Dict[str, Any]:
     default_state: Dict[str, Any] = {
         "total_records": 0,
         "target_total": TOTAL_CAP,
+        "milestone_step": MILESTONE_STEP,
+        "current_milestone_cap": MILESTONE_STEP,
+        "milestone_status": "HARVESTING",
+        "last_harvested_item": None,
         "houses": {},
         "processed_ids": {
             "editing": set(),
@@ -623,7 +628,17 @@ def load_harvest_state() -> Dict[str, Any]:
                     default_state["total_records"] = data["total_records"]
                     default_state["counts"]["total"] = data["total_records"]
                 if "target_total" in data:
-                    default_state["target_total"] = data["target_total"]
+                    default_state["target_total"] = max(int(data["target_total"]), TOTAL_CAP)
+                if "milestone_step" in data:
+                    default_state["milestone_step"] = int(data["milestone_step"])
+                if "current_milestone_cap" in data:
+                    default_state["current_milestone_cap"] = int(data["current_milestone_cap"])
+                if "milestone_status" in data:
+                    default_state["milestone_status"] = data["milestone_status"]
+                if "last_harvested_item" in data:
+                    default_state["last_harvested_item"] = data["last_harvested_item"]
+                if "synced_reflexion_keys" in data:
+                    default_state["synced_reflexion_keys"] = data["synced_reflexion_keys"]
                 if "processed_ids" in data:
                     for task in ("editing", "hooks", "storytelling", "visual_audio"):
                         task_ids = data.get("processed_ids", {}).get(task, [])
@@ -643,9 +658,22 @@ def load_harvest_state() -> Dict[str, Any]:
 
 def save_harvest_state(state: Dict[str, Any]):
     """Persists 5-House harvest state checkpoint to C:\\cf_training\\harvest_state.json."""
+    total_rec = state.get("total_records", state.get("counts", {}).get("total", 0))
+    milestone_cap = int(state.get("current_milestone_cap") or MILESTONE_STEP)
+    target_tot = max(int(state.get("target_total") or TOTAL_CAP), TOTAL_CAP)
+    m_status = state.get("milestone_status") or "HARVESTING"
+    if total_rec >= target_tot:
+        m_status = "COMPLETED_2M"
+    elif total_rec >= milestone_cap:
+        m_status = "PAUSED_AT_100K_CHECKPOINT"
+
     save_data = {
-        "total_records": state.get("total_records", state.get("counts", {}).get("total", 0)),
-        "target_total": state.get("target_total", TOTAL_CAP),
+        "total_records": total_rec,
+        "target_total": target_tot,
+        "milestone_step": int(state.get("milestone_step") or MILESTONE_STEP),
+        "current_milestone_cap": milestone_cap,
+        "milestone_status": m_status,
+        "last_harvested_item": state.get("last_harvested_item"),
         "houses": state.get("houses", {}),
         "processed_ids": {k: list(v) if isinstance(v, set) else v for k, v in state.get("processed_ids", {}).items()},
         "counts": state.get("counts", {}),
@@ -655,6 +683,7 @@ def save_harvest_state(state: Dict[str, Any]):
         "hf_offsets": state.get("hf_offsets", {
             "imdb": 0, "rotten_tomatoes": 0, "dolly": 0
         }),
+        "synced_reflexion_keys": state.get("synced_reflexion_keys", []),
         "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
     try:
@@ -722,6 +751,13 @@ def record_to_house_quota(
 
     state["total_records"] = state.get("total_records", 0) + 1
     state["counts"]["total"] = state["total_records"]
+    state["last_harvested_item"] = {
+        "house": house,
+        "sub_room": sub_room,
+        "genre": genre,
+        "preview": str(record.get("input") or record.get("instruction") or "")[:90],
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
     save_harvest_state(state)
     return True
 
@@ -1113,8 +1149,19 @@ def assemble_spoken_sentences(raw_segments: List[Dict[str, Any]]) -> List[Dict[s
     return sentences
 
 
+_YT_SUB_429_CONSECUTIVE = 0
+_YT_SUB_429_COOLDOWN_UNTIL = 0.0
+
+
+def is_yt_subtitles_on_cooldown() -> bool:
+    return time.time() < _YT_SUB_429_COOLDOWN_UNTIL
+
+
 def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Extracts genuine spoken dialogue lines from subtitles/captions without downloading video."""
+    global _YT_SUB_429_CONSECUTIVE, _YT_SUB_429_COOLDOWN_UNTIL
+    if is_yt_subtitles_on_cooldown():
+        return []
     all_subs = {**info.get("automatic_captions", {}), **info.get("subtitles", {})}
     subs = None
     for k in ("en", "en-US", "en-GB", "en-CA", "en-orig", "en-IE", "en-NZ"):
@@ -1175,9 +1222,16 @@ def extract_subtitles_stream(info: Dict[str, Any]) -> List[Dict[str, Any]]:
                 if clean and not clean.startswith("WEBVTT") and not clean.isdigit():
                     raw_chunks.append({"start": 0.0, "duration": 3.0, "end": 3.0, "text": clean})
 
+        _YT_SUB_429_CONSECUTIVE = 0
         return assemble_spoken_sentences(raw_chunks)
     except Exception as e:
-        print(f"     [WARN] Subtitle stream download error: {e}")
+        err_s = str(e)
+        print(f"     [WARN] Subtitle stream download error: {err_s}")
+        if "429" in err_s or "too many requests" in err_s.lower():
+            _YT_SUB_429_CONSECUTIVE += 1
+            if _YT_SUB_429_CONSECUTIVE >= 3:
+                _YT_SUB_429_COOLDOWN_UNTIL = time.time() + 900.0
+                print("     [YT 429 CIRCUIT BREAKER] 3 consecutive HTTP 429 errors on YouTube subtitles. Auto-skipping YouTube for 15m and continuing via Hugging Face REST Streaming!")
         return []
 
 
@@ -2257,6 +2311,8 @@ def run_balanced_plan(
     total_harvested_cycle = 0
     tasks_order = ["editing", "hooks", "storytelling", "visual_audio"]
     for task_name in tasks_order:
+        if is_yt_subtitles_on_cooldown():
+            break
         current_cnt = state["counts"].get(task_name, 0)
         target_cnt = TASK_BALANCED_TARGETS.get(task_name, 1500)
         if current_cnt >= target_cnt:
@@ -2277,6 +2333,9 @@ def run_balanced_plan(
         task_processed = state["processed_ids"].get(task_name, set())
 
         for q_offset in range(len(queries)):
+            if is_yt_subtitles_on_cooldown():
+                print("     [YT 429 COOLDOWN] Skipping remaining YouTube queries for this cycle; returning to Hugging Face REST Streaming.")
+                break
             if harvested_for_task >= count_per_task:
                 break
             if state["counts"].get(task_name, 0) >= target_cnt:
@@ -2292,6 +2351,8 @@ def run_balanced_plan(
             time.sleep(round(random.uniform(2.0, 3.5), 2))
 
             for item in items:
+                if is_yt_subtitles_on_cooldown():
+                    break
                 if harvested_for_task >= count_per_task:
                     break
                 res = harvest_video_entry(
@@ -2327,20 +2388,20 @@ def run_continuous_harvest(
     state: Dict[str, Any],
     count_per_task: int = 5,
     cooldown_seconds: int = 90,
-    target_total: int = 6000,
+    target_total: int = 2000000,
     visual_cuts: bool = False
 ):
     """
-    Continuous auto-looping daemon that runs cycles indefinitely until target_total (6,000) is reached.
-    - Two-tier pacing: 4.5s-6.5s per video, 90s inter-cycle cooldown.
-    - Auto-backoff: 120s on HTTP 429 or network timeouts.
-    - Micro-batches: 5 videos per task (20 videos per cycle).
-    - Query rotation: rotates across 25+ diverse search queries per task.
-    - Zero-disk bloat: all temp files purged immediately.
+    Continuous auto-looping daemon that runs cycles indefinitely towards target_total (2,000,000)
+    with 100,000-record Phase Milestone Checkpoints.
+    - When total_records hits current_milestone_cap (e.g. 100,000), pauses cleanly at the checkpoint
+      until the user approves continuing to the next 100,000 milestone towards 2,000,000.
     """
+    state["target_total"] = max(int(target_total), TOTAL_CAP)
     print("\n==================================================================")
     print("CONTINUOUS AUTO-PACED DATASET HARVESTER DAEMON STARTED (--continuous)")
-    print(f"Target Total: {target_total} examples in {DATASET_PATH}")
+    print(f"Master Target Total: {state['target_total']:,} examples in {DATASET_PATH}")
+    print(f"Current Milestone Checkpoint: {state.get('current_milestone_cap', MILESTONE_STEP):,} (Step: {MILESTONE_STEP:,})")
     print(f"Micro-Batch: {count_per_task} videos per task ({count_per_task * 4} videos/cycle)")
     print("Per-Video Delay: 4.5s - 6.5s (Guarantees < 12 RPM, respects Gemini 15 RPM ceiling)")
     print(f"Inter-Cycle Cooldown: {cooldown_seconds}s sleep between cycles (prevents YouTube IP blocks)")
@@ -2352,18 +2413,40 @@ def run_continuous_harvest(
     query_pointers = state.get("query_indices", {t: 0 for t in ["editing", "hooks", "storytelling", "visual_audio"]})
 
     while True:
-        total_now = state["counts"].get("total", 0)
-        if total_now >= target_total:
-            print(f"\n[MASTER GOAL REACHED] Dataset reached {total_now}/{target_total} examples! Daemon completed.")
+        total_now = state.get("total_records", state["counts"].get("total", 0))
+        master_target = int(state.get("target_total") or TOTAL_CAP)
+        milestone_cap = int(state.get("current_milestone_cap") or MILESTONE_STEP)
+
+        if total_now >= master_target:
+            state["milestone_status"] = "COMPLETED_2M"
+            save_harvest_state(state)
+            print(f"\n[MASTER 2,000,000 GOAL REACHED] Dataset reached {total_now:,}/{master_target:,} examples! Daemon completed.")
             break
 
-        all_done = all(state["counts"].get(t, 0) >= TASK_BALANCED_TARGETS[t] for t in TASK_BALANCED_TARGETS)
-        if all_done:
-            print(f"\n[ALL TASK TARGETS MET] Total records: {total_now}. Daemon completed.")
-            break
+        # 100,000-Record Milestone Checkpoint Gate: pause at each 100k milestone until user continues
+        if total_now >= milestone_cap:
+            state["milestone_status"] = "PAUSED_AT_100K_CHECKPOINT"
+            save_harvest_state(state)
+            print(
+                f"\n[100K MILESTONE CHECKPOINT REACHED] Harvested {total_now:,} / {milestone_cap:,} records "
+                f"(Master Goal: {master_target:,}).\n"
+                f"Waiting for user approval to continue to {min(master_target, milestone_cap + MILESTONE_STEP):,} "
+                f"(Click 'Continue Next 100k' in Studio UI or run with --continue-milestone)..."
+            )
+            time.sleep(15)
+            reloaded = load_harvest_state()
+            state["current_milestone_cap"] = reloaded.get("current_milestone_cap", milestone_cap)
+            state["milestone_status"] = reloaded.get("milestone_status", "PAUSED_AT_100K_CHECKPOINT")
+            continue
+
+        state["milestone_status"] = "HARVESTING"
+        save_harvest_state(state)
 
         print(f"\n==================================================================")
-        print(f">>> DAEMON CYCLE #{cycle} STARTING (Total Harvested So Far: {total_now} / {target_total}) <<<")
+        print(
+            f">>> DAEMON CYCLE #{cycle} STARTING "
+            f"(Live Progress: {total_now:,} / Milestone {milestone_cap:,} | Master Goal: {master_target:,}) <<<"
+        )
         print(f"==================================================================")
 
         # 1. Sync any new Reflexion mistake fixes into HOUSE_5_COPILOT_AND_REFLEXION
@@ -2376,50 +2459,60 @@ def run_continuous_harvest(
         if hf_added > 0:
             print(f"     [HF REST STREAM] Streamed +{hf_added} real records into Houses 1, 2, 5")
 
-        # 3. Harvest multi-genre YouTube videos via 0-quota search & subtitle streaming
-        cycle_added = run_balanced_plan(
-            state,
-            count_per_task=count_per_task,
-            visual_cuts=visual_cuts,
-            query_pointers=query_pointers
-        )
+        # 3. Harvest multi-genre YouTube videos via 0-quota search & subtitle streaming (skip if on 429 cooldown)
+        if is_yt_subtitles_on_cooldown():
+            rem_yt = int(max(0, _YT_SUB_429_COOLDOWN_UNTIL - time.time()))
+            print(f"     [YT 429 COOLDOWN] Skipping YouTube batch ({rem_yt}s remaining); continuing live via Hugging Face REST Streaming.")
+            cycle_added = 0
+        else:
+            cycle_added = run_balanced_plan(
+                state,
+                count_per_task=count_per_task,
+                visual_cuts=visual_cuts,
+                query_pointers=query_pointers
+            )
 
         total_after = state.get("total_records", state["counts"].get("total", 0))
         print(f"\n==================================================================")
         print(f">>> DAEMON CYCLE #{cycle} FINISHED (+{cycle_added + hf_added + ref_added} new examples added) <<<")
-        print(f"5-House 100,000-Quota Status (Total: {total_after:,} / {target_total:,}):")
+        print(f"5-House 2,000,000-Quota Status (Total: {total_after:,} / Milestone: {milestone_cap:,} / Master: {master_target:,}):")
         for h_k, h_v in state.get("houses", {}).items():
             h_cnt = h_v.get("count", 0)
-            h_tgt = h_v.get("target", 20000)
+            h_tgt = h_v.get("target", 400000)
             h_st = h_v.get("status", "OPEN")
-            print(f"  - {h_k:<28}: {h_cnt:>6,} / {h_tgt:>6,} [{h_st}]")
+            print(f"  - {h_k:<28}: {h_cnt:>7,} / {h_tgt:>7,} [{h_st}]")
         print(f"==================================================================")
 
-        if total_after >= target_total:
-            print(f"\n[MASTER GOAL REACHED] Reached {total_after}/{target_total} records! Daemon completed.")
+        if total_after >= master_target:
+            state["milestone_status"] = "COMPLETED_2M"
+            save_harvest_state(state)
+            print(f"\n[MASTER GOAL REACHED] Reached {total_after:,}/{master_target:,} records! Daemon completed.")
             break
 
-        print(f"\n[INTER-CYCLE COOLDOWN] Completed cycle. Sleeping {cooldown_seconds}s before Cycle #{cycle + 1}...")
-        for remaining in range(cooldown_seconds, 0, -15):
+        effective_cooldown = 12 if is_yt_subtitles_on_cooldown() else cooldown_seconds
+        print(f"\n[INTER-CYCLE COOLDOWN] Completed cycle. Sleeping {effective_cooldown}s before Cycle #{cycle + 1}...")
+        for remaining in range(effective_cooldown, 0, -12):
             print(f"     ... cooldown: {remaining}s remaining ...")
-            time.sleep(min(15, remaining))
+            time.sleep(min(12, remaining))
         cycle += 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description="5-House 100,000-Quota Video Dataset Harvester")
+    parser = argparse.ArgumentParser(description="5-House 2,000,000-Quota Video Dataset Harvester (100k Milestones)")
     parser.add_argument("--task", choices=["editing", "hooks", "storytelling", "visual_audio", "all"], default="all",
                         help="Specific production task to harvest")
     parser.add_argument("--continuous", action="store_true",
-                        help="Run continuous auto-paced daemon looping until 100,000 target is reached")
+                        help="Run continuous auto-paced daemon looping towards 2,000,000 target with 100k checkpoints")
+    parser.add_argument("--continue-milestone", action="store_true",
+                        help="Advance current 100,000 milestone checkpoint by +100,000 towards 2,000,000")
     parser.add_argument("--cooldown", type=int, default=90,
                         help="Inter-cycle cooldown in seconds for continuous mode (default: 90s)")
     parser.add_argument("--run-balanced-plan", action="store_true",
                         help="Run master balanced distribution plan cycle across all tasks")
     parser.add_argument("--count", type=int, default=10,
                         help="Number of videos per task in balanced plan or per query (default: 10)")
-    parser.add_argument("--target-total", type=int, default=100000,
-                        help="Total dataset target size (default: 100,000)")
+    parser.add_argument("--target-total", type=int, default=2000000,
+                        help="Total dataset target size (default: 2,000,000)")
     parser.add_argument("--stream-hf", action="store_true",
                         help="Stream batch directly from Hugging Face Datasets Server REST API")
     parser.add_argument("--query", help="Custom search query")
@@ -2435,6 +2528,18 @@ def main():
     for t, cnt in state["counts"].items():
         if t != "total":
             print(f"  - Task [{t}]: {cnt} records")
+
+    if args.continue_milestone:
+        cur_cap = int(state.get("current_milestone_cap") or MILESTONE_STEP)
+        master_tgt = max(int(state.get("target_total") or TOTAL_CAP), TOTAL_CAP)
+        next_cap = min(master_tgt, cur_cap + MILESTONE_STEP)
+        state["target_total"] = master_tgt
+        state["current_milestone_cap"] = next_cap
+        state["milestone_status"] = "HARVESTING"
+        save_harvest_state(state)
+        print(f"[MILESTONE ADVANCED] Checkpoint raised from {cur_cap:,} -> {next_cap:,} (Master Goal: {master_tgt:,}).")
+        if not args.continuous:
+            return
 
     # Quick Verification Mode: exactly 1 video per task (4 videos total)
     if args.verify:

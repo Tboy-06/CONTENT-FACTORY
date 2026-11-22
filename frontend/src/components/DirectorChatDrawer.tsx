@@ -183,7 +183,7 @@ export default function DirectorChatDrawer({
           role: 'director',
           content: `**Job #${jobId} Storyboard Deconstructed**:\n\n` +
             `• **Pacing**: ${res.pacing?.cuts_per_minute || 0} cuts/min (avg cut ${res.pacing?.avg_cut_interval || 0}s)\n` +
-            `• **Pacing Rhythm**: 16 beats across ${res.duration || 50}s (${res.dimensions?.aspect_ratio})\n` +
+            `• **Pacing Rhythm**: ${res.pacing?.cuts_count ?? 0} cuts across ${res.duration ?? 0}s (${res.dimensions?.aspect_ratio || '9:16'})\n` +
             `• **Narration**: ${res.audio?.words_per_minute || 0} WPM (${res.audio?.total_words || 0} words)\n` +
             `What modifications would you like me to execute?`,
           timestamp: new Date()
@@ -267,30 +267,30 @@ export default function DirectorChatDrawer({
   ];
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] md:w-[560px] bg-slate-950/95 border-l border-slate-800 shadow-2xl flex flex-col backdrop-blur-xl animate-in slide-in-from-right duration-200">
+    <div className="light-adapt-surface fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] md:w-[560px] bg-[var(--shell-bg)] border-l border-[var(--shell-border)] shadow-2xl flex flex-col backdrop-blur-2xl animate-in slide-in-from-right duration-200 text-[var(--tx)]">
       
       {/* Top Header */}
-      <div className="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
+      <div className="p-4 border-b border-[var(--ln-subtle)] flex items-center justify-between bg-[var(--gl)]">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+          <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
             <Sparkles size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-white tracking-wide">AI Director Studio</h2>
+              <h2 className="text-sm font-bold text-[var(--tx)] tracking-wide">AI Director Studio</h2>
               {jobId && (
-                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-blue-900/60 border border-blue-600/40 text-blue-300">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
                   Job #{jobId}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400">Agentic timeline commands & video deconstruction</p>
+            <p className="text-[11px] text-[var(--mu)]">Agentic timeline commands & video deconstruction</p>
           </div>
         </div>
 
         <button 
           onClick={onClose}
-          className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors"
+          className="p-1.5 text-[var(--mu)] hover:text-[var(--tx)] rounded-lg hover:bg-[var(--gl2)] transition-colors cursor-pointer"
           title="Close Director Studio"
         >
           <X size={18} />
@@ -298,61 +298,61 @@ export default function DirectorChatDrawer({
       </div>
 
       {/* Model Engine Selector */}
-      <div className="px-4 py-2.5 border-b border-slate-800/60 bg-slate-900/20 flex items-center justify-between text-xs">
-        <span className="text-slate-400 font-medium flex items-center gap-1.5">
-          <Sliders size={13} className="text-slate-400" />
+      <div className="px-4 py-2.5 border-b border-[var(--ln-subtle)] bg-[var(--gl)] flex items-center justify-between text-xs gap-2">
+        <span className="text-[var(--mu)] font-semibold flex items-center gap-1.5 shrink-0">
+          <Sliders size={13} />
           Model Router:
         </span>
-        <div className="flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-lg border border-slate-800">
+        <div className="flex items-center gap-1 bg-[var(--gl2)] p-0.5 rounded-xl border border-[var(--input-border)] overflow-x-auto">
           <button
             onClick={() => setEngineMode('offline_spark')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
               engineMode === 'offline_spark'
-                ? 'bg-emerald-950 border border-emerald-500/50 text-emerald-300 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-600 text-white shadow-xs preserve-white'
+                : 'text-[var(--mu)] hover:text-[var(--tx)]'
             }`}
             title="Local Ollama Spark-X2.5-4B (0 MB VRAM, 100% Offline, $0 Spend)"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-emerald-400"></span>
             Offline Spark
           </button>
 
           <button
             onClick={() => setEngineMode('auto')}
-            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
               engineMode === 'auto'
-                ? 'bg-blue-950 border border-blue-500/50 text-blue-300 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-600 text-white shadow-xs preserve-white'
+                : 'text-[var(--mu)] hover:text-[var(--tx)]'
             }`}
             title="Auto Hybrid Waterfall (Gemini AI Studio -> OpenRouter :free -> Pollinations -> Local Spark)"
           >
-            <span className="w-1.5 h-1.5 rounded-sm bg-blue-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-sky-300"></span>
             Auto Hybrid
           </button>
 
           <button
             onClick={() => setEngineMode('openrouter_free')}
-            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
               engineMode === 'openrouter_free'
-                ? 'bg-amber-950 border border-amber-500/50 text-amber-300 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                : 'text-[var(--mu)] hover:text-[var(--tx)]'
             }`}
-            title="Strictly-Free ($0.00 :free) OpenRouter 6-Stage Router (Nemotron 3.5 / Gemma 4)"
+            title="Strictly-Free ($0.00 :free) OpenRouter 6-Stage Router"
           >
-            <span className="w-1.5 h-1.5 rounded-sm bg-amber-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-amber-300"></span>
             OpenRouter $0
           </button>
 
           <button
             onClick={() => setEngineMode('cloud')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
               engineMode === 'cloud'
-                ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-600 text-white shadow-xs preserve-white'
+                : 'text-[var(--mu)] hover:text-[var(--tx)]'
             }`}
             title="Cloud Models (Gemini / Kimi K3)"
           >
-            <span className="w-1.5 h-1.5 rounded-sm bg-cyan-400"></span>
+            <span className="w-1.5 h-1.5 rounded-sm bg-cyan-300"></span>
             Cloud
           </button>
         </div>
@@ -414,15 +414,15 @@ export default function DirectorChatDrawer({
             onClick={() => setShowHouseQuotas(prev => !prev)}
             className={`!py-1 !px-2.5 text-[11px] border flex items-center gap-1.5 rounded-lg transition-colors ${
               showHouseQuotas
-                ? 'bg-amber-950/80 border-amber-500/60 text-amber-200'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                ? 'bg-amber-500/20 border-amber-500/60 text-amber-700 dark:text-amber-300'
+                : 'bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border-[var(--input-border)]'
             }`}
-            title="5-House 100,000 Brain Quota Architecture"
+            title="5-House 2,000,000 Master Brain Quota Architecture"
           >
-            <Layers size={12} className="text-amber-400" />
+            <Layers size={12} className="text-amber-500" />
             <span>Brain Quota</span>
             {houseQuotasData?.data?.total_records !== undefined && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                 {houseQuotasData.data.total_records.toLocaleString()}
               </span>
             )}
@@ -570,53 +570,66 @@ export default function DirectorChatDrawer({
       )}
 
       {/* 5-House Knowledge Quota Panel */}
-      {showHouseQuotas && (
-        <div className="p-3.5 bg-slate-900/90 border-b border-slate-800 text-xs space-y-2.5 max-h-72 overflow-y-auto animate-in fade-in">
-          <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-            <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px] uppercase tracking-wider">
-              <Layers size={13} className="text-amber-400" />
-              <span>5-House Knowledge Quota (100,000 Cap)</span>
+      {showHouseQuotas && (() => {
+        const totalRecs = houseQuotasData?.data?.total_records ?? 0;
+        const targetTot = houseQuotasData?.data?.target_total ?? 0;
+        const milestoneCap = houseQuotasData?.data?.current_milestone_cap ?? 0;
+        const milestoneState = houseQuotasData?.data?.milestone_status ?? 'LOADING';
+
+        return (
+          <div className="p-3.5 bg-[var(--gl)] border-b border-[var(--ln-subtle)] text-xs space-y-2.5 max-h-72 overflow-y-auto animate-in fade-in">
+            <div className="flex items-center justify-between flex-wrap gap-1 pb-1.5 border-b border-[var(--ln-subtle)]">
+              <div className="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-300 text-[11px] uppercase tracking-wider">
+                <Layers size={13} className="text-amber-500" />
+                <span>5-House Quota ({targetTot > 0 ? `${targetTot.toLocaleString()} Goal` : 'Live'})</span>
+              </div>
+              <span className="font-mono text-[10px] text-[var(--mu)]">
+                {totalRecs.toLocaleString()} / {targetTot > 0 ? targetTot.toLocaleString() : '--'} ({targetTot > 0 ? ((totalRecs / targetTot) * 100).toFixed(2) : '0.00'}%) · Cap: {milestoneCap > 0 ? milestoneCap.toLocaleString() : '--'} ({milestoneState})
+              </span>
             </div>
-            <span className="font-mono text-[10px] text-slate-400">
-              Total: {(houseQuotasData?.data?.total_records || 0).toLocaleString()} / 100,000 ({(((houseQuotasData?.data?.total_records || 0) / 100000) * 100).toFixed(1)}%)
-            </span>
-          </div>
 
-          <div className="space-y-2">
-            {Object.entries(houseQuotasData?.data?.houses || {}).map(([houseKey, houseData]: [string, any]) => {
-              const count = houseData?.count || 0;
-              const target = houseData?.target || 20000;
-              const pct = Math.min(100, (count / target) * 100);
-              const isFull = houseData?.status === 'FULL' || count >= target;
-              const label = houseKey.replace('HOUSE_', '').replace(/_/g, ' ');
+            <div className="space-y-2">
+              {Object.entries(houseQuotasData?.data?.houses || {}).map(([houseKey, houseData]: [string, any]) => {
+                const count = houseData?.count ?? 0;
+                const target = houseData?.target ?? 0;
+                const pct = target > 0 ? Math.min(100, (count / target) * 100) : 0;
+                const isFull = houseData?.status === 'FULL' || (target > 0 && count >= target);
+                const label = houseKey.replace(/^HOUSE_\d+_/, '').replace(/_/g, ' ');
 
-              return (
-                <div key={houseKey} className="bg-slate-950/70 p-2 rounded-lg border border-slate-800 space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-slate-200 truncate">{label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] text-slate-400">{count.toLocaleString()} / {target.toLocaleString()}</span>
-                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                        isFull ? 'bg-red-950 text-red-300 border border-red-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
-                      }`}>
-                        {isFull ? 'FULL' : 'OPEN'}
-                      </span>
+                return (
+                  <div key={houseKey} className="glass-subcard p-2 space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[var(--tx)] truncate">{label}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-[var(--mu)]">
+                          {count.toLocaleString()} / {target.toLocaleString()}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${
+                            isFull
+                              ? 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40'
+                              : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40'
+                          }`}
+                        >
+                          {isFull ? 'FULL' : 'OPEN'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 bg-[var(--ln-subtle)] rounded-sm overflow-hidden">
+                      <div
+                        className={`h-full rounded-sm transition-all duration-500 ${
+                          isFull ? 'bg-amber-500' : 'bg-blue-600'
+                        }`}
+                        style={{ width: `${Math.max(pct, count > 0 ? 1.5 : 0)}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-800 rounded-sm overflow-hidden">
-                    <div 
-                      className={`h-full rounded-sm transition-all duration-500 ${
-                        isFull ? 'bg-amber-400' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 5-Genre Re-Cut Action Bar */}
       {jobId && (
@@ -657,12 +670,12 @@ export default function DirectorChatDrawer({
               <div
                 className={`max-w-[88%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                   isUser
-                    ? 'bg-blue-600 text-white rounded-br-sm shadow-md'
-                    : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-bl-sm shadow-lg'
+                    ? 'bg-blue-600 text-white preserve-white rounded-br-sm shadow-md'
+                    : 'glass-panel rounded-bl-sm shadow-sm'
                 }`}
               >
                 {!isUser && (
-                  <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-slate-800/80 text-[10px] font-semibold text-amber-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[var(--ln-subtle)] text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                     <Sparkles size={11} />
                     <span>Creative Director</span>
                   </div>
@@ -839,15 +852,15 @@ export default function DirectorChatDrawer({
       </div>
 
       {/* Quick Prompts Bar */}
-      <div className="px-4 py-2 border-t border-slate-800/60 bg-slate-900/20">
-        <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1.5">Director Suggestions</span>
+      <div className="px-4 py-2.5 border-t border-[var(--ln-subtle)] bg-[var(--gl)]">
+        <span className="text-[10px] uppercase font-bold text-[var(--mu)] block mb-1.5">Director Suggestions</span>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {quickPrompts.map((qp, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(qp)}
               disabled={chatMutation.isPending}
-              className="text-[11px] px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white whitespace-nowrap transition-colors shrink-0"
+              className="glass-subcard text-[11px] px-2.5 py-1 whitespace-nowrap shrink-0 cursor-pointer"
             >
               {qp}
             </button>
@@ -856,7 +869,7 @@ export default function DirectorChatDrawer({
       </div>
 
       {/* Input Form */}
-      <div className="p-3.5 border-t border-slate-800 bg-slate-900/60">
+      <div className="p-3.5 border-t border-[var(--ln-subtle)] bg-[var(--gl)]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -875,13 +888,13 @@ export default function DirectorChatDrawer({
             }}
             placeholder="Instruct the director: 'Change Beat 3 to a radar map flyover', 'Cut dead air'..."
             rows={2}
-            className="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40 text-xs text-white placeholder-slate-500 p-2.5 pr-10 resize-none outline-none leading-relaxed"
+            className="glass-input w-full text-xs p-2.5 pr-11 resize-none leading-relaxed"
           />
 
           <button
             type="submit"
             disabled={!prompt.trim() || chatMutation.isPending}
-            className="absolute right-2.5 bottom-2.5 p-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-30 disabled:hover:bg-amber-500 text-slate-950 transition-all font-semibold"
+            className="absolute right-2.5 bottom-2.5 p-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-30 disabled:hover:bg-amber-500 text-slate-950 transition-all font-semibold cursor-pointer"
             title="Execute Director Command"
           >
             {chatMutation.isPending ? (

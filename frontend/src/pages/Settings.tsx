@@ -1,10 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Shield, HardDrive, Trash2, Cpu, Mic, CheckCircle2, Globe, Server, Link as LinkIcon } from 'lucide-react';
-import { useSettings, useUpdateSettings, useClearAllJobs, useClearCache } from '../api/client';
+import {
+  Shield,
+  HardDrive,
+  Trash2,
+  Cpu,
+  CheckCircle2,
+  Globe,
+  ChevronRight,
+  KeyRound,
+  Save
+} from 'lucide-react';
+import {
+  useSettings,
+  useUpdateSettings,
+  useClearAllJobs,
+  useClearCache,
+  useCacheStatus
+} from '../api/client';
 import { Button, Badge } from '../components/ui';
 
 export default function Settings() {
   const { data: initialSettings, isLoading } = useSettings();
+  const { data: cache } = useCacheStatus();
   const updateMutation = useUpdateSettings();
   const clearJobsMutation = useClearAllJobs();
   const clearCacheMutation = useClearCache();
@@ -15,9 +32,12 @@ export default function Settings() {
     force_offline: false,
     custom_domain: 'localhost:3000',
     telegram_token: '',
-    gemini_key: ''
+    gemini_key: '',
+    openrouter_api_key: '',
+    moonshot_api_key: ''
   });
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     if (initialSettings) {
@@ -26,144 +46,205 @@ export default function Settings() {
   }, [initialSettings]);
 
   const handleSave = async () => {
+    setSaveError(false);
     try {
       await updateMutation.mutateAsync(settings);
-      setSaveStatus('Settings saved successfully.');
-      setTimeout(() => setSaveStatus(null), 3000);
+      setSaveStatus('Settings saved & masked safely.');
+      setTimeout(() => setSaveStatus(null), 3500);
     } catch {
+      setSaveError(true);
       setSaveStatus('Failed to save settings.');
     }
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-slate-400">Loading settings...</div>;
+    return <div className="p-10 text-center text-xs text-[var(--mu)]">Loading studio settings...</div>;
   }
 
   return (
-    <div className="min-h-full flex flex-col max-w-4xl mx-auto w-full pb-8 space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-3 mb-2 shrink-0">
+    <div className="animate-in fade-in min-h-full flex flex-col max-w-4xl mx-auto w-full pb-10 space-y-5">
+      {/* Header */}
+      <div className="flex justify-between items-center flex-wrap gap-3 shrink-0">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white">System Settings</h1>
-          <div className="text-slate-400 text-xs mt-1">Configure local offline engines, network domain routing, and disk storage.</div>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--tx)]">System Settings</h1>
+          <div className="text-[var(--mu)] text-xs mt-0.5">
+            Configure local offline engines, free-tier API keys, network routing, and disk storage.
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {saveStatus && <span className="text-xs text-emerald-400 font-medium">{saveStatus}</span>}
+        <div className="flex items-center gap-2.5">
+          {saveStatus && (
+            <span
+              className={`text-xs font-semibold ${
+                saveError ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
+              {saveStatus}
+            </span>
+          )}
           <Button variant="primary" onClick={handleSave} disabled={updateMutation.isPending}>
-            {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
+            <Save size={13} />
+            <span>{updateMutation.isPending ? 'Saving...' : 'Save Settings'}</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 flex-1 overflow-y-auto pb-8">
-        
+      <div className="flex flex-col gap-5 flex-1">
         {/* Zero-Cost Architecture Status */}
-        <div className="glass-panel p-5 bg-slate-900 border border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield size={16} className="text-blue-400" />
-            <h2 className="font-semibold text-white text-sm">Local Engine Architecture</h2>
-            <Badge variant="success">Zero Subscription Required</Badge>
+        <div className="glass-panel p-5">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/25">
+                <Shield size={16} />
+              </div>
+              <h2 className="font-bold text-[var(--tx)] text-sm">Local Zero-Cost Engine Architecture</h2>
+            </div>
+            <Badge variant="success">$0.00 Strictly Free Lock</Badge>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Content Factory is engineered to operate with zero third-party platform dependencies. Scriptwriting, voice synthesis via Edge-TTS, pan/zoom motion via FFmpeg, and frame composition run locally or via quota-free endpoints.
+          <p className="text-xs text-[var(--mu)] leading-relaxed">
+            Content Factory runs with zero paid subscriptions. Scriptwriting routes across strictly-free OpenRouter `:free` models, Gemini AI Studio free tier, and local Spark-X2.5-4B (`llama-server.exe`), while Edge-TTS, Pillow, and FFmpeg assemble video locally with beat-level caching.
           </p>
         </div>
 
         {/* Custom Domain & Network Configuration */}
-        <div className="glass-panel p-5 space-y-4 border border-slate-800 bg-slate-900">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <Globe size={16} className="text-blue-400" />
-              <h2 className="font-semibold text-white text-sm">Custom Domain & Network Routing</h2>
+        <div className="glass-panel p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--ln-subtle)]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/25">
+                <Globe size={16} />
+              </div>
+              <h2 className="font-bold text-[var(--tx)] text-sm">Custom Domain & Network Routing</h2>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-              <CheckCircle2 size={13} />
+            <Badge variant="success">
+              <CheckCircle2 size={12} />
               <span>Host Verified</span>
-            </div>
+            </Badge>
           </div>
 
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Bind Content Factory to a dedicated hostname or reverse proxy. DNS records must route to the listening host interface.
-          </p>
-
           <div className="space-y-3 text-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
               <div>
-                <span className="text-slate-200 font-medium text-xs">Primary Domain / FQDN</span>
-                <p className="text-slate-500 text-[11px]">Hostname used for frontend routing and asset links.</p>
+                <span className="text-[var(--tx)] font-semibold text-xs">Primary Domain / FQDN</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Hostname used for frontend routing and local studio asset links.
+                </p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-72">
-                <input
-                  type="text"
-                  value={settings.custom_domain || 'localhost:3000'}
-                  onChange={e => setSettings({ ...settings, custom_domain: e.target.value })}
-                  className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-950 text-slate-200 font-mono text-xs outline-none focus:border-blue-500 flex-1"
-                  placeholder="e.g. factory.local or 127.0.0.1:3000"
-                />
-              </div>
+              <input
+                type="text"
+                value={settings.custom_domain || 'localhost:3000'}
+                onChange={(e) => setSettings({ ...settings, custom_domain: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
+                placeholder="e.g. localhost:3000"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-md">
-                <div className="text-slate-500 text-[11px]">Binding Address</div>
-                <div className="text-slate-200 font-mono text-xs mt-0.5">0.0.0.0:3000</div>
+              <div className="glass-subcard p-3">
+                <div className="text-[var(--mu)] text-[11px]">Frontend Port</div>
+                <div className="text-[var(--tx)] font-mono font-semibold text-xs mt-0.5">localhost:3000</div>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-md">
-                <div className="text-slate-500 text-[11px]">Backend API Target</div>
-                <div className="text-slate-200 font-mono text-xs mt-0.5">127.0.0.1:8000</div>
+              <div className="glass-subcard p-3">
+                <div className="text-[var(--mu)] text-[11px]">Backend API Target</div>
+                <div className="text-[var(--tx)] font-mono font-semibold text-xs mt-0.5">127.0.0.1:8000</div>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-md">
-                <div className="text-slate-500 text-[11px]">SSL / TLS Status</div>
-                <div className="text-emerald-400 font-mono text-xs mt-0.5">Proxy Passthrough</div>
+              <div className="glass-subcard p-3">
+                <div className="text-[var(--mu)] text-[11px]">CORS Security Lock</div>
+                <div className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold text-xs mt-0.5">
+                  Localhost Restricted
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Local Brain & Voice Engine */}
-        <div className="glass-panel p-5 space-y-4 border border-slate-800 bg-slate-900">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-            <Cpu size={16} className="text-slate-300" />
-            <h2 className="font-semibold text-white text-sm">Script Engine & Narration Model</h2>
+        {/* Local Brain, Free-Tier Keys & Voice Engine */}
+        <div className="glass-panel p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--ln-subtle)]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                <Cpu size={16} />
+              </div>
+              <h2 className="font-bold text-[var(--tx)] text-sm">Script Engine, API Keys & Narration</h2>
+            </div>
+            <Badge variant="neutral">
+              <KeyRound size={11} />
+              <span>Secrets Masked</span>
+            </Badge>
           </div>
 
-          <div className="space-y-4 text-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
+          <div className="space-y-3.5 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
               <div>
-                <span className="text-slate-200 font-medium text-xs">Local Ollama Model</span>
-                <p className="text-slate-500 text-[11px]">Offline generation engine for script beats and structuring.</p>
+                <span className="text-[var(--tx)] font-semibold">Local Ollama / GGUF Model</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Offline generation engine for script beats and structuring (0 MB on D:\).
+                </p>
               </div>
               <input
                 type="text"
                 value={settings.ollama_model || 'SparkLLM/Spark-X2.5-4B'}
-                onChange={e => setSettings({ ...settings, ollama_model: e.target.value })}
-                className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-950 text-slate-200 font-mono text-xs outline-none focus:border-blue-500 w-full sm:w-64"
+                onChange={(e) => setSettings({ ...settings, ollama_model: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
                 placeholder="e.g. SparkLLM/Spark-X2.5-4B"
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
               <div>
-                <span className="text-slate-200 font-medium text-xs">Kimi K3 / Moonshot API Key</span>
-                <p className="text-slate-500 text-[11px]">Optional key for Kimi K3 2.8T MoE frontier model routing ($0 local RAM).</p>
+                <span className="text-[var(--tx)] font-semibold">OpenRouter Free API Key (`:free` Locked)</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Strictly restricted to `$0.00` free endpoints by double-lock verification.
+                </p>
+              </div>
+              <input
+                type="password"
+                value={settings.openrouter_api_key || ''}
+                onChange={(e) => setSettings({ ...settings, openrouter_api_key: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
+                placeholder="sk-or-v1-..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
+              <div>
+                <span className="text-[var(--tx)] font-semibold">Gemini AI Studio API Key</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Uses official `google-genai` v3 SDK for multimodal script & vision fallback.
+                </p>
+              </div>
+              <input
+                type="password"
+                value={settings.gemini_key || ''}
+                onChange={(e) => setSettings({ ...settings, gemini_key: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
+                placeholder="AIza..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
+              <div>
+                <span className="text-[var(--tx)] font-semibold">Kimi K3 / Moonshot API Key</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Optional key for Kimi K3 frontier model routing (zero local RAM footprint).
+                </p>
               </div>
               <input
                 type="password"
                 value={settings.moonshot_api_key || ''}
-                onChange={e => setSettings({ ...settings, moonshot_api_key: e.target.value })}
-                className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-950 text-slate-200 font-mono text-xs outline-none focus:border-blue-500 w-full sm:w-64"
+                onChange={(e) => setSettings({ ...settings, moonshot_api_key: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
                 placeholder="sk-..."
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-800/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
               <div>
-                <span className="text-slate-200 font-medium text-xs">Default Voice Profile</span>
-                <p className="text-slate-500 text-[11px]">Speech synthesis actor voice profile.</p>
+                <span className="text-[var(--tx)] font-semibold">Default Voice Profile</span>
+                <p className="text-[var(--mu)] text-[11px]">Speech synthesis neural voice profile.</p>
               </div>
               <select
                 value={settings.default_voice || 'en-US-ChristopherNeural'}
-                onChange={e => setSettings({ ...settings, default_voice: e.target.value })}
-                className="px-3 py-1.5 rounded-md border border-slate-700 bg-slate-950 text-slate-200 text-xs outline-none focus:border-blue-500 w-full sm:w-64"
+                onChange={(e) => setSettings({ ...settings, default_voice: e.target.value })}
+                className="glass-input px-3 py-2 text-xs w-full sm:w-72 cursor-pointer"
               >
                 <option value="en-US-ChristopherNeural">Christopher (Male, Narrative)</option>
                 <option value="en-US-AriaNeural">Aria (Female, Clear)</option>
@@ -172,63 +253,105 @@ export default function Settings() {
               </select>
             </div>
 
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between pt-1">
               <div>
-                <span className="text-slate-200 font-medium text-xs">Force Offline Processing</span>
-                <p className="text-slate-500 text-[11px]">Directs all inference exclusively to the local Ollama instance.</p>
+                <span className="text-[var(--tx)] font-semibold">Force Offline Processing</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Directs all inference exclusively to the local offline engine without outbound API calls.
+                </p>
               </div>
-              <button 
+              <button
                 type="button"
-                className={`w-10 h-5 rounded-md p-0.5 transition-colors border ${settings.force_offline ? 'bg-blue-600 border-blue-500' : 'bg-slate-800 border-slate-700'}`}
+                aria-label="Toggle Force Offline Processing"
+                className={`w-11 h-6 rounded-lg p-0.5 transition-colors border cursor-pointer ${
+                  settings.force_offline
+                    ? 'bg-blue-600 border-blue-500'
+                    : 'bg-[var(--gl2)] border-[var(--input-border)]'
+                }`}
                 onClick={() => setSettings({ ...settings, force_offline: !settings.force_offline })}
               >
-                <div className={`w-3.5 h-3.5 rounded-sm bg-white transition-transform ${settings.force_offline ? 'translate-x-5' : 'translate-x-0'}`} />
+                <div
+                  className={`w-4 h-4 rounded-md bg-white shadow-xs transition-transform ${
+                    settings.force_offline ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Storage Management & Data Control */}
-        <div className="glass-panel p-5 space-y-4 border border-slate-800 bg-slate-900">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-            <HardDrive size={16} className="text-slate-300" />
-            <h2 className="font-semibold text-white text-sm">Storage & Cache Maintenance</h2>
+        {/* Storage & Cache Maintenance (Tactile Action Stack) */}
+        <div className="glass-panel p-5 space-y-3">
+          <div className="flex items-center justify-between pb-2.5 border-b border-[var(--ln-subtle)]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                <HardDrive size={16} />
+              </div>
+              <div>
+                <h2 className="font-bold text-[var(--tx)] text-sm">Storage & Cache Maintenance</h2>
+                <p className="text-[11px] text-[var(--mu)]">
+                  Live temp footprint: <b className="font-mono text-[var(--tx)]">{cache?.temp_mb ?? '0.0'} MB</b> ({cache?.temp_count ?? 0} files)
+                </p>
+              </div>
+            </div>
+            <Badge variant="info">C:\cf_training\</Badge>
           </div>
 
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Manage local disk footprint. Clear temporary render chunks or reset factory job records.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                clearCacheMutation.mutate();
-              }}
+          <div className="space-y-2.5">
+            <button
+              type="button"
+              onClick={() => clearCacheMutation.mutate()}
               disabled={clearCacheMutation.isPending}
-              className="flex items-center gap-1.5 text-xs py-1.5 px-3"
+              className="glass-subcard w-full p-3.5 flex items-center justify-between text-left cursor-pointer disabled:opacity-50"
             >
-              <Trash2 size={13} />
-              <span>Purge Temp Cache</span>
-            </Button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <Trash2 size={14} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[var(--tx)]">
+                    {clearCacheMutation.isPending ? 'Purging Temp Cache...' : 'Purge Temp & Frame Cache'}
+                  </div>
+                  <div className="text-[11px] text-[var(--mu)]">
+                    Clears temporary render frames while preserving finished MP4s and 5-House training data.
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={15} className="text-[var(--mu)] shrink-0" />
+            </button>
 
-            <Button
-              variant="danger"
+            <button
+              type="button"
               onClick={() => {
-                if (confirm("Reset Data: This will remove all job records and intermediate render artifacts. Confirm?")) {
+                if (
+                  confirm(
+                    'Reset Data: This will remove all job records and intermediate render artifacts. Confirm?'
+                  )
+                ) {
                   clearJobsMutation.mutate();
                   clearCacheMutation.mutate();
                 }
               }}
               disabled={clearJobsMutation.isPending}
-              className="flex items-center gap-1.5 text-xs py-1.5 px-3"
+              className="glass-subcard w-full p-3.5 flex items-center justify-between text-left cursor-pointer hover:!border-red-500/50 disabled:opacity-50"
             >
-              <Trash2 size={13} />
-              <span>Reset Factory Records</span>
-            </Button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 flex items-center justify-center shrink-0">
+                  <Trash2 size={14} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-red-600 dark:text-red-400">
+                    {clearJobsMutation.isPending ? 'Resetting Factory Records...' : 'Reset Factory Job Records'}
+                  </div>
+                  <div className="text-[11px] text-[var(--mu)]">
+                    Deletes all SQLite job history rows and intermediate caches.
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={15} className="text-red-500 shrink-0" />
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   );

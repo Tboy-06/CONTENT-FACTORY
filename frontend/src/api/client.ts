@@ -501,6 +501,17 @@ export interface HouseQuotasResponse {
   data: {
     total_records: number;
     target_total: number;
+    milestone_step?: number;
+    current_milestone_cap?: number;
+    milestone_status?: string;
+    last_harvested_item?: {
+      house: string;
+      sub_room: string;
+      genre: string;
+      preview: string;
+      timestamp?: string;
+    } | null;
+    counts?: Record<string, number>;
     houses: Record<string, HouseQuota>;
     last_updated?: string;
   };
@@ -512,7 +523,18 @@ export function useHouseQuotas() {
     queryFn: async (): Promise<HouseQuotasResponse> => {
       return await api.get('/api/copilot/house-quotas');
     },
-    refetchInterval: 8000,
+    refetchInterval: 2500, // Real-time 2.5s telemetry polling
+  });
+}
+
+export function useContinueHarvesterMilestone() {
+  return useMutation({
+    mutationFn: async () => {
+      return await api.post('/api/copilot/harvester/continue-milestone');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['house-quotas'] });
+    },
   });
 }
 
@@ -525,5 +547,39 @@ export function useRecutGenre() {
       queryClient.invalidateQueries({ queryKey: ['job', variables.jobId] });
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
     }
+  });
+}
+
+export interface OpenRouterStageReport {
+  status: string;
+  free_models_count: number;
+  free_models: string[];
+  primary_free_model: string | null;
+  local_fallback_engine: string;
+}
+
+export interface OpenRouterCapabilitiesReport {
+  strict_zero_cost_lock: boolean;
+  api_key_configured: boolean;
+  harvester_openrouter_enabled: boolean;
+  catalog_total_scanned: number;
+  catalog_strictly_free_count: number;
+  last_catalog_refresh_epoch: number;
+  circuit_breaker: {
+    on_cooldown: boolean;
+    remaining_seconds: number;
+    last_status_code: number | null;
+    last_reason: string | null;
+  };
+  stages: Record<string, OpenRouterStageReport>;
+}
+
+export function useOpenRouterCapabilities() {
+  return useQuery({
+    queryKey: ['openrouter-capabilities'],
+    queryFn: async (): Promise<OpenRouterCapabilitiesReport> => {
+      return await api.get('/api/copilot/openrouter-capabilities');
+    },
+    refetchInterval: 30000,
   });
 }
