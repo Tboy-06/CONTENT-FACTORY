@@ -145,6 +145,34 @@ def _instantiate_gradio_client(client_cls: Any, space_id: str, token: Optional[s
         return client_cls(space_id, hf_token=token)
 
 
+def _ensure_starting_image(prompt: str, image_path: Optional[str]) -> str:
+    """
+    Ensures a valid starting keyframe image exists on disk for Image-to-Video Spaces
+    (`Lightricks/LTX-2.5` `/run` and `Wan 2.2` `/generate_video` both require a starting image).
+    If `image_path` is not provided, generates or creates a cinematic 832x1472 starting plate in C:\\cf_training\\temp\\ai_clips\\.
+    """
+    if image_path and os.path.exists(image_path):
+        return image_path
+
+    os.makedirs(AI_CLIPS_DIR, exist_ok=True)
+    p_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:10]
+    fallback_img = os.path.join(AI_CLIPS_DIR, f"start_frame_{p_hash}.jpg")
+    if os.path.exists(fallback_img) and os.path.getsize(fallback_img) > 1000:
+        return fallback_img
+
+    # Create a clean dark cinema keyframe canvas via Pillow (fast, 0 network failure risk)
+    try:
+        from PIL import Image, ImageDraw
+        img = Image.new("RGB", (832, 1472), color=(12, 16, 26))
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([36, 36, 832 - 36, 1472 - 36], outline=(45, 58, 82), width=2)
+        img.save(fallback_img, quality=92)
+    except Exception:
+        with open(fallback_img, "wb") as f:
+            f.write(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9")
+    return fallback_img
+
+
 def _predict_on_space(
     client: Any,
     space_id: str,
@@ -155,8 +183,11 @@ def _predict_on_space(
     """
     Inspects the Gradio Space's endpoints via `view_api()` and calls `predict()`
     using resilient parameter mapping on a single connection.
+    Supports exact live signatures of `Lightricks/LTX-2.5` (`/run` with `prompt`, `image_path`, `duration_s`)
+    and `zerogpu-aoti/wan2-2-fp8da-aoti-faster` (`/generate_video` with `input_image`, `prompt`, `duration_seconds`).
     """
-    has_image = bool(image_path and os.path.exists(image_path))
+    effective_img = _ensure_starting_image(prompt, image_path)
+    has_image = bool(effective_img and os.path.exists(effective_img))
     api_info = None
     try:
         api_info = client.view_api(return_format="dict")
@@ -168,11 +199,12 @@ def _predict_on_space(
 
     if isinstance(api_info, dict):
         named = api_info.get("named_endpoints") or {}
-        # Prefer endpoints matching generate / video / i2v / t2v
+        # Prefer endpoints matching /run, /generate_video, /generate, /i2v, /t2v
         preferred_order = sorted(
             named.keys(),
             key=lambda k: (
-                0 if any(w in k.lower() for w in ("generate", "video", "i2v", "t2v", "infer", "predict")) else 1
+                0 if k.lower() in ("/run", "/generate_video", "/generate")
+                else (1 if any(w in k.lower() for w in ("generate", "video", "run", "i2v", "t2v", "infer", "predict")) else 2)
             ),
         )
         if preferred_order:
@@ -189,28 +221,31 @@ def _predict_on_space(
             if p in ("prompt", "text", "text_prompt", "positive_prompt"):
                 kwargs[p] = prompt
                 break
-        if has_image and image_path:
+        if has_image and effective_img:
             for p in param_names:
-                if p in ("image", "input_image", "init_image", "first_frame", "cond_image", "reference_image"):
-                    kwargs[p] = _wrap_file_for_gradio(image_path)
+                if p in ("image_path", "input_image", "image", "init_image", "first_frame", "cond_image", "reference_image", "path"):
+                    kwargs[p] = _wrap_file_for_gradio(effective_img)
                     break
         for p in param_names:
-            if p in ("duration", "video_length", "seconds", "length"):
-                kwargs[p] = duration
+            if p in ("duration_s", "duration_seconds", "duration", "video_length", "seconds", "length"):
+                kwargs[p] = min(5.0, max(2.0, float(duration)))
                 break
 
     if not kwargs:
         kwargs["prompt"] = prompt
-        if has_image and image_path and "wan" in space_id.lower():
-            kwargs["image"] = _wrap_file_for_gradio(image_path)
+        if has_image and effective_img:
+            if "ltx-2.5" in space_id.lower():
+                kwargs["image_path"] = _wrap_file_for_gradio(effective_img)
+            elif "wan" in space_id.lower():
+                kwargs["input_image"] = _wrap_file_for_gradio(effective_img)
 
-    # Attempt prediction with discovered api_name, then fallback to default predict
+    # Attempt prediction with discovered api_name, then fallback to known endpoint names
     attempts = []
     if chosen_api_name:
         attempts.append((chosen_api_name, kwargs))
-    for default_ep in ("/generate", "/generate_video", "/predict", "/infer"):
+    for default_ep in ("/run", "/generate_video", "/generate", "/predict", "/infer"):
         if default_ep != chosen_api_name:
-            attempts.append((default_ep, {"prompt": prompt}))
+            attempts.append((default_ep, kwargs))
 
     last_err = None
     for ep_name, ep_kwargs in attempts:

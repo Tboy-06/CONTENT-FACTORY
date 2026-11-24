@@ -323,17 +323,31 @@ async def generate_sentence_audio(
         effective_voice = upgrade_legacy_edge_voice(voice)
 
         async def _stream_edge_tts():
-            communicate = edge_tts.Communicate(text, effective_voice)
-            with open(output_path, "wb") as f:
-                async for chunk in communicate.stream():
-                    if chunk["type"] == "audio":
-                        f.write(chunk["data"])
-                    elif chunk["type"] == "WordBoundary":
-                        words.append({
-                            "text": chunk["text"],
-                            "start": (chunk["offset"] / 10_000_000) + pause_before,
-                            "duration": chunk["duration"] / 10_000_000
-                        })
+            last_exc = None
+            for attempt in range(3):
+                words.clear()
+                try:
+                    communicate = edge_tts.Communicate(text, effective_voice)
+                    audio_bytes_written = 0
+                    with open(output_path, "wb") as f:
+                        async for chunk in communicate.stream():
+                            if chunk["type"] == "audio":
+                                f.write(chunk["data"])
+                                audio_bytes_written += len(chunk["data"])
+                            elif chunk["type"] == "WordBoundary":
+                                words.append({
+                                    "text": chunk["text"],
+                                    "start": (chunk["offset"] / 10_000_000) + pause_before,
+                                    "duration": chunk["duration"] / 10_000_000
+                                })
+                    if audio_bytes_written > 500:
+                        return
+                except Exception as exc:
+                    last_exc = exc
+                    await asyncio.sleep(0.6 * (attempt + 1))
+            if last_exc:
+                raise last_exc
+            raise RuntimeError("No audio bytes received from Edge-TTS")
 
         try:
             await asyncio.wait_for(_stream_edge_tts(), timeout=30.0)
