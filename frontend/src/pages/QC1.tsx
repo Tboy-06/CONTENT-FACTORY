@@ -32,7 +32,8 @@ import {
   useUploadAnchor,
   useUploadCustomSceneMedia,
   useJobThumbnails,
-  useRegenerateThumbnails
+  useRegenerateThumbnails,
+  useGenerateBeatVideo
 } from '../api/client';
 import { Button, Badge, Card } from '../components/ui';
 import SafeZoneOverlay from '../components/SafeZoneOverlay';
@@ -68,8 +69,12 @@ export default function QC1() {
   const uploadCustomMediaMutation = useUploadCustomSceneMedia();
   const { data: thumbnailData, isLoading: isThumbLoading } = useJobThumbnails(id);
   const regenerateThumbsMutation = useRegenerateThumbnails();
+  const generateBeatVideoMutation = useGenerateBeatVideo();
   const [anchorUploadMsg, setAnchorUploadMsg] = useState<string | null>(null);
   const [activeUploadingIndex, setActiveUploadingIndex] = useState<number | null>(null);
+  const [activeAiVideoIndex, setActiveAiVideoIndex] = useState<number | null>(null);
+  const [flowHandoffMap, setFlowHandoffMap] = useState<Record<number, { prompt: string; image_path?: string; flow_url?: string; reason?: string }>>({});
+  const [copiedFlowIdx, setCopiedFlowIdx] = useState<number | null>(null);
 
   const job = useMemo(() => jobs.find((j: any) => String(j.id) === id), [jobs, id]);
 
@@ -162,6 +167,57 @@ export default function QC1() {
       console.error('Failed to reroll visual:', e);
     } finally {
       setActiveRerollingIndex(null);
+    }
+  };
+
+  const handleGenerateBeatAiVideo = async (sceneIndex: number) => {
+    if (!id || activeAiVideoIndex !== null) return;
+    setActiveAiVideoIndex(sceneIndex);
+    const targetScene = displayScenes[sceneIndex];
+    const promptToUse = targetScene?.prompt || `${targetScene?.text || job.niche}, ${stylePreset}`;
+
+    try {
+      const res = await generateBeatVideoMutation.mutateAsync({
+        jobId: id,
+        beatId: sceneIndex,
+        prompt: promptToUse,
+        imagePath: targetScene?.image_path,
+        duration: Number(targetScene?.duration || 4.0),
+        engine: 'hf_ltx25',
+      });
+
+      if (res?.status === 'success' && res?.scene) {
+        setEditedScenes((prev) => {
+          const updated = [...prev];
+          updated[sceneIndex] = res.scene;
+          return updated;
+        });
+        if (res.video_url) {
+          setOverrideVideoUrl(res.video_url);
+        }
+        setFlowHandoffMap((prev) => {
+          const next = { ...prev };
+          delete next[sceneIndex];
+          return next;
+        });
+      } else if (res?.flow_handoff) {
+        setFlowHandoffMap((prev) => ({
+          ...prev,
+          [sceneIndex]: { ...res.flow_handoff, reason: res.reason },
+        }));
+      }
+    } catch (e: any) {
+      setFlowHandoffMap((prev) => ({
+        ...prev,
+        [sceneIndex]: {
+          prompt: promptToUse,
+          image_path: targetScene?.image_path,
+          flow_url: 'https://labs.google/fx/tools/flow',
+          reason: e?.message || 'ZeroGPU busy',
+        },
+      }));
+    } finally {
+      setActiveAiVideoIndex(null);
     }
   };
 
@@ -732,12 +788,12 @@ export default function QC1() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 pt-2.5 border-t border-[var(--ln-subtle)]">
+                  <div className="flex items-center flex-wrap gap-1.5 pt-2.5 border-t border-[var(--ln-subtle)]">
                     <Button
                       variant="secondary"
                       onClick={() => handleRerollVisual(idx)}
-                      disabled={isRerolling || rerollMutation.isPending || activeUploadingIndex === idx}
-                      className="flex-1 !py-1.5"
+                      disabled={isRerolling || rerollMutation.isPending || activeUploadingIndex === idx || activeAiVideoIndex === idx}
+                      className="!py-1.5 !px-2.5"
                     >
                       <RotateCw
                         size={12}
@@ -746,9 +802,44 @@ export default function QC1() {
                       <span>{isRerolling ? 'Stitching...' : 'Re-roll'}</span>
                     </Button>
 
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleGenerateBeatAiVideo(idx)}
+                      disabled={activeAiVideoIndex === idx || isRerolling || activeUploadingIndex === idx}
+                      className="!py-1.5 !px-2.5"
+                      title="Generate real moving AI video clip via Hugging Face ZeroGPU (LTX-2.5 / Wan 2.2) at $0"
+                    >
+                      {activeAiVideoIndex === idx ? (
+                        <Loader2 size={12} className="animate-spin text-amber-500" />
+                      ) : (
+                        <Clapperboard size={12} className="text-amber-600 dark:text-amber-400" />
+                      )}
+                      <span>{activeAiVideoIndex === idx ? 'ZeroGPU...' : 'AI Video ($0)'}</span>
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const promptStr = sc.prompt || `${sc.text || job.niche}, ${stylePreset}, 35mm documentary shot`;
+                        const refInfo = sc.image_path ? ` [Reference Image: ${sc.image_path}]` : '';
+                        navigator.clipboard.writeText(`${promptStr}${refInfo}`);
+                        setCopiedFlowIdx(idx);
+                        setTimeout(() => setCopiedFlowIdx(null), 2000);
+                      }}
+                      className="inline-flex items-center justify-center gap-1 text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-all cursor-pointer"
+                      title="1-Click Copy Prompt + Reference Image path for Google Flow (50 free daily credits)"
+                    >
+                      {copiedFlowIdx === idx ? (
+                        <Check size={12} className="text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <Copy size={12} className="text-blue-600 dark:text-blue-400" />
+                      )}
+                      <span>{copiedFlowIdx === idx ? 'Flow Copied' : 'Flow Copy'}</span>
+                    </button>
+
                     <label
                       className="inline-flex items-center justify-center gap-1 text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-all cursor-pointer"
-                      title="Upload custom video clip (.mp4, .mov) or image"
+                      title="Upload custom video clip (.mp4, .mov from Google Flow) or image"
                     >
                       <input
                         type="file"
@@ -769,13 +860,37 @@ export default function QC1() {
                       variant="ghost"
                       onClick={() => handleRegenerateAudio()}
                       disabled={audioMutation.isPending}
-                      className="!py-1.5 !px-2.5"
+                      className="!py-1.5 !px-2"
                       title="Regenerate voiceover"
                     >
                       <Mic size={12} className="text-emerald-600 dark:text-emerald-400" />
                       <span>Voice</span>
                     </Button>
                   </div>
+
+                  {flowHandoffMap[idx] && (
+                    <div className="glass-subcard p-2.5 border-amber-500/40 text-[11px] space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-amber-600 dark:text-amber-400">
+                          ZeroGPU Quota / Queue Notice: Use Google Flow Handoff
+                        </span>
+                        <a
+                          href={flowHandoffMap[idx].flow_url || 'https://labs.google/fx/tools/flow'}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => {
+                            navigator.clipboard.writeText(flowHandoffMap[idx].prompt);
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-blue-600 text-white font-semibold text-[10px] hover:bg-blue-500"
+                        >
+                          Copy &amp; Open Google Flow
+                        </a>
+                      </div>
+                      <p className="text-[10px] text-[var(--mu)]">
+                        Prompt copied-ready. Generate clip in Google Flow (50 free daily credits) and drop the .mp4 into the Clip button above.
+                      </p>
+                    </div>
+                  )}
                 </Card>
               );
             })}

@@ -151,10 +151,13 @@ def render_scene_card(
     draw = ImageDraw.Draw(img)
 
     try:
-        font_large = ImageFont.truetype("arialbd.ttf", 64)
-        font_medium = ImageFont.truetype("arial.ttf", 46)
-        font_small = ImageFont.truetype("arial.ttf", 32)
-        font_badge = ImageFont.truetype("arialbd.ttf", 28)
+        fonts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+        mont_path = os.path.join(fonts_dir, "Montserrat-Black.ttf")
+        inter_path = os.path.join(fonts_dir, "Inter-Bold.ttf")
+        font_large = ImageFont.truetype(mont_path, 62)
+        font_medium = ImageFont.truetype(inter_path, 44)
+        font_small = ImageFont.truetype(inter_path, 30)
+        font_badge = ImageFont.truetype(mont_path, 26)
     except Exception:
         font_large = ImageFont.load_default()
         font_medium = font_large

@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     gemini_pro_model: str = Field(default="models/gemini-3.8-flash", description="Pro model for complex tasks")
     gemini_vision_model: str = Field(default="models/gemini-3.8-flash", description="Vision model for video analysis")
     openrouter_api_key: str = Field(default="", description="OpenRouter API key for strictly-free ($0.00 :free) tier")
+    hf_token: str = Field(default="", description="Hugging Face token for free 5-min/day ZeroGPU video generation (LTX-2.5 / Wan 2.2)")
+    enable_paid_gemini_video: bool = Field(default=False, description="Strict opt-in flag for paid gemini-omni-1.2-flash video generation (default False for $0 lock)")
     ollama_model: str = Field(default="copilot-brain:latest", description="Local Ollama model name")
     ollama_endpoint: str = Field(default="http://localhost:11434/api/chat", description="Local Ollama endpoint")
 

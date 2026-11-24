@@ -576,7 +576,7 @@ async def plan_documentary(
                     h_idx += num_b
                 hook_txt = all_sentences[0].get("text", "")
                 log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Documentary", healed_beats)
-                return {
+                return apply_three_act_pacing_curve({
                     "job_id": job_id,
                     "topic": topic,
                     "style": "editor-v1",
@@ -586,7 +586,7 @@ async def plan_documentary(
                     "fact_dossier": fact_dossier,
                     "sentences": all_sentences,
                     "beats": healed_beats
-                }
+                })
         except Exception as e:
             logger.info(f"[Planner] Multi-act brain loop interrupted ({e}), using long-form fallback manifest")
 
@@ -640,7 +640,7 @@ async def plan_documentary(
                 hook_txt = parsed["sentences"][0].get("text", "")
                 log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Short", healed_beats)
 
-                return parsed
+                return apply_three_act_pacing_curve(parsed)
     except Exception as e:
         logger.info(f"[Planner] Brain offline/unavailable ({e}). Engaging documentary generator.")
 
@@ -676,6 +676,71 @@ async def plan_documentary(
     hook_txt = manifest["sentences"][0].get("text", "") if manifest.get("sentences") else ""
     log_script_to_vault(job_id, topic, hook_txt, f"{resolved_genre.title()} Fallback", healed_fb)
 
+    return apply_three_act_pacing_curve(manifest)
+
+
+def apply_three_act_pacing_curve(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Enforces a cinematic 3-Act visual pacing and sound-design curve across all beats:
+    - Act 1 (Hook, first ~20% of beats): 1.8s - 2.2s bold hero opener & curiosity setup.
+    - Act 2 (Escalation, middle ~50% of beats): 1.2s - 1.5s evidence, close-ups, and B-roll build.
+    - Act 3 (Climax & Payoff, final ~30% of beats): rapid 0.75s - 1.0s cuts synced to risers & thuds,
+      ending on a deliberate 1.6s closer.
+    """
+    sentences = manifest.get("sentences", [])
+    flat_beats: List[Dict[str, Any]] = []
+    for s in sentences:
+        flat_beats.extend(s.get("beats", []))
+    if not flat_beats and manifest.get("beats"):
+        flat_beats = manifest["beats"]
+
+    total = len(flat_beats)
+    if total == 0:
+        return manifest
+
+    act1_end = max(2, int(round(total * 0.20)))
+    act3_start = max(act1_end + 1, int(round(total * 0.70)))
+
+    for idx, beat in enumerate(flat_beats):
+        if idx == 0:
+            beat["act"] = 1
+            beat["duration"] = 2.0
+            beat["is_hero_beat"] = True
+            beat["sfx"] = beat.get("sfx") or "thud.wav"
+            beat["transition"] = "fadeblack"
+        elif idx < act1_end:
+            beat["act"] = 1
+            beat["duration"] = 1.85
+            beat["transition"] = "slideleft" if beat.get("sfx") == "whoosh.wav" else "fade"
+        elif idx < act3_start:
+            beat["act"] = 2
+            beat["duration"] = 1.35 if idx % 2 == 0 else 1.45
+            if idx == act1_end:
+                beat["act_break"] = True
+                beat["transition"] = "fadeblack"
+            else:
+                beat["transition"] = "slideleft" if beat.get("sfx") == "whoosh.wav" else "fade"
+        elif idx < total - 1:
+            beat["act"] = 3
+            beat["duration"] = 0.85 if idx % 2 == 0 else 0.95
+            if idx == act3_start:
+                beat["act_break"] = True
+                beat["is_climax_entry"] = True
+                beat["is_hero_beat"] = True
+                beat["sfx"] = "riser.wav"
+                beat["transition"] = "fadeblack"
+            else:
+                beat["sfx"] = "thud.wav" if idx % 2 == 1 else "whoosh.wav"
+                beat["flash_hit"] = idx % 2 == 1
+                beat["transition"] = "wipeleft"
+        else:
+            beat["act"] = 3
+            beat["duration"] = 1.6
+            beat["is_hero_beat"] = True
+            beat["sfx"] = "thud.wav"
+            beat["transition"] = "fadeblack"
+
+    manifest["beats"] = flat_beats
     return manifest
 
 

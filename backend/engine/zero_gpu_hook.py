@@ -1,20 +1,18 @@
 """
 CONTENT-FACTORY Engine: ZeroGPU Serverless Hook Generator (zero_gpu_hook.py)
 ----------------------------------------------------------------------------
-Uses free serverless ZeroGPU public instances on Hugging Face (Wan2.1 / LTX-Video)
-via `gradio_client` to generate the 3-second viral hero hook (Beat #1) for $0.
-
-Zero local CUDA VRAM and zero local GPU compute.
-Includes instant fallback to Pollinations Flux + DepthCortex 3D parallax if the
-public Space is busy or queuing.
+Routes Beat #1 hero video generation through the unified `backend/engine/video_gen.py`
+engine (`Lightricks/LTX-2.5` + `Wan 2.2 14B I2V` on Hugging Face ZeroGPU) with
+automatic circuit-breaker protection and $0 cost guarantee.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import shutil
 from typing import Optional
+
+from backend.engine import video_gen
 
 logger = logging.getLogger("engine.zero_gpu_hook")
 
@@ -23,53 +21,26 @@ def generate_zero_gpu_hero_clip(
     prompt: str,
     output_path: str,
     hf_token: Optional[str] = None,
-    timeout: float = 28.0
+    image_path: Optional[str] = None,
+    duration: float = 4.0,
+    timeout: float = 28.0,
 ) -> Optional[str]:
     """
-    Attempts to generate a 3-second cinematic moving video hook using free public
-    Hugging Face ZeroGPU Spaces via gradio_client.
-    Returns output_path on success, or None on queue/timeout.
+    Generates a moving AI video clip using free Hugging Face ZeroGPU Spaces
+    (`Lightricks/LTX-2.5` -> `Wan 2.2 I2V`) via `video_gen.generate_ai_video_clip()`.
+    Returns `output_path` on success, or `None` on quota exhaustion/queue so the caller
+    can fall back to real moving B-roll.
     """
-    try:
-        from gradio_client import Client
-    except ImportError:
-        logger.warning("[zero_gpu_hook] gradio_client not installed, skipping serverless hero clip.")
-        return None
-
-    token = hf_token or os.environ.get("HF_TOKEN") or None
-    clean_prompt = prompt.strip()[:180]
-
-    # Candidate public ZeroGPU Spaces for fast video generation
-    spaces = [
-        ("Wan-AI/Wan2.1-T2V-1.3B", "/generate"),
-        ("Lightricks/LTX-Video", "/generate_video"),
-    ]
-
-    for space_id, api_name in spaces:
-        try:
-            logger.info(f"[zero_gpu_hook] Attempting ZeroGPU hook generation via {space_id}...")
-            client = Client(space_id, token=token) if token else Client(space_id)
-            # Predict with fast parameters
-            result = client.predict(
-                prompt=clean_prompt,
-                api_name=api_name
-            )
-            # Result is usually a dict or tuple with video path
-            res_path = None
-            if isinstance(result, str) and os.path.exists(result):
-                res_path = result
-            elif isinstance(result, (list, tuple)) and len(result) > 0 and isinstance(result[0], str) and os.path.exists(result[0]):
-                res_path = result[0]
-            elif isinstance(result, dict) and "video" in result:
-                res_path = result["video"]
-
-            if res_path and os.path.exists(res_path):
-                os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-                shutil.copyfile(res_path, output_path)
-                logger.info(f"[zero_gpu_hook] ZeroGPU video generated successfully -> {output_path}")
-                return output_path
-        except Exception as e:
-            logger.info(f"[zero_gpu_hook] Space {space_id} unavailable or queued ({e}). Trying next or fallback...")
-
-    logger.info("[zero_gpu_hook] Falling back gracefully to Tier 1 Pollinations Flux + 3D Camera Motion.")
+    res = video_gen.generate_ai_video_clip(
+        prompt=prompt,
+        image_path=image_path,
+        duration=duration,
+        mode="free_hf",
+        hf_token=hf_token,
+        output_path=output_path,
+    )
+    if res.get("status") == "success":
+        final_p = res.get("output_path") or res.get("video_path")
+        if final_p and os.path.exists(final_p):
+            return final_p
     return None

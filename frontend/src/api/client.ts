@@ -583,3 +583,44 @@ export function useOpenRouterCapabilities() {
     refetchInterval: 30000,
   });
 }
+
+export function useVideoGenStatus() {
+  return useQuery({
+    queryKey: ['video-gen-status'],
+    queryFn: async () => {
+      return await api.get('/api/jobs/video-gen/status');
+    },
+    refetchInterval: 15000,
+  });
+}
+
+export function useGenerateBeatVideo() {
+  return useMutation({
+    mutationFn: async ({
+      jobId,
+      beatId,
+      prompt,
+      imagePath,
+      duration = 4.0,
+      engine = 'hf_ltx25',
+    }: {
+      jobId: string | number;
+      beatId: string | number;
+      prompt?: string;
+      imagePath?: string;
+      duration?: number;
+      engine?: 'hf_ltx25' | 'hf_wan22' | 'auto';
+    }) => {
+      return await api.post(`/api/jobs/${jobId}/beats/${beatId}/generate-video`, {
+        prompt,
+        image_path: imagePath,
+        duration,
+        engine,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['video-gen-status'] });
+    },
+  });
+}

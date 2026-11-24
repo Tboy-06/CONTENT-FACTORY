@@ -32,6 +32,12 @@ class RerollVisualRequest(BaseModel):
     custom_prompt: Optional[str] = None
     style_preset: Optional[str] = "Dark Documentary"
 
+class GenerateBeatVideoRequest(BaseModel):
+    prompt: Optional[str] = None
+    image_path: Optional[str] = None
+    duration: float = 4.0
+    engine: str = "hf_ltx25"
+
 class RegenerateAudioRequest(BaseModel):
     voice: Optional[str] = "en-US-AriaNeural"
     scenes: Optional[List[Dict[str, Any]]] = None
@@ -395,6 +401,102 @@ async def clear_cache():
         "cleaned_count": cleaned_count,
         "message": f"Freed {round(freed_bytes / (1024 * 1024), 2)} MB from temporary storage."
     }
+
+@router.get('/video-gen/status')
+async def get_video_gen_engine_status():
+    from backend.engine.video_gen import get_video_gen_status
+    return get_video_gen_status()
+
+
+@router.post('/{job_id}/beats/{beat_id}/generate-video')
+async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVideoRequest):
+    """
+    Generates a real moving AI video clip for a specific beat using Hugging Face ZeroGPU
+    (`Lightricks/LTX-2.5` with native audio or `Wan 2.2 14B I2V`) at $0 cost.
+    If daily 5-min ZeroGPU quota is exhausted, returns `status="quota_exhausted"` with a
+    `flow_handoff` payload so the Studio UI can offer 1-click Google Flow copy + clip upload.
+    """
+    from backend.engine import video_gen
+
+    job = await repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    assets = await repository.get_job_assets(job_id)
+    video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
+    if not video_asset or not video_asset.metadata_json:
+        raise HTTPException(status_code=400, detail="Video asset not found for job")
+
+    meta = dict(video_asset.metadata_json)
+    scenes = meta.get("scenes", [])
+
+    # Resolve beat_id as integer index ("0", "1", "beat_01")
+    scene_index = 0
+    if beat_id.isdigit():
+        scene_index = int(beat_id)
+    else:
+        import re
+        m = re.search(r"(\d+)", beat_id)
+        if m:
+            val = int(m.group(1))
+            scene_index = val - 1 if beat_id.lower().startswith("beat_") and val > 0 else val
+
+    if scene_index < 0 or scene_index >= len(scenes):
+        raise HTTPException(status_code=400, detail=f"Invalid beat index: {beat_id}")
+
+    sc = scenes[scene_index]
+    prompt = (req.prompt or sc.get("prompt") or sc.get("text") or job.niche).strip()
+    ref_img = req.image_path or sc.get("image_path") or (job.config or {}).get("anchor_image_path")
+    if ref_img and ref_img.startswith("/"):
+        ref_img = ref_img.lstrip("/")
+    if ref_img and not os.path.exists(ref_img):
+        ref_img = None
+
+    dur = float(req.duration or sc.get("duration") or 4.0)
+    gen_res = await asyncio.to_thread(
+        video_gen.generate_ai_video_clip,
+        prompt=prompt,
+        image_path=ref_img,
+        duration=dur,
+        mode="free_hf",
+        engine=req.engine or "hf_ltx25",
+    )
+
+    if gen_res.get("status") != "success" or not gen_res.get("video_path"):
+        return {
+            "status": gen_res.get("status", "quota_exhausted"),
+            "scene_index": scene_index,
+            "scene": sc,
+            "reason": gen_res.get("reason") or gen_res.get("message"),
+            "flow_handoff": gen_res.get("flow_handoff"),
+        }
+
+    # Normalize generated clip into scene and re-stitch video
+    clip_path = gen_res["video_path"]
+    sc["video_path"] = clip_path
+    sc["visual_type"] = "ai_video"
+    sc["prompt"] = prompt
+    sc["ai_engine"] = gen_res.get("engine_used")
+    sc["has_native_audio"] = gen_res.get("has_native_audio", False)
+
+    ts = int(datetime.utcnow().timestamp())
+    audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)
+    audio_path = audio_asset.path if audio_asset else f"output/audio_{job_id}.mp3"
+    final_video_path = f"output/video_{job_id}_9x16.mp4"
+
+    await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
+    meta["scenes"] = scenes
+    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    await repository.update_asset_metadata(video_asset.id, meta)
+
+    return {
+        "status": "success",
+        "scene_index": scene_index,
+        "scene": sc,
+        "video_url": meta["video_url"],
+        "video_gen": gen_res,
+    }
+
 
 @router.post('/{job_id}/reroll-visual')
 async def reroll_visual(job_id: int, req: RerollVisualRequest):

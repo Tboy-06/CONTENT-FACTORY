@@ -44,6 +44,12 @@ BEAT_CACHE_DIR = r"C:\cf_training\temp\beat_cache"
 os.makedirs(BEAT_CACHE_DIR, exist_ok=True)
 _NO_WIN = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
 
+# ZeroGPU Budget Guard: cap automatic ZeroGPU AI video calls to top 3 hero beats per job
+MAX_AUTO_HF_CLIPS_PER_JOB = 3
+_JOB_HF_CLIP_COUNTS: Dict[str, int] = {}
+FONTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+SFX_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "sfx"))
+
 
 def compute_beat_render_hash(beat: Dict[str, Any], fps: int = 30) -> str:
     """
@@ -189,13 +195,19 @@ async def render_beat_pass1(
             is_video_input = True
             video_source_path = broll_dest
         else:
-            # 2. Try Serverless ZeroGPU Moving Video Clip
+            # 2. Try Serverless ZeroGPU Moving Video Clip (guarded by MAX_AUTO_HF_CLIPS_PER_JOB)
+            used_hf_clips = _JOB_HF_CLIP_COUNTS.get(job_dir, 0)
             hero_dest = os.path.join(beats_dir, f"{beat_id}_zerogpu.mp4")
-            hero_path = await asyncio.to_thread(
-                zero_gpu_hook.generate_zero_gpu_hero_clip,
-                prompt=prompt,
-                output_path=hero_dest
-            )
+            hero_path = None
+            if used_hf_clips < MAX_AUTO_HF_CLIPS_PER_JOB:
+                _JOB_HF_CLIP_COUNTS[job_dir] = used_hf_clips + 1
+                hero_path = await asyncio.to_thread(
+                    zero_gpu_hook.generate_zero_gpu_hero_clip,
+                    prompt=prompt,
+                    output_path=hero_dest,
+                    image_path=beat.get("reference_image") or beat.get("anchor_image_path"),
+                    duration=duration,
+                )
             if hero_path and os.path.exists(hero_dest):
                 is_video_input = True
                 video_source_path = hero_dest
@@ -491,6 +503,137 @@ def cleanup_job_temp_files(job_dir: str) -> int:
     return freed_bytes
 
 
+def build_xfade_filter_chain(all_beats: List[Dict[str, Any]]) -> str:
+    """
+    Constructs an FFmpeg `xfade` video transition filter chain across rendered beats:
+    - Act breaks (`act_break` / `transition == 'fadeblack'`): `fadeblack` (0.16s)
+    - Whoosh transitions (`sfx == 'whoosh.wav'`): `slideleft` (0.14s)
+    - Climax impact beats (`transition == 'wipeleft'`): `wipeleft` (0.12s)
+    - Standard cuts: `fade` (0.12s)
+    Appends a unified subtle film contrast + vignette pass so all clips share cohesive lighting.
+    """
+    n = len(all_beats)
+    if n <= 1:
+        return "[0:v]eq=contrast=1.04:saturation=1.03,vignette=PI/6[vxf]"
+
+    parts: List[str] = []
+    cum_offset = 0.0
+    prev_label = "0:v"
+
+    for i in range(1, n):
+        prev_dur = max(0.65, float(all_beats[i - 1].get("duration", 1.5)))
+        beat = all_beats[i]
+        tr_type = str(beat.get("transition") or "").lower()
+        if not tr_type:
+            if beat.get("act_break"):
+                tr_type = "fadeblack"
+            elif beat.get("sfx") == "whoosh.wav":
+                tr_type = "slideleft"
+            else:
+                tr_type = "fade"
+        if tr_type not in ("fadeblack", "slideleft", "wipeleft", "wiperight", "fade", "smoothleft"):
+            tr_type = "fade"
+
+        tr_dur = 0.16 if tr_type == "fadeblack" else (0.14 if tr_type == "slideleft" else 0.12)
+        tr_dur = min(tr_dur, prev_dur * 0.35)
+        cum_offset = round(cum_offset + prev_dur - tr_dur, 3)
+        out_label = f"vx{i}" if i < n - 1 else "vxf_raw"
+        parts.append(
+            f"[{prev_label}][{i}:v]xfade=transition={tr_type}:duration={tr_dur:.2f}:offset={max(0.1, cum_offset):.3f}[{out_label}]"
+        )
+        prev_label = out_label
+
+    parts.append(f"[{prev_label}]eq=contrast=1.04:saturation=1.03,vignette=PI/6[vxf]")
+    return ";".join(parts)
+
+
+def build_pass2_audio_filter_complex(
+    all_beats: List[Dict[str, Any]],
+    has_voice: bool,
+    has_bgm: bool,
+    base_input_count: int = 3,
+) -> tuple[str, List[str]]:
+    """
+    Builds the Pass 2 Trailer Sound Design & Sidechain Ducking FFmpeg `filter_complex`:
+    1. Places every beat's scheduled SFX (`thud.wav`, `whoosh.wav`, `click.wav`, `riser.wav`)
+       onto the master timeline using exact millisecond `adelay` offsets (with `riser.wav`
+       pre-offset by 1.1s so it peaks right on the cut).
+    2. Inserts a 0.35s dramatic BGM silence drop right before the Act 3 climax reveal.
+    3. Replaces flat BGM volume mixing with FFmpeg `sidechaincompress` driven by the mastered
+       voice track so background score swells during vocal pauses and ducks cleanly during speech,
+       mastered to -14 LUFS.
+    """
+    sfx_inputs: List[str] = []
+    sfx_nodes: List[str] = []
+    filter_parts: List[str] = []
+
+    cur_t = 0.0
+    climax_t: Optional[float] = None
+    for idx, b in enumerate(all_beats):
+        dur = max(0.65, float(b.get("duration", 1.5)))
+        if b.get("is_climax_entry") and climax_t is None and cur_t > 2.0:
+            climax_t = cur_t
+
+        sfx_name = str(b.get("sfx") or "").strip()
+        if sfx_name and sfx_name.lower() != "none":
+            cand = os.path.join(SFX_DIR, os.path.basename(sfx_name))
+            if os.path.exists(cand) and len(sfx_inputs) < 18:
+                in_idx = base_input_count + len(sfx_inputs)
+                sfx_inputs.append(cand)
+                # Offset riser.wav so its swell peaks right on the beat transition
+                if "riser" in sfx_name.lower():
+                    delay_ms = max(0, int(round((cur_t - 1.1) * 1000)))
+                    vol = 0.50
+                elif "thud" in sfx_name.lower():
+                    delay_ms = max(0, int(round(cur_t * 1000)))
+                    vol = 0.62
+                else:
+                    delay_ms = max(0, int(round(cur_t * 1000)))
+                    vol = 0.45
+                node_name = f"sfx_d{len(sfx_nodes)}"
+                filter_parts.append(f"[{in_idx}:a]adelay={delay_ms}|{delay_ms},volume={vol}[{node_name}]")
+                sfx_nodes.append(f"[{node_name}]")
+        cur_t += dur
+
+    if climax_t is None and cur_t > 6.0:
+        climax_t = round(cur_t * 0.72, 2)
+
+    # Combine stitched base SFX track [0:a] with scheduled timeline SFX nodes
+    if sfx_nodes:
+        all_sfx_refs = "[0:a]" + "".join(sfx_nodes)
+        filter_parts.append(
+            f"{all_sfx_refs}amix=inputs={1 + len(sfx_nodes)}:duration=first:dropout_transition=0:normalize=0,volume=0.65[sfx_bus]"
+        )
+    else:
+        filter_parts.append("[0:a]volume=0.55[sfx_bus]")
+
+    if has_voice and has_bgm:
+        # Split mastered voice track [1:a] so it both plays and drives the BGM sidechain compressor
+        filter_parts.append("[1:a]volume=1.10,asplit=2[voice_main][voice_sc]")
+        bgm_chain = "afade=t=in:st=0.6:d=1.4,volume=0.22"
+        if climax_t is not None and climax_t > 1.0:
+            drop_start = max(0.5, round(climax_t - 0.35, 2))
+            drop_end = round(climax_t, 2)
+            bgm_chain += f",volume=enable='between(t,{drop_start},{drop_end})':volume=0"
+        filter_parts.append(f"[2:a]{bgm_chain}[bgm_pre]")
+        filter_parts.append(
+            "[bgm_pre][voice_sc]sidechaincompress=threshold=0.03:ratio=6:attack=15:release=350[bgm_ducked]"
+        )
+        filter_parts.append(
+            "[voice_main][sfx_bus][bgm_ducked]amix=inputs=3:duration=first:dropout_transition=2:normalize=0,"
+            "loudnorm=I=-14:TP=-1.5:LRA=9[aout]"
+        )
+    elif has_voice:
+        filter_parts.append("[1:a]volume=1.10[voice_main]")
+        filter_parts.append(
+            "[voice_main][sfx_bus]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=9[aout]"
+        )
+    else:
+        filter_parts.append("[sfx_bus]volume=1.0[aout]")
+
+    return ";".join(filter_parts), sfx_inputs
+
+
 async def assemble_final_pass2(
     manifest: Dict[str, Any],
     job_dir: str,
@@ -585,35 +728,38 @@ async def assemble_final_pass2(
     os.makedirs(os.path.dirname(os.path.abspath(output_mp4)), exist_ok=True)
 
     cmd_master = ["ffmpeg", "-y", "-i", stitched_video]
-    filter_complex = []
+    has_voice = bool(voice_path and os.path.exists(voice_path))
+    has_bgm = bool(has_voice and bgm_path and os.path.exists(bgm_path))
 
-    if voice_path and os.path.exists(voice_path):
+    if has_voice:
         cmd_master.extend(["-i", voice_path])
-        if os.path.exists(bgm_path):
-            # Cap infinite stream loop with -t to guarantee FFmpeg never hangs on 0-byte voice
-            # Fade in BGM gently after 1.2s so the opening hook voiceover & intro SFX hit with 100% clarity
+        if has_bgm:
             cmd_master.extend(["-stream_loop", "-1", "-t", str(target_duration + 3.0), "-i", bgm_path])
-            # Inputs: 0=stitched (sfx), 1=voice, 2=bgm (normalize=0 preserves full -14 LUFS voice volume)
-            filter_complex.append("[0:a]volume=0.55[sfx]")
-            filter_complex.append("[1:a]volume=1.15[voice]")
-            filter_complex.append("[2:a]afade=t=in:st=1.2:d=1.8,volume=0.06[bgm]")
-            filter_complex.append("[voice][sfx][bgm]amix=inputs=3:duration=first:dropout_transition=2:normalize=0[aout]")
-        else:
-            # Inputs: 0=stitched (sfx), 1=voice
-            filter_complex.append("[0:a]volume=0.55[sfx]")
-            filter_complex.append("[1:a]volume=1.15[voice]")
-            filter_complex.append("[voice][sfx]amix=inputs=2:duration=first:normalize=0[aout]")
-    else:
-        # Fallback to SFX audio stream only
-        filter_complex.append("[0:a]volume=1.0[aout]")
 
-    # Subtitle burn filter (escaped for Windows)
+    base_inputs = 1 + (1 if has_voice else 0) + (1 if has_bgm else 0)
+    audio_fc, sfx_input_paths = build_pass2_audio_filter_complex(
+        all_beats=all_beats,
+        has_voice=has_voice,
+        has_bgm=has_bgm,
+        base_input_count=base_inputs,
+    )
+    for sfx_p in sfx_input_paths:
+        cmd_master.extend(["-i", sfx_p])
+
+    filter_complex = [audio_fc]
+
+    # Unified lighting polish + active-word .ASS subtitle burn with bundled studio fontsdir
     if ass_path and os.path.exists(ass_path):
         escaped_ass = os.path.abspath(ass_path).replace("\\", "/").replace(":", "\\:")
-        filter_complex.append(f"[0:v]subtitles='{escaped_ass}'[vout]")
+        escaped_fonts = os.path.abspath(FONTS_DIR).replace("\\", "/").replace(":", "\\:")
+        filter_complex.append(
+            f"[0:v]eq=contrast=1.04:saturation=1.03,vignette=PI/6,"
+            f"subtitles='{escaped_ass}':fontsdir='{escaped_fonts}'[vout]"
+        )
         map_v = "[vout]"
     else:
-        map_v = "0:v"
+        filter_complex.append("[0:v]eq=contrast=1.04:saturation=1.03,vignette=PI/6[vout]")
+        map_v = "[vout]"
 
     cmd_master.extend([
         "-filter_complex", ";".join(filter_complex),

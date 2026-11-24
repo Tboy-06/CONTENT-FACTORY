@@ -18,14 +18,24 @@ from PIL import Image, ImageDraw, ImageFont
 logger = logging.getLogger("engine.motion_cards")
 
 
+FONTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+
+
+def _load_ttf(filename: str, size: int) -> ImageFont.FreeTypeFont:
+    candidate = os.path.join(FONTS_DIR, filename)
+    if os.path.exists(candidate):
+        return ImageFont.truetype(candidate, size)
+    return ImageFont.truetype(filename, size)
+
+
 def get_fonts():
-    """Loads system or default fonts safely."""
+    """Loads bundled open-license studio fonts (Anton, Montserrat Black, Inter Bold) with safe fallback."""
     try:
-        font_huge = ImageFont.truetype("arialbd.ttf", 76)
-        font_large = ImageFont.truetype("arialbd.ttf", 54)
-        font_medium = ImageFont.truetype("arial.ttf", 38)
-        font_mono = ImageFont.truetype("courbd.ttf", 34)
-        font_small = ImageFont.truetype("arial.ttf", 28)
+        font_huge = _load_ttf("Anton-Regular.ttf", 80)
+        font_large = _load_ttf("Montserrat-Black.ttf", 54)
+        font_medium = _load_ttf("Inter-Bold.ttf", 38)
+        font_mono = _load_ttf("Montserrat-Black.ttf", 32)
+        font_small = _load_ttf("Inter-Bold.ttf", 28)
     except Exception:
         font_huge = ImageFont.load_default()
         font_large = font_huge

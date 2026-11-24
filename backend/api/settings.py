@@ -11,6 +11,7 @@ SECRET_FIELD_NAMES = {
     "openai_key",
     "moonshot_api_key",
     "openrouter_api_key",
+    "hf_token",
     "telegram_token",
     "youtube_key",
     "pexels_key",
@@ -48,6 +49,7 @@ class SettingsUpdate(BaseModel):
     moonshot_api_key: Optional[str] = None
     moonshot_model: Optional[str] = None
     openrouter_api_key: Optional[str] = None
+    hf_token: Optional[str] = None
     niche: Optional[str] = None
     format: Optional[str] = None
     platforms: Optional[List[str]] = None
@@ -60,13 +62,14 @@ async def get_settings():
     gemini_val = settings.gemini_api_key or os.environ.get("GEMINI_API_KEY", "")
     moonshot_val = settings.moonshot_api_key or os.environ.get("MOONSHOT_API_KEY", "")
     openrouter_val = getattr(settings, "openrouter_api_key", "") or os.environ.get("OPENROUTER_API_KEY", "")
+    hf_val = getattr(settings, "hf_token", "") or os.environ.get("HF_TOKEN", "")
     telegram_val = settings.telegram_bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
     youtube_val = settings.youtube_api_key or os.environ.get("YOUTUBE_API_KEY", "")
     pexels_val = settings.pexels_api_key or os.environ.get("PEXELS_API_KEY", "")
 
     return {
         "ollama_model": os.environ.get("OLLAMA_MODEL", "SparkLLM/Spark-X2.5-4B"),
-        "default_voice": settings.tts_voice or "en-US-ChristopherNeural",
+        "default_voice": settings.tts_voice or "en-US-AndrewMultilingualNeural",
         "force_offline": os.environ.get("FORCE_OFFLINE", "false").lower() == "true",
         "custom_domain": os.environ.get("CUSTOM_DOMAIN", "localhost:3000"),
         "openai_key": mask_secret(gemini_val),
@@ -74,6 +77,7 @@ async def get_settings():
         "moonshot_api_key": mask_secret(moonshot_val),
         "moonshot_model": settings.moonshot_model or os.environ.get("MOONSHOT_MODEL", "kimi-k3"),
         "openrouter_api_key": mask_secret(openrouter_val),
+        "hf_token": mask_secret(hf_val),
         "telegram_token": mask_secret(telegram_val),
         "youtube_key": mask_secret(youtube_val),
         "pexels_key": mask_secret(pexels_val),
@@ -116,6 +120,10 @@ async def update_settings(req: SettingsUpdate):
         os.environ["OPENROUTER_API_KEY"] = req.openrouter_api_key
         settings.openrouter_api_key = req.openrouter_api_key
         env_updates["OPENROUTER_API_KEY"] = req.openrouter_api_key
+    if req.hf_token and not _is_masked_placeholder(req.hf_token):
+        os.environ["HF_TOKEN"] = req.hf_token
+        settings.hf_token = req.hf_token
+        env_updates["HF_TOKEN"] = req.hf_token
     if req.telegram_token and not _is_masked_placeholder(req.telegram_token):
         os.environ["TELEGRAM_BOT_TOKEN"] = req.telegram_token
         settings.telegram_bot_token = req.telegram_token

@@ -30,6 +30,7 @@ import {
   useClearAllJobs,
   useUploadAnchor,
   useSpend,
+  useVideoGenStatus,
   api
 } from '../api/client';
 import DirectorChatDrawer from '../components/DirectorChatDrawer';
@@ -42,10 +43,10 @@ const stylePresets = [
 ];
 
 const voices = [
-  { id: 'en-US-AriaNeural', label: 'Aria (Female, Clear & Polished)' },
-  { id: 'en-US-ChristopherNeural', label: 'Christopher (Male, Deep Storytelling)' },
-  { id: 'en-US-GuyNeural', label: 'Guy (Male, Conversational)' },
-  { id: 'en-US-AndrewNeural', label: 'Andrew (Male, Warm & Authoritative)' }
+  { id: 'en-US-AndrewMultilingualNeural', label: 'Andrew Multilingual (Male, Warm Trailer Narrator)' },
+  { id: 'en-US-AvaMultilingualNeural', label: 'Ava Multilingual (Female, Expressive Documentary)' },
+  { id: 'en-US-BrianMultilingualNeural', label: 'Brian Multilingual (Male, Crisp Editorial)' },
+  { id: 'am_michael', label: 'Kokoro-82M Michael (Local CPU Offline Narrator)' }
 ];
 
 const genres = [
@@ -69,7 +70,7 @@ export default function Create() {
   const [topic, setTopic] = useState('');
   const [genre, setGenre] = useState('auto');
   const [stylePreset, setStylePreset] = useState('Dark Documentary');
-  const [voice, setVoice] = useState('en-US-AriaNeural');
+  const [voice, setVoice] = useState('en-US-AndrewMultilingualNeural');
   const [aspectRatio, setAspectRatio] = useState('9:16');
   const [duration, setDuration] = useState('45s');
   const [anchorFile, setAnchorFile] = useState<File | null>(null);
@@ -79,9 +80,11 @@ export default function Create() {
   const [suggestedHooks, setSuggestedHooks] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDirectorChatOpen, setIsDirectorChatOpen] = useState(false);
+  const [flowCopied, setFlowCopied] = useState(false);
 
   const { data: recentJobs = [] } = useJobs();
   const { data: liveSpend } = useSpend();
+  const { data: videoGenStatus } = useVideoGenStatus();
   const instantMutation = useCreateInstantJob();
   const brainstormMutation = useBrainstormHooks();
   const deleteJobMutation = useDeleteJob();
@@ -482,6 +485,40 @@ export default function Create() {
                 />
               </label>
             )}
+
+            {/* 8. Generative AI Video Engine (Hugging Face ZeroGPU LTX-2.5 / Wan 2.2 + Google Flow Handoff) */}
+            <div className="glass-subcard p-3.5 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-[var(--tx)]">
+                    Generative Image-to-Video Engine ($0 ZeroGPU + Flow Handoff)
+                  </span>
+                  <Badge variant={videoGenStatus?.hf_token_configured ? 'success' : 'info'}>
+                    {videoGenStatus?.primary_space || 'Lightricks/LTX-2.5'}
+                  </Badge>
+                  <Badge variant="neutral">Budget Guard: Top 3 Hero Beats</Badge>
+                </div>
+                <p className="text-[11px] text-[var(--mu)]">
+                  {videoGenStatus?.daily_quota_tier || 'Auto-generates real moving AI video clips on Hero Hook & Climax beats, or 1-click copy for Google Flow.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const promptText = `Cinematic 35mm documentary video, ${stylePreset}, ${topic.trim() || 'Declassified investigation'}, volumetric lighting, real camera motion${anchorFile ? ` (Reference Image: ${anchorFile.name})` : ''}`;
+                    navigator.clipboard.writeText(promptText);
+                    setFlowCopied(true);
+                    setTimeout(() => setFlowCopied(false), 2500);
+                  }}
+                  className="!py-1.5 !px-3 text-[11px]"
+                  title="Copy cinematic prompt + reference image spec for Google Flow (50 free daily credits)"
+                >
+                  <span>{flowCopied ? 'Copied for Google Flow' : 'Copy Prompt for Google Flow'}</span>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -24,14 +24,20 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 logger = logging.getLogger("engine.forensic_canvas")
 
 
+FONTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+
+
 def _get_fonts() -> Tuple[ImageFont.ImageFont, ...]:
-    """Loads system or fallback fonts safely."""
+    """Loads bundled studio fonts (Anton, Montserrat Black, Inter Bold) safely."""
     try:
-        font_stamp = ImageFont.truetype("arialbd.ttf", 64)
-        font_title = ImageFont.truetype("courbd.ttf", 46)
-        font_body = ImageFont.truetype("cour.ttf", 34)
-        font_bold = ImageFont.truetype("arialbd.ttf", 38)
-        font_mono_small = ImageFont.truetype("courbd.ttf", 26)
+        anton = os.path.join(FONTS_DIR, "Anton-Regular.ttf")
+        mont = os.path.join(FONTS_DIR, "Montserrat-Black.ttf")
+        inter = os.path.join(FONTS_DIR, "Inter-Bold.ttf")
+        font_stamp = ImageFont.truetype(anton if os.path.exists(anton) else "courbd.ttf", 64)
+        font_title = ImageFont.truetype(mont if os.path.exists(mont) else "courbd.ttf", 44)
+        font_body = ImageFont.truetype(inter if os.path.exists(inter) else "cour.ttf", 33)
+        font_bold = ImageFont.truetype(mont if os.path.exists(mont) else "courbd.ttf", 36)
+        font_mono_small = ImageFont.truetype(inter if os.path.exists(inter) else "courbd.ttf", 26)
     except Exception:
         fallback = ImageFont.load_default()
         font_stamp = fallback

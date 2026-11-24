@@ -28,12 +28,13 @@ export default function Settings() {
 
   const [settings, setSettings] = useState<any>({
     ollama_model: 'SparkLLM/Spark-X2.5-4B',
-    default_voice: 'en-US-ChristopherNeural',
+    default_voice: 'en-US-AndrewMultilingualNeural',
     force_offline: false,
     custom_domain: 'localhost:3000',
     telegram_token: '',
     gemini_key: '',
     openrouter_api_key: '',
+    hf_token: '',
     moonshot_api_key: ''
   });
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -238,18 +239,34 @@ export default function Settings() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
               <div>
-                <span className="text-[var(--tx)] font-semibold">Default Voice Profile</span>
-                <p className="text-[var(--mu)] text-[11px]">Speech synthesis neural voice profile.</p>
+                <span className="text-[var(--tx)] font-semibold">Hugging Face ZeroGPU Token (`HF_TOKEN`)</span>
+                <p className="text-[var(--mu)] text-[11px]">
+                  Unlocks 5 min/day free cloud GPU video generation (`Lightricks/LTX-2.5` &amp; `Wan 2.2 I2V`) at $0.
+                </p>
+              </div>
+              <input
+                type="password"
+                value={settings.hf_token || ''}
+                onChange={(e) => setSettings({ ...settings, hf_token: e.target.value })}
+                className="glass-input px-3 py-2 font-mono text-xs w-full sm:w-72"
+                placeholder="hf_..."
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
+              <div>
+                <span className="text-[var(--tx)] font-semibold">Default Voice Profile (Mastered -14 LUFS)</span>
+                <p className="text-[var(--mu)] text-[11px]">3-tier vocal stack with broadcast EQ &amp; dynamic compression.</p>
               </div>
               <select
-                value={settings.default_voice || 'en-US-ChristopherNeural'}
+                value={settings.default_voice || 'en-US-AndrewMultilingualNeural'}
                 onChange={(e) => setSettings({ ...settings, default_voice: e.target.value })}
                 className="glass-input px-3 py-2 text-xs w-full sm:w-72 cursor-pointer"
               >
-                <option value="en-US-ChristopherNeural">Christopher (Male, Narrative)</option>
-                <option value="en-US-AriaNeural">Aria (Female, Clear)</option>
-                <option value="en-US-GuyNeural">Guy (Male, Conversational)</option>
-                <option value="en-US-AndrewNeural">Andrew (Male, Authoritative)</option>
+                <option value="en-US-AndrewMultilingualNeural">Andrew Multilingual (Male, Warm Trailer Narrator)</option>
+                <option value="en-US-AvaMultilingualNeural">Ava Multilingual (Female, Expressive Documentary)</option>
+                <option value="en-US-BrianMultilingualNeural">Brian Multilingual (Male, Crisp Editorial)</option>
+                <option value="am_michael">Kokoro-82M Michael (Local Offline CPU Narrator)</option>
               </select>
             </div>
 
