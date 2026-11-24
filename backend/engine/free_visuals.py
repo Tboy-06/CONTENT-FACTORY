@@ -22,6 +22,7 @@ from typing import Any, Dict, Optional
 
 from backend.engine import openrouter_discovery
 from backend.engine.visual_cortex import (
+    fetch_wikimedia_commons_image,
     fetch_pollinations_flux,
     fetch_pexels_broll,
     build_cinematic_visual_prompt,
@@ -135,15 +136,22 @@ def resolve_image_plate(
     width: int = 1080,
     height: int = 1920,
     prefer_openrouter: bool = False,
+    prefer_archival: bool = True,
 ) -> bool:
     """
     Hybrid image plate resolver:
-    - By default (`prefer_openrouter=False`), uses unlimited `Pollinations Flux` first to save the
-      50/day OpenRouter free quota for Brain/Script/Vision tasks, falling back to OpenRouter `:free`
-      image models if Pollinations fails.
-    - When `prefer_openrouter=True` (e.g. hero thumbnail generation), tries OpenRouter `:free` image
-      generation first and falls back to `Pollinations Flux`.
+    1. When `prefer_archival=True`, queries real Wikimedia Commons archival photography first so
+       historical/documentary subjects use authentic archival stills before falling back to AI generation.
+    2. By default (`prefer_openrouter=False`), uses unlimited `Pollinations Flux` next to save the
+       50/day OpenRouter free quota for Brain/Script/Vision tasks, falling back to OpenRouter `:free`
+       image models if Pollinations fails.
+    3. When `prefer_openrouter=True` (e.g. hero thumbnail generation), tries OpenRouter `:free` image
+       generation first and falls back to `Pollinations Flux`.
     """
+    if prefer_archival and not prefer_openrouter:
+        if fetch_wikimedia_commons_image(prompt, output_path, width=width, height=height):
+            return True
+
     if prefer_openrouter:
         if fetch_openrouter_free_image(prompt, output_path, width=width, height=height):
             return True

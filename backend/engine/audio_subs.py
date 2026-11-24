@@ -65,6 +65,21 @@ def upgrade_legacy_edge_voice(voice: str) -> str:
     return v
 
 
+def resolve_kokoro_model_paths() -> Optional[Tuple[str, str]]:
+    """
+    Resolves local Kokoro-82M ONNX weights in C:\\models\\kokoro\\, preferring the compact
+    quantized `kokoro-v1.0.int8.onnx` (~88 MB) for 16 GB RAM laptops, or `kokoro-v1.0.onnx`.
+    """
+    voices_path = os.path.join(KOKORO_MODELS_DIR, "voices-v1.0.bin")
+    if not os.path.exists(voices_path):
+        return None
+    for candidate in ("kokoro-v1.0.int8.onnx", "kokoro-v1.0.onnx"):
+        onnx_path = os.path.join(KOKORO_MODELS_DIR, candidate)
+        if os.path.exists(onnx_path) and os.path.getsize(onnx_path) > 10 * 1024 * 1024:
+            return onnx_path, voices_path
+    return None
+
+
 def try_kokoro_local_tts(
     text: str,
     output_path: str,
@@ -75,10 +90,10 @@ def try_kokoro_local_tts(
     Returns `(duration, word_boundaries)` when `kokoro_onnx` and local weights are present,
     or `None` to fall back cleanly to OpenRouter `:free` / Edge-TTS Multilingual.
     """
-    onnx_path = os.path.join(KOKORO_MODELS_DIR, "kokoro-v1.0.onnx")
-    voices_path = os.path.join(KOKORO_MODELS_DIR, "voices-v1.0.bin")
-    if not (os.path.exists(onnx_path) and os.path.exists(voices_path)):
+    resolved = resolve_kokoro_model_paths()
+    if not resolved:
         return None
+    onnx_path, voices_path = resolved
 
     try:
         import soundfile as sf

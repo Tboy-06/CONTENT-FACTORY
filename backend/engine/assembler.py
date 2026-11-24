@@ -39,16 +39,164 @@ logger = logging.getLogger("engine.assembler")
 # 16 GB Laptop Thermal & Concurrency Guard: serialize heavy FFmpeg encodes
 _FFMPEG_SEMAPHORE = asyncio.Semaphore(1)
 
-# Beat-Level SHA-256 Render Cache on C: drive (0 MB bloat on D:)
+# Beat-Level SHA-256 Render Cache & Scratch Directories on C: drive (0 MB bloat on 8 GB D: partition)
 BEAT_CACHE_DIR = r"C:\cf_training\temp\beat_cache"
-os.makedirs(BEAT_CACHE_DIR, exist_ok=True)
+AI_CLIPS_CACHE_DIR = r"C:\cf_training\temp\ai_clips"
+EXPORTS_CACHE_DIR = r"C:\cf_training\exports"
+JOBS_SCRATCH_ROOT = r"C:\cf_training\jobs"
+ACTIVE_RENDER_LOCK_FILE = r"C:\cf_training\temp\active_render.lock"
+MAX_TEMP_CACHE_MB = 500.0
+
+for _d in (BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR, JOBS_SCRATCH_ROOT):
+    os.makedirs(_d, exist_ok=True)
+
 _NO_WIN = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
+_QSV_AVAILABLE: Optional[bool] = None
+FFMPEG_THREADS = "4"
 
 # ZeroGPU Budget Guard: cap automatic ZeroGPU AI video calls to top 3 hero beats per job
 MAX_AUTO_HF_CLIPS_PER_JOB = 3
 _JOB_HF_CLIP_COUNTS: Dict[str, int] = {}
 FONTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
 SFX_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "sfx"))
+
+
+def get_job_scratch_dir(job_id: int | str) -> str:
+    """
+    Returns the job working directory on C:\\cf_training\\jobs\\<job_id>
+    so intermediate beat clips, raw sentence MP3s, and stitched_temp.mp4 never touch the 8 GB D: drive.
+    Automatically migrates any legacy D:\\CONTENT-FACTORY\\jobs\\<job_id> directory if present.
+    """
+    target_dir = os.path.join(JOBS_SCRATCH_ROOT, str(job_id))
+    legacy_dir = os.path.abspath(os.path.join("jobs", str(job_id)))
+    if os.path.exists(legacy_dir) and os.path.abspath(legacy_dir) != os.path.abspath(target_dir):
+        try:
+            os.makedirs(os.path.dirname(target_dir), exist_ok=True)
+            if not os.path.exists(target_dir):
+                shutil.move(legacy_dir, target_dir)
+            else:
+                shutil.copytree(legacy_dir, target_dir, dirs_exist_ok=True)
+                shutil.rmtree(legacy_dir, ignore_errors=True)
+        except Exception as e:
+            logger.debug(f"[assembler] Legacy job dir migration note: {e}")
+    os.makedirs(target_dir, exist_ok=True)
+    return target_dir
+
+
+def set_active_render_lock(job_id: int | str, stage: str = "FFMPEG") -> None:
+    """Signals the background dataset harvester to auto-pause while a video render job is active."""
+    try:
+        os.makedirs(os.path.dirname(ACTIVE_RENDER_LOCK_FILE), exist_ok=True)
+        with open(ACTIVE_RENDER_LOCK_FILE, "w", encoding="utf-8") as f:
+            json.dump({"job_id": str(job_id), "stage": stage, "timestamp": os.path.getmtime(os.path.dirname(ACTIVE_RENDER_LOCK_FILE))}, f)
+    except Exception:
+        pass
+
+
+def clear_active_render_lock() -> None:
+    """Clears the active render lock so the background dataset harvester can resume."""
+    try:
+        if os.path.exists(ACTIVE_RENDER_LOCK_FILE):
+            os.remove(ACTIVE_RENDER_LOCK_FILE)
+    except Exception:
+        pass
+
+
+def is_render_job_active(max_stale_seconds: float = 900.0) -> bool:
+    """Returns True if a video render is currently active (lock file present and younger than 15 minutes)."""
+    if not os.path.exists(ACTIVE_RENDER_LOCK_FILE):
+        return False
+    try:
+        import time
+        age = time.time() - os.path.getmtime(ACTIVE_RENDER_LOCK_FILE)
+        if age > max_stale_seconds:
+            os.remove(ACTIVE_RENDER_LOCK_FILE)
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def get_optimal_h264_encoder_args() -> List[str]:
+    """
+    16 GB Laptop / Intel UHD 620 Thermal & CPU Throttling Helper:
+    - Always caps FFmpeg encoding threads to `-threads 4` and `-preset veryfast` so Windows and Chrome stay responsive.
+    - Optionally uses Intel QuickSync (`h264_qsv`) when `CF_ENABLE_QSV=1` and hardware QSV probe succeeds;
+      otherwise uses `libx264 -preset veryfast -threads 4`.
+    """
+    global _QSV_AVAILABLE
+    if os.environ.get("CF_ENABLE_QSV", "0").strip() == "1":
+        if _QSV_AVAILABLE is None:
+            try:
+                probe = subprocess.run(
+                    [
+                        "ffmpeg", "-hide_banner", "-loglevel", "error",
+                        "-f", "lavfi", "-i", "color=c=black:s=256x256:d=0.1",
+                        "-c:v", "h264_qsv", "-f", "null", "-"
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=4,
+                    creationflags=_NO_WIN,
+                )
+                _QSV_AVAILABLE = (probe.returncode == 0)
+            except Exception:
+                _QSV_AVAILABLE = False
+        if _QSV_AVAILABLE:
+            return ["-c:v", "h264_qsv", "-preset", "veryfast", "-threads", FFMPEG_THREADS]
+    return ["-c:v", "libx264", "-preset", "veryfast", "-threads", FFMPEG_THREADS]
+
+
+def enforce_lru_cache_cap(max_mb: float = MAX_TEMP_CACHE_MB) -> Dict[str, Any]:
+    """
+    Enforces a hard 500 MB LRU cache ceiling across C:\\cf_training\\temp\\beat_cache,
+    C:\\cf_training\\temp\\ai_clips, C:\\cf_training\\exports, and local temp/.
+    Evicts oldest files first whenever total size exceeds `max_mb`.
+    """
+    cache_dirs = [BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR, os.path.abspath("temp")]
+    entries: List[tuple[float, int, str]] = []
+    total_bytes = 0
+
+    for d in cache_dirs:
+        if not os.path.exists(d):
+            continue
+        for root, _, files in os.walk(d):
+            for fname in files:
+                if fname == "active_render.lock":
+                    continue
+                fp = os.path.join(root, fname)
+                try:
+                    st = os.stat(fp)
+                    entries.append((st.st_mtime, st.st_size, fp))
+                    total_bytes += st.st_size
+                except OSError:
+                    pass
+
+    max_bytes = int(max_mb * 1024 * 1024)
+    evicted_bytes = 0
+    evicted_count = 0
+
+    if total_bytes > max_bytes:
+        # Sort oldest mtime first (Least Recently Used)
+        entries.sort(key=lambda x: x[0])
+        for _, fsize, fpath in entries:
+            if total_bytes - evicted_bytes <= max_bytes:
+                break
+            try:
+                os.remove(fpath)
+                evicted_bytes += fsize
+                evicted_count += 1
+            except OSError:
+                pass
+
+    remaining_mb = round(max(0, total_bytes - evicted_bytes) / (1024 * 1024), 2)
+    return {
+        "total_before_mb": round(total_bytes / (1024 * 1024), 2),
+        "remaining_mb": remaining_mb,
+        "evicted_mb": round(evicted_bytes / (1024 * 1024), 2),
+        "evicted_count": evicted_count,
+        "max_cap_mb": max_mb,
+    }
 
 
 def compute_beat_render_hash(beat: Dict[str, Any], fps: int = 30) -> str:
@@ -364,6 +512,7 @@ async def render_beat_pass1(
     sfx_path = os.path.abspath(os.path.join("assets", "sfx", sfx_name))
     has_sfx = os.path.exists(sfx_path)
 
+    enc_args = get_optimal_h264_encoder_args()
     if is_video_input:
         if has_sfx:
             cmd = [
@@ -374,8 +523,7 @@ async def render_beat_pass1(
                 "-filter_complex", f"[1:a]apad=whole_dur={duration},atrim=0:{duration}[a]",
                 "-map", "0:v",
                 "-map", "[a]",
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
+                *enc_args,
                 "-pix_fmt", "yuv420p",
                 "-r", str(fps),
                 "-c:a", "aac",
@@ -391,8 +539,7 @@ async def render_beat_pass1(
                 "-f", "lavfi", "-i", f"aevalsrc=0:d={duration}",
                 "-map", "0:v",
                 "-map", "1:a",
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
+                *enc_args,
                 "-pix_fmt", "yuv420p",
                 "-r", str(fps),
                 "-c:a", "aac",
@@ -411,8 +558,7 @@ async def render_beat_pass1(
                 "-filter_complex", f"[1:a]apad=whole_dur={duration},atrim=0:{duration}[a]",
                 "-map", "0:v",
                 "-map", "[a]",
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
+                *enc_args,
                 "-pix_fmt", "yuv420p",
                 "-r", str(fps),
                 "-c:a", "aac",
@@ -428,8 +574,7 @@ async def render_beat_pass1(
                 "-vf", zoom_filter,
                 "-map", "0:v",
                 "-map", "1:a",
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
+                *enc_args,
                 "-pix_fmt", "yuv420p",
                 "-r", str(fps),
                 "-c:a", "aac",
@@ -492,36 +637,65 @@ def cleanup_job_temp_files(job_dir: str) -> int:
                     logger.warning(f"[assembler] Could not remove temp beat file {fp}: {e}")
         logger.info(f"[assembler] Cleaned up intermediate beat clips in {beats_dir}")
 
-    # 3. Remove temporary audio concat list
-    audio_concat = os.path.join(job_dir, "audio", "concat_list.txt")
-    if os.path.exists(audio_concat):
-        try:
-            os.remove(audio_concat)
-        except Exception:
-            pass
+    # 3. Remove temporary audio concat list and raw sentence MP3 chunks (voice_master.mp3 is already rendered)
+    audio_dir = os.path.join(job_dir, "audio")
+    if os.path.exists(audio_dir):
+        for af in os.listdir(audio_dir):
+            if af == "concat_list.txt" or af.startswith("sentence_") or af.endswith(".padded.mp3"):
+                afp = os.path.join(audio_dir, af)
+                try:
+                    s = os.path.getsize(afp)
+                    os.remove(afp)
+                    freed_bytes += s
+                except Exception:
+                    pass
+
+    # 4. Enforce hard 500 MB LRU cap across beat_cache, ai_clips, exports, and temp
+    try:
+        lru_res = enforce_lru_cache_cap(MAX_TEMP_CACHE_MB)
+        if lru_res.get("evicted_count", 0) > 0:
+            logger.info(
+                f"[assembler] 500 MB LRU cache cap evicted {lru_res['evicted_count']} oldest files "
+                f"({lru_res['evicted_mb']} MB freed; {lru_res['remaining_mb']} MB remaining)."
+            )
+    except Exception as e:
+        logger.debug(f"[assembler] LRU cache enforcement note: {e}")
 
     return freed_bytes
 
 
-def build_xfade_filter_chain(all_beats: List[Dict[str, Any]]) -> str:
+def build_xfade_filter_chain(all_beats: List[Dict[str, Any]], max_transitions: int = 4) -> str:
     """
-    Constructs an FFmpeg `xfade` video transition filter chain across rendered beats:
-    - Act breaks (`act_break` / `transition == 'fadeblack'`): `fadeblack` (0.16s)
-    - Whoosh transitions (`sfx == 'whoosh.wav'`): `slideleft` (0.14s)
-    - Climax impact beats (`transition == 'wipeleft'`): `wipeleft` (0.12s)
-    - Standard cuts: `fade` (0.12s)
-    Appends a unified subtle film contrast + vignette pass so all clips share cohesive lighting.
+    Constructs an Intel UHD 620 / 16 GB RAM-safe `xfade` video transition filter chain:
+    - Caps simultaneous `xfade` nodes to major Act breaks (`act_break`, `is_climax_entry`, or explicit
+      `fadeblack` / `wipeleft`, max `max_transitions=4` per video) so FFmpeg never holds 16 1080x1920
+      decoders open at once.
+    - Appends a unified subtle film contrast + vignette pass so all clips share cohesive lighting.
     """
     n = len(all_beats)
     if n <= 1:
         return "[0:v]eq=contrast=1.04:saturation=1.03,vignette=PI/6[vxf]"
 
+    # Select up to `max_transitions` major Act break indices (or evenly spaced act transitions if none flagged)
+    break_indices: List[int] = [
+        i for i in range(1, n)
+        if all_beats[i].get("act_break")
+        or all_beats[i].get("is_climax_entry")
+        or str(all_beats[i].get("transition") or "").lower() in ("fadeblack", "wipeleft", "slideleft")
+    ]
+    if not break_indices:
+        step = max(1, n // min(max_transitions, n))
+        break_indices = [i for i in range(1, n) if i % step == 0]
+    selected_indices = break_indices[:max_transitions]
+
     parts: List[str] = []
     cum_offset = 0.0
     prev_label = "0:v"
 
-    for i in range(1, n):
-        prev_dur = max(0.65, float(all_beats[i - 1].get("duration", 1.5)))
+    for idx_pos, i in enumerate(selected_indices):
+        # Sum durations up to this act break
+        prev_idx = selected_indices[idx_pos - 1] if idx_pos > 0 else 0
+        seg_dur = sum(max(0.65, float(all_beats[k].get("duration", 1.5))) for k in range(prev_idx, i))
         beat = all_beats[i]
         tr_type = str(beat.get("transition") or "").lower()
         if not tr_type:
@@ -535,9 +709,9 @@ def build_xfade_filter_chain(all_beats: List[Dict[str, Any]]) -> str:
             tr_type = "fade"
 
         tr_dur = 0.16 if tr_type == "fadeblack" else (0.14 if tr_type == "slideleft" else 0.12)
-        tr_dur = min(tr_dur, prev_dur * 0.35)
-        cum_offset = round(cum_offset + prev_dur - tr_dur, 3)
-        out_label = f"vx{i}" if i < n - 1 else "vxf_raw"
+        tr_dur = min(tr_dur, seg_dur * 0.35)
+        cum_offset = round(cum_offset + seg_dur - tr_dur, 3)
+        out_label = f"vx{i}" if idx_pos < len(selected_indices) - 1 else "vxf_raw"
         parts.append(
             f"[{prev_label}][{i}:v]xfade=transition={tr_type}:duration={tr_dur:.2f}:offset={max(0.1, cum_offset):.3f}[{out_label}]"
         )
@@ -641,11 +815,19 @@ async def assemble_final_pass2(
 ) -> bool:
     """
     Pass 2:
+    - Explicitly unloads local Spark-X2.5-4B (~3.2 GB) before starting Pass 2 FFmpeg
+    - Signals active_render.lock so the background harvester daemon pauses during encoding
     - Stitches all beats via concat demuxer (preserves synchronized transition SFX)
-    - Layers voice_master.mp3 (spoken voiceover)
-    - Layers ducked background music
-    - Burns .ASS captions
+    - Layers voice_master.mp3 (spoken voiceover) + sidechain-ducked background music
+    - Burns .ASS captions using bundled studio fonts with 4-thread CPU throttling
     """
+    try:
+        from backend.engine.brain import unload_local_brain
+        unload_local_brain()
+    except Exception:
+        pass
+
+    set_active_render_lock(manifest.get("job_id", os.path.basename(job_dir)), stage="FFMPEG_PASS2")
     beats_dir = os.path.join(job_dir, "beats")
     os.makedirs(beats_dir, exist_ok=True)
     concat_txt = os.path.join(beats_dir, "concat_beats.txt")
@@ -761,12 +943,12 @@ async def assemble_final_pass2(
         filter_complex.append("[0:v]eq=contrast=1.04:saturation=1.03,vignette=PI/6[vout]")
         map_v = "[vout]"
 
+    enc_args = get_optimal_h264_encoder_args()
     cmd_master.extend([
         "-filter_complex", ";".join(filter_complex),
         "-map", map_v,
         "-map", "[aout]",
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
+        *enc_args,
         "-c:a", "aac",
         "-b:a", "192k",
         "-pix_fmt", "yuv420p",
@@ -807,8 +989,9 @@ async def assemble_final_pass2(
                 logger.info(f"[assembler] Pass 2 fallback merge complete: {output_mp4}")
                 success = True
 
+    clear_active_render_lock()
     if success:
-        # Automatic disk cleanup: purge intermediate stitched video and beat clips
+        # Automatic disk cleanup: purge intermediate stitched video, beat clips, raw sentence MP3s, and enforce 500 MB LRU cap
         cleanup_job_temp_files(job_dir)
         return True
     return False

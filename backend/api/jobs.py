@@ -352,54 +352,74 @@ async def brainstorm_hooks(req: BrainstormRequest):
 
 @router.get('/system/cache')
 async def get_cache_status():
-    temp_bytes = 0
-    temp_count = 0
-    if os.path.exists("temp"):
-        for root, _, files in os.walk("temp"):
-            for f in files:
-                fp = os.path.join(root, f)
-                try:
-                    temp_bytes += os.path.getsize(fp)
-                    temp_count += 1
-                except OSError:
-                    pass
-    output_bytes = 0
-    output_count = 0
-    if os.path.exists("output"):
-        for root, _, files in os.walk("output"):
-            for f in files:
-                fp = os.path.join(root, f)
-                try:
-                    output_bytes += os.path.getsize(fp)
-                    output_count += 1
-                except OSError:
-                    pass
+    from backend.engine.assembler import (
+        BEAT_CACHE_DIR,
+        AI_CLIPS_CACHE_DIR,
+        EXPORTS_CACHE_DIR,
+        MAX_TEMP_CACHE_MB,
+        enforce_lru_cache_cap,
+    )
+    enforce_lru_cache_cap(MAX_TEMP_CACHE_MB)
+
+    def _scan_dir(d_path: str) -> tuple[int, int]:
+        b_total = 0
+        c_total = 0
+        if os.path.exists(d_path):
+            for root, _, files in os.walk(d_path):
+                for fname in files:
+                    if fname == "active_render.lock":
+                        continue
+                    fp = os.path.join(root, fname)
+                    try:
+                        b_total += os.path.getsize(fp)
+                        c_total += 1
+                    except OSError:
+                        pass
+        return b_total, c_total
+
+    local_b, local_c = _scan_dir("temp")
+    beat_b, beat_c = _scan_dir(BEAT_CACHE_DIR)
+    ai_b, ai_c = _scan_dir(AI_CLIPS_CACHE_DIR)
+    exp_b, exp_c = _scan_dir(EXPORTS_CACHE_DIR)
+    temp_bytes = local_b + beat_b + ai_b + exp_b
+    temp_count = local_c + beat_c + ai_c + exp_c
+
+    output_bytes, output_count = _scan_dir("output")
     return {
         "temp_mb": round(temp_bytes / (1024 * 1024), 2),
         "temp_count": temp_count,
+        "beat_cache_mb": round(beat_b / (1024 * 1024), 2),
+        "ai_clips_mb": round(ai_b / (1024 * 1024), 2),
+        "exports_mb": round(exp_b / (1024 * 1024), 2),
+        "max_cap_mb": MAX_TEMP_CACHE_MB,
         "output_mb": round(output_bytes / (1024 * 1024), 2),
         "output_count": output_count,
     }
 
 @router.post('/system/cache/clear')
 async def clear_cache():
+    from backend.engine.assembler import BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR
     freed_bytes = 0
     cleaned_count = 0
-    if os.path.exists("temp"):
-        for f in os.listdir("temp"):
-            fp = os.path.join("temp", f)
-            try:
-                if os.path.isfile(fp):
-                    freed_bytes += os.path.getsize(fp)
-                    os.remove(fp)
-                    cleaned_count += 1
-            except OSError:
-                pass
+    for target_dir in ("temp", BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR):
+        if os.path.exists(target_dir):
+            for root, _, files in os.walk(target_dir):
+                for f in files:
+                    if f == "active_render.lock":
+                        continue
+                    fp = os.path.join(root, f)
+                    try:
+                        if os.path.isfile(fp):
+                            freed_bytes += os.path.getsize(fp)
+                            os.remove(fp)
+                            cleaned_count += 1
+                    except OSError:
+                        pass
     return {
         "status": "success",
         "freed_mb": round(freed_bytes / (1024 * 1024), 2),
         "cleaned_count": cleaned_count,
-        "message": f"Freed {round(freed_bytes / (1024 * 1024), 2)} MB from temporary storage."
+        "message": f"Freed {round(freed_bytes / (1024 * 1024), 2)} MB across beat_cache, ai_clips, exports, and temp storage."
     }
 
 @router.get('/video-gen/status')
@@ -787,7 +807,8 @@ async def upload_job_anchor(job_id: int, file: UploadFile = File(...)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    job_dir = os.path.abspath(f"jobs/{job_id}")
+    from backend.engine.assembler import get_job_scratch_dir
+    job_dir = get_job_scratch_dir(job_id)
     os.makedirs(job_dir, exist_ok=True)
     file_ext = os.path.splitext(file.filename)[1].lower() or ".png"
     anchor_filename = f"anchor_reference{file_ext}"
@@ -837,8 +858,10 @@ async def get_job_thumbnails(job_id: int):
         return meta["thumbnails"]
 
     from backend.engine.thumbnail_engine import generate_job_thumbnails
+    from backend.engine.assembler import get_job_scratch_dir
+    job_dir = get_job_scratch_dir(job_id)
     manifest = None
-    manifest_path = os.path.join("jobs", str(job_id), "manifest.json")
+    manifest_path = os.path.join(job_dir, "manifest.json")
     if os.path.exists(manifest_path):
         try:
             with open(manifest_path, "r", encoding="utf-8") as f:
@@ -852,7 +875,7 @@ async def get_job_thumbnails(job_id: int):
             "fact_dossier": meta.get("fact_dossier", {})
         }
 
-    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=f"jobs/{job_id}")
+    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=job_dir)
     if video_asset:
         meta["thumbnails"] = thumb_data
         await repository.update_asset_metadata(video_asset.id, meta)
@@ -870,8 +893,10 @@ async def regenerate_job_thumbnails(job_id: int):
     meta = dict(video_asset.metadata_json or {}) if video_asset else {}
 
     from backend.engine.thumbnail_engine import generate_job_thumbnails
+    from backend.engine.assembler import get_job_scratch_dir
+    job_dir = get_job_scratch_dir(job_id)
     manifest = None
-    manifest_path = os.path.join("jobs", str(job_id), "manifest.json")
+    manifest_path = os.path.join(job_dir, "manifest.json")
     if os.path.exists(manifest_path):
         try:
             with open(manifest_path, "r", encoding="utf-8") as f:
@@ -885,7 +910,7 @@ async def regenerate_job_thumbnails(job_id: int):
             "fact_dossier": meta.get("fact_dossier", {})
         }
 
-    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=f"jobs/{job_id}")
+    thumb_data = await generate_job_thumbnails(job_id=job_id, manifest=manifest, job_dir=job_dir)
     if video_asset:
         meta["thumbnails"] = thumb_data
         await repository.update_asset_metadata(video_asset.id, meta)
@@ -959,7 +984,8 @@ async def build_job_export_zip(job_id: int, job_dir_override: Optional[str] = No
     video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
     meta = dict(video_asset.metadata_json or {}) if video_asset and getattr(video_asset, "metadata_json", None) else {}
 
-    job_dir = job_dir_override or os.path.join("jobs", str(job_id))
+    from backend.engine.assembler import get_job_scratch_dir
+    job_dir = job_dir_override or get_job_scratch_dir(job_id)
     manifest_path = os.path.join(job_dir, "manifest.json")
     manifest: Dict[str, Any] = {}
     if os.path.exists(manifest_path):

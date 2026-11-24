@@ -44,6 +44,76 @@ def build_cinematic_visual_prompt(
     )
 
 
+def fetch_wikimedia_commons_image(
+    query: str,
+    output_path: str,
+    width: int = 1080,
+    height: int = 1920,
+    timeout: float = 8.0,
+) -> bool:
+    """
+    Tier 0 Real Historical / Archival Photo Retrieval via Wikimedia Commons MediaWiki API ($0, 0 API keys).
+    Searches public-domain / CC archival bitmap photographs before falling back to AI plates.
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    # Extract concrete nouns/subject terms and strip synthetic camera jargon
+    stop_terms = {
+        "cinematic", "35mm", "anamorphic", "film", "shot", "volumetric", "chiaroscuro",
+        "shadows", "kodak", "grain", "photorealistic", "documentary", "archival", "still",
+        "slow", "dramatic", "push-in", "zoom", "8k", "uhd", "lighting", "optical", "texture",
+        "photojournalism", "high", "contrast", "dark", "moody", "plate", "scene", "beat"
+    }
+    tokens = [
+        re.sub(r"[^a-zA-Z0-9_-]", "", w)
+        for w in query.split()
+        if len(w) > 2 and re.sub(r"[^a-zA-Z0-9_-]", "", w).lower() not in stop_terms
+    ]
+    clean_q = " ".join(tokens[:6]).strip()
+    if len(clean_q) < 4:
+        return False
+
+    encoded_q = urllib.parse.quote(f"filetype:bitmap {clean_q}")
+    api_url = (
+        f"https://commons.wikimedia.org/w/api.php?action=query&generator=search"
+        f"&gsrsearch={encoded_q}&gsrnamespace=6&gsrlimit=5&prop=imageinfo"
+        f"&iiprop=url|dimensions&iiurlwidth={max(width, 1080)}&format=json"
+    )
+    req = urllib.request.Request(
+        api_url,
+        headers={"User-Agent": "ContentFactoryDocumentaryStudio/2.0 (https://localhost:3000)"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+            pages = (payload.get("query") or {}).get("pages") or {}
+            for _, page in pages.items():
+                infos = page.get("imageinfo") or []
+                if not infos:
+                    continue
+                info = infos[0]
+                img_w = int(info.get("width") or 0)
+                img_h = int(info.get("height") or 0)
+                img_url = info.get("thumburl") or info.get("url")
+                if not img_url or img_w < 500 or img_h < 400:
+                    continue
+                if img_url.lower().endswith((".svg", ".gif", ".tif", ".tiff", ".pdf")):
+                    continue
+                img_req = urllib.request.Request(
+                    img_url,
+                    headers={"User-Agent": "ContentFactoryDocumentaryStudio/2.0"}
+                )
+                with urllib.request.urlopen(img_req, timeout=timeout) as img_resp:
+                    img_bytes = img_resp.read()
+                    if len(img_bytes) > 8000:
+                        with open(output_path, "wb") as f:
+                            f.write(img_bytes)
+                        logger.info(f"[visual_cortex] Fetched real Wikimedia Commons archival photo ({clean_q}) -> {output_path}")
+                        return True
+    except Exception as e:
+        logger.debug(f"[visual_cortex] Wikimedia Commons lookup skipped ({e}) for query '{clean_q}'")
+    return False
+
+
 def fetch_pollinations_flux(
     prompt: str,
     output_path: str,

@@ -15,7 +15,16 @@ from backend.tools.nuzky_engine import build_nuzky_project, save_nuzky_project, 
 from backend.tools.llm import generate_script
 from backend.engine.planner import generate_documentary_plan, save_manifest
 from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
-from backend.engine.assembler import render_beat_pass1, assemble_final_pass2, cleanup_job_temp_files
+from backend.engine.assembler import (
+    render_beat_pass1,
+    assemble_final_pass2,
+    cleanup_job_temp_files,
+    get_job_scratch_dir,
+    set_active_render_lock,
+    clear_active_render_lock,
+    get_optimal_h264_encoder_args,
+)
+from backend.engine.brain import unload_local_brain
 from backend.engine.thumbnail_engine import generate_job_thumbnails
 
 logger = logging.getLogger(__name__)
@@ -26,7 +35,7 @@ os.makedirs(ARCHIVE_OUTPUTS_DIR, exist_ok=True)
 
 def archive_older_job_outputs(
     output_dir: str = "output",
-    max_kept: int = 10,
+    max_kept: int = 8,
     archive_dir: str = ARCHIVE_OUTPUTS_DIR
 ) -> Dict[str, Any]:
     """
@@ -230,11 +239,12 @@ async def render_video_from_scenes(job_id: int, scenes: List[Dict[str, Any]], au
     concat_inputs = "".join(f"[v{i}]" for i in range(len(scenes)))
     filter_complex = f"{filter_inputs}{concat_inputs}concat=n={len(scenes)}:v=1:a=0[outv]"
 
+    enc_args = get_optimal_h264_encoder_args()
     cmd.extend([
         "-filter_complex", filter_complex,
         "-map", "[outv]",
         "-map", "0:a",
-        "-c:v", "libx264",
+        *enc_args,
         "-c:a", "aac",
         "-b:a", "192k",
         "-pix_fmt", "yuv420p",
@@ -270,7 +280,7 @@ async def run_instant_pipeline(
     logger.info(f"[Instant Pipeline] Starting high-retention documentary generation for Job {job_id}: '{topic}' ({aspect_ratio}, {duration}, genre={genre})")
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     output_dir = os.path.join(repo_root, "output")
-    job_dir = os.path.join(repo_root, "jobs", str(job_id))
+    job_dir = get_job_scratch_dir(job_id)
     temp_dir = os.path.join(repo_root, "temp")
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(temp_dir, exist_ok=True)
@@ -285,6 +295,7 @@ async def run_instant_pipeline(
     except Exception:
         duration_target = 45.0
 
+    set_active_render_lock(job_id, stage="SCRIPT")
     try:
         # -------------------------------------------------------------
         # STEP 1: DOCUMENTARY SCRIPT & BEAT PLANNING
@@ -299,10 +310,13 @@ async def run_instant_pipeline(
             genre=genre
         )
         save_manifest(manifest, job_dir)
+        # Explicitly unload Spark-X2.5-4B (~3.2 GB) after script planning so audio & FFmpeg never collide in RAM
+        unload_local_brain()
 
         # -------------------------------------------------------------
         # STEP 2: AUDIO SYNTHESIS & KARAOKE SUBTITLES
         # -------------------------------------------------------------
+        set_active_render_lock(job_id, stage="AUDIO")
         await repository.create_stage(job_id, "AUDIO")
         await repository.update_job_status(job_id, JobStatus.RUNNING, "AUDIO")
         manifest = await synthesize_documentary_audio_and_subs(manifest, job_dir, voice=voice)
@@ -319,6 +333,7 @@ async def run_instant_pipeline(
         # -------------------------------------------------------------
         # STEP 3: RENDER 16 RAPID VISUAL BEATS (PASS 1)
         # -------------------------------------------------------------
+        set_active_render_lock(job_id, stage="PLATES")
         await repository.create_stage(job_id, "PLATES")
         await repository.update_job_status(job_id, JobStatus.RUNNING, "PLATES")
         scenes = []
@@ -327,20 +342,21 @@ async def run_instant_pipeline(
             for b_idx, b in enumerate(s.get("beats", [])):
                 rendered_path = await render_beat_pass1(b, job_dir)
                 plate_png = os.path.join(job_dir, "beats", f"{b['id']}_plate.png")
-                preview_img = plate_png if os.path.exists(plate_png) else rendered_path
+                preview_url = f"jobs/{job_id}/beats/{b['id']}_plate.png" if os.path.exists(plate_png) else rendered_path.replace("\\", "/")
                 scenes.append({
                     "scene_index": len(scenes),
                     "badge": b.get("headline") or f"BEAT {len(scenes) + 1}",
                     "title": b.get("headline") or f"Beat {len(scenes) + 1}",
                     "text": s_text if b_idx == 0 else "",
                     "prompt": b.get("prompt") or b.get("highlight", ""),
-                    "image_path": preview_img.replace("\\", "/"),
+                    "image_path": preview_url,
                     "duration": float(b.get("duration", 1.5))
                 })
 
         # -------------------------------------------------------------
         # STEP 4: TIMELINES & 2-PASS MASTER ASSEMBLY (FFMPEG)
         # -------------------------------------------------------------
+        set_active_render_lock(job_id, stage="FFMPEG")
         await repository.create_stage(job_id, "FFMPEG")
         await repository.update_job_status(job_id, JobStatus.RUNNING, "FFMPEG")
 
@@ -370,8 +386,8 @@ async def run_instant_pipeline(
         except Exception as th_err:
             logger.warning(f"[Instant Pipeline] Automated thumbnail packager error: {th_err}")
 
-        # Long-Term D: Partition Guard: Archive jobs older than last 10
-        arch_res = archive_older_job_outputs(output_dir=output_dir, max_kept=10)
+        # Long-Term D: Partition Guard: Archive jobs older than last 8
+        arch_res = archive_older_job_outputs(output_dir=output_dir, max_kept=8)
         if arch_res.get("archived_count", 0) > 0:
             logger.info(f"[Instant Pipeline] D: drive safeguard: Archived {arch_res['archived_count']} videos ({arch_res['freed_mb']} MB freed).")
 
@@ -437,3 +453,5 @@ async def run_instant_pipeline(
             "error": str(e),
             "stage": "FAILED"
         }
+    finally:
+        clear_active_render_lock()

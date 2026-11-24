@@ -89,12 +89,31 @@ app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 app.add_api_route("/api/system/cache", get_cache_status, methods=["GET"], tags=["system"])
 app.add_api_route("/api/system/cache/clear", clear_cache, methods=["POST"], tags=["system"])
 
+import shutil
+
+JOBS_SCRATCH_ROOT = r"C:\cf_training\jobs"
 os.makedirs("output", exist_ok=True)
 os.makedirs("temp", exist_ok=True)
-os.makedirs("jobs", exist_ok=True)
+os.makedirs(JOBS_SCRATCH_ROOT, exist_ok=True)
+
+# Migrate any existing D:\CONTENT-FACTORY\jobs\<id> folders to C:\cf_training\jobs\<id> to keep D: free
+if os.path.exists("jobs"):
+    try:
+        for entry in os.listdir("jobs"):
+            src_j = os.path.join("jobs", entry)
+            dst_j = os.path.join(JOBS_SCRATCH_ROOT, entry)
+            if os.path.isdir(src_j):
+                if not os.path.exists(dst_j):
+                    shutil.move(src_j, dst_j)
+                else:
+                    shutil.copytree(src_j, dst_j, dirs_exist_ok=True)
+                    shutil.rmtree(src_j, ignore_errors=True)
+    except Exception as _mig_err:
+        logger.warning(f"Could not migrate legacy D:\\jobs folder: {_mig_err}")
+
 app.mount("/output", StaticFiles(directory="output"), name="output")
 app.mount("/temp", StaticFiles(directory="temp"), name="temp")
-app.mount("/jobs", StaticFiles(directory="jobs"), name="jobs")
+app.mount("/jobs", StaticFiles(directory=JOBS_SCRATCH_ROOT), name="jobs")
 
 @app.get("/health")
 async def health_check() -> JSONResponse:

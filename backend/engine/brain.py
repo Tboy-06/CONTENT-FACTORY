@@ -58,13 +58,13 @@ _LOCAL_BRAIN_LOCK = asyncio.Lock()
 
 
 def shutdown_local_brain() -> None:
-    """Terminates the local llama-server subprocess cleanly on FastAPI shutdown or process exit."""
+    """Terminates the local llama-server subprocess cleanly on FastAPI shutdown or before heavy FFmpeg renders."""
     global _LOCAL_BRAIN_PROC
     proc = _LOCAL_BRAIN_PROC
     if proc is not None:
         try:
             if proc.poll() is None:
-                logger.info("[Brain] Terminating local llama-server.exe subprocess...")
+                logger.info("[Brain] Terminating local llama-server.exe subprocess to free ~3.2 GB RAM...")
                 proc.terminate()
                 try:
                     proc.wait(timeout=3)
@@ -74,6 +74,34 @@ def shutdown_local_brain() -> None:
             logger.debug(f"[Brain] Error terminating local brain subprocess: {e}")
         finally:
             _LOCAL_BRAIN_PROC = None
+
+    # Also ensure no orphaned llama-server.exe holds RAM if spawned previously
+    if is_ollama_running():
+        try:
+            _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "llama-server.exe"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                creationflags=_no_win,
+            )
+        except Exception:
+            pass
+
+
+def unload_local_brain() -> bool:
+    """
+    Explicit 16 GB RAM Sequencer Guard:
+    Unloads/stops local `llama-server.exe` (~3.2 GB) before launching heavy FFmpeg Pass 2 or
+    Faster-Whisper passes so the LLM and video encoder never share peak RAM simultaneously.
+    Returns True if unloaded or already idle.
+    """
+    was_running = is_ollama_running() or (_LOCAL_BRAIN_PROC is not None and _LOCAL_BRAIN_PROC.poll() is None)
+    shutdown_local_brain()
+    if was_running:
+        logger.info("[Brain] Unloaded Spark-X2.5-4B before media encoding pass (~3.2 GB RAM freed).")
+    return True
 
 
 atexit.register(shutdown_local_brain)
@@ -123,9 +151,9 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
                 "--port", "11434",
                 "--host", "127.0.0.1",
                 "-c", "8192",  # Intentional 16GB RAM KV-cache cap (~240 MB) on native 1M-context Spark-X2.5-4B
-                "-t", "6",
+                "-t", "4",
                 "--log-disable",
-                "--sleep-idle-seconds", "300"
+                "--sleep-idle-seconds", "75"
             ]
             try:
                 _no_win = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0

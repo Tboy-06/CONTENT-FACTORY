@@ -29,7 +29,12 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from backend.engine.assembler import assemble_final_pass2, cleanup_job_temp_files, render_beat_pass1
+from backend.engine.assembler import (
+    assemble_final_pass2,
+    cleanup_job_temp_files,
+    render_beat_pass1,
+    get_job_scratch_dir,
+)
 from backend.engine.brain import ask_brain
 from backend.engine.reflexion import log_editorial_mistake, get_learned_mistakes
 from backend.engine.vault_graph import query_director_vault
@@ -67,6 +72,7 @@ def validate_safe_video_path(video_path: str) -> str:
         (project_root / "temp").resolve(),
         Path(UPLOADS_DIR).resolve(),
         Path(r"C:\cf_training\temp").resolve(),
+        Path(r"C:\cf_training\jobs").resolve(),
         Path(r"C:\cf_training\archive_outputs").resolve(),
     ]
 
@@ -459,9 +465,99 @@ class CopilotChatRequest(BaseModel):
     genre: Optional[str] = None
 
 
+def save_manifest_history_snapshot(
+    job_id: int,
+    manifest: Dict[str, Any],
+    action_label: str = "director_edit",
+) -> str:
+    """
+    Saves an immutable `manifest_history/v{N}.json` backup before any AI Director or Copilot
+    timeline modification so the user can 1-click rollback if a change messes up a timeline.
+    """
+    job_dir = get_job_scratch_dir(job_id)
+    history_dir = os.path.join(job_dir, "manifest_history")
+    os.makedirs(history_dir, exist_ok=True)
+    existing_versions: List[int] = []
+    for fname in os.listdir(history_dir):
+        m = re.match(r"^v(\d+)\.json$", fname)
+        if m:
+            existing_versions.append(int(m.group(1)))
+    next_ver = (max(existing_versions) + 1) if existing_versions else 1
+    snap_path = os.path.join(history_dir, f"v{next_ver}.json")
+    snapshot_payload = {
+        "version": next_ver,
+        "job_id": job_id,
+        "action_label": action_label,
+        "timestamp": int(time.time()),
+        "manifest": json.loads(json.dumps(manifest)),
+    }
+    with open(snap_path, "w", encoding="utf-8") as f:
+        json.dump(snapshot_payload, f, indent=2)
+    logger.info(f"[copilot] Saved manifest history backup v{next_ver} for Job #{job_id} -> {snap_path}")
+    return snap_path
+
+
+async def rollback_job_manifest(
+    job_id: int,
+    version: Optional[int] = None,
+    re_render: bool = True,
+) -> Dict[str, Any]:
+    """
+    Restores a job's `manifest.json` from `manifest_history/v{N}.json` (defaults to the latest snapshot)
+    and optionally re-renders/re-stitches the timeline.
+    """
+    job_dir = get_job_scratch_dir(job_id)
+    history_dir = os.path.join(job_dir, "manifest_history")
+    if not os.path.exists(history_dir):
+        raise HTTPException(status_code=404, detail=f"No manifest history found for Job #{job_id}")
+
+    snaps: List[tuple[int, str]] = []
+    for fname in os.listdir(history_dir):
+        m = re.match(r"^v(\d+)\.json$", fname)
+        if m:
+            snaps.append((int(m.group(1)), os.path.join(history_dir, fname)))
+    if not snaps:
+        raise HTTPException(status_code=404, detail=f"No manifest history versions available for Job #{job_id}")
+
+    snaps.sort(key=lambda x: x[0])
+    if version is not None:
+        chosen = next(((v, p) for v, p in snaps if v == int(version)), None)
+        if not chosen:
+            raise HTTPException(status_code=404, detail=f"Snapshot v{version} not found for Job #{job_id}")
+        target_ver, target_path = chosen
+    else:
+        target_ver, target_path = snaps[-1]
+
+    with open(target_path, "r", encoding="utf-8") as f:
+        snap_data = json.load(f)
+    restored_manifest = snap_data.get("manifest") or snap_data
+
+    manifest_path = os.path.join(job_dir, "manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(restored_manifest, f, indent=2)
+
+    video_url = f"/output/instant_{job_id}.mp4?t={int(time.time())}"
+    if re_render:
+        for b in restored_manifest.get("beats", []):
+            await render_beat_pass1(b, job_dir)
+        final_video = f"output/instant_{job_id}.mp4"
+        await assemble_final_pass2(restored_manifest, job_dir, final_video)
+        cleanup_job_temp_files(job_dir)
+
+    return {
+        "status": "success",
+        "job_id": job_id,
+        "restored_version": target_ver,
+        "available_versions": [v for v, _ in snaps],
+        "video_url": video_url,
+        "manifest": restored_manifest,
+    }
+
+
 async def execute_recut_genre(job_id: int, target_genre: str) -> Dict[str, Any]:
     """
     Re-cuts an existing video into a new genre physics profile:
+    - Saves manifest_history/v{N}.json backup before modifying the timeline
     - Updates manifest genre and rules
     - Transforms color grades (skit_warm for comedy, action_crush for action, cinema_scope for movie, etc.)
     - Updates camera movements (snap_zoom for comedy, camera_shake for action, anamorphic letterbox for cinema)
@@ -469,6 +565,7 @@ async def execute_recut_genre(job_id: int, target_genre: str) -> Dict[str, Any]:
     """
     from backend.engine.planner import detect_genre, GENRES
     manifest = await get_or_create_manifest(job_id)
+    save_manifest_history_snapshot(job_id, manifest, action_label=f"recut_genre:{target_genre}")
     g = (target_genre or "crime_doc").lower().strip()
     if g == "auto" or g not in GENRES:
         g = detect_genre(manifest.get("topic", ""))
@@ -485,7 +582,7 @@ async def execute_recut_genre(job_id: int, target_genre: str) -> Dict[str, Any]:
     }
     target_grade = grade_map.get(g, "hard_bw")
 
-    job_dir = os.path.join("jobs", str(job_id))
+    job_dir = get_job_scratch_dir(job_id)
     for i, b in enumerate(beats):
         b["genre"] = g
         b["grade"] = target_grade
@@ -531,7 +628,7 @@ async def execute_recut_genre(job_id: int, target_genre: str) -> Dict[str, Any]:
 
 async def get_or_create_manifest(job_id: int) -> Dict[str, Any]:
     """Retrieves manifest.json or reconstructs it from repository VIDEO asset metadata."""
-    job_dir = os.path.join("jobs", str(job_id))
+    job_dir = get_job_scratch_dir(job_id)
     os.makedirs(job_dir, exist_ok=True)
     manifest_path = os.path.join(job_dir, "manifest.json")
     if os.path.exists(manifest_path):
@@ -586,11 +683,13 @@ async def get_or_create_manifest(job_id: int) -> Dict[str, Any]:
 
 async def execute_modify_timeline_beats(job_id: int, beat_mods: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Modifies specific beats in job's manifest.json, re-renders the affected beat clips,
-    re-stitches instant_<id>.mp4 via assemble_final_pass2, and auto-cleans intermediate files.
+    Modifies specific beats in job's manifest.json, saves a manifest_history/v{N}.json backup first,
+    re-renders the affected beat clips, re-stitches instant_<id>.mp4 via assemble_final_pass2,
+    and auto-cleans intermediate files.
     """
-    job_dir = os.path.join("jobs", str(job_id))
+    job_dir = get_job_scratch_dir(job_id)
     manifest = await get_or_create_manifest(job_id)
+    save_manifest_history_snapshot(job_id, manifest, action_label="modify_timeline_beats")
     manifest_path = os.path.join(job_dir, "manifest.json")
 
     beats = manifest.get("beats", [])
@@ -1307,6 +1406,43 @@ class RecutGenreRequest(BaseModel):
 async def recut_genre_endpoint(req: RecutGenreRequest):
     """Re-cuts a video into a specific genre profile."""
     return await execute_recut_genre(req.job_id, req.genre)
+
+
+class RollbackManifestRequest(BaseModel):
+    version: Optional[int] = None
+    re_render: bool = True
+
+
+@router.post("/jobs/{job_id}/rollback")
+async def rollback_manifest_endpoint(job_id: int, req: Optional[RollbackManifestRequest] = None):
+    """1-click rollback to a previous `manifest_history/v{N}.json` snapshot before an AI Director edit."""
+    ver = req.version if req else None
+    rerender = req.re_render if req is not None else True
+    return await rollback_job_manifest(job_id=job_id, version=ver, re_render=rerender)
+
+
+@router.get("/jobs/{job_id}/history")
+async def list_manifest_history_endpoint(job_id: int):
+    """Lists available `manifest_history/v{N}.json` snapshots for a job."""
+    job_dir = get_job_scratch_dir(job_id)
+    history_dir = os.path.join(job_dir, "manifest_history")
+    versions = []
+    if os.path.exists(history_dir):
+        for fname in sorted(os.listdir(history_dir)):
+            m = re.match(r"^v(\d+)\.json$", fname)
+            if m:
+                fp = os.path.join(history_dir, fname)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        d = json.load(f)
+                    versions.append({
+                        "version": int(m.group(1)),
+                        "action_label": d.get("action_label", "director_edit"),
+                        "timestamp": d.get("timestamp"),
+                    })
+                except Exception:
+                    versions.append({"version": int(m.group(1)), "action_label": "director_edit"})
+    return {"status": "success", "job_id": job_id, "versions": versions}
 
 
 @router.get("/house-quotas")
