@@ -465,6 +465,8 @@ export default function DirectorChatDrawer({
             className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-red-500 font-mono"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && ytUrl.trim()) {
+                e.preventDefault();
+                if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
                 handleSendMessage(`Extract top 3 viral shorts from this: ${ytUrl.trim()}`);
                 setYtUrl('');
                 setShowUrlInput(false);
@@ -883,6 +885,7 @@ export default function DirectorChatDrawer({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
                 handleSendMessage();
               }
             }}

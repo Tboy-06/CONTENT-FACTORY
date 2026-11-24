@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
-@custom-variant dark (&:where([data-theme="dark-glass"], [data-theme="dark-glass"] *, [data-theme="classic-dark"], [data-theme="classic-dark"] *));
+@custom-variant dark (&:where([data-studio-mode="dark-glass"], [data-studio-mode="dark-glass"] *, [data-studio-mode="classic-dark"], [data-studio-mode="classic-dark"] *, :root:has(> head > meta[name="color-scheme"][content="dark"]), :root:has(> head > meta[name="color-scheme"][content="dark"]) *));
 
 @theme {
   --color-bg: var(--bg);
@@ -21,23 +21,30 @@ html, body, #root {
   min-height: 100%;
 }
 
-/* Custom Scrollbar - Adaptive across Light Glass, Dark Glass, and Classic */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+/* Custom Scrollbar - Modern scrollbar-color with @supports not fallback per modern-web-guidance */
+:root {
+  --scrollbar-thumb: rgba(100, 116, 139, 0.42);
+  --scrollbar-track: transparent;
 }
 
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.32);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.55);
+
+@supports not (scrollbar-color: auto) {
+  * {
+    scrollbar-width: auto;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
 }

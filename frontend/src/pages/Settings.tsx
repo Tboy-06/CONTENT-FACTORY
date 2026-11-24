@@ -17,7 +17,7 @@ import {
   useClearCache,
   useCacheStatus
 } from '../api/client';
-import { Button, Badge } from '../components/ui';
+import { Button, Badge, ConfirmDialog } from '../components/ui';
 
 export default function Settings() {
   const { data: initialSettings, isLoading } = useSettings();
@@ -25,6 +25,7 @@ export default function Settings() {
   const updateMutation = useUpdateSettings();
   const clearJobsMutation = useClearAllJobs();
   const clearCacheMutation = useClearCache();
+  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
   const [settings, setSettings] = useState<any>({
     ollama_model: 'SparkLLM/Spark-X2.5-4B',
@@ -339,16 +340,7 @@ export default function Settings() {
 
             <button
               type="button"
-              onClick={() => {
-                if (
-                  confirm(
-                    'Reset Data: This will remove all job records and intermediate render artifacts. Confirm?'
-                  )
-                ) {
-                  clearJobsMutation.mutate();
-                  clearCacheMutation.mutate();
-                }
-              }}
+              onClick={() => setIsConfirmResetOpen(true)}
               disabled={clearJobsMutation.isPending}
               className="glass-subcard w-full p-3.5 flex items-center justify-between text-left cursor-pointer hover:!border-red-500/50 disabled:opacity-50"
             >
@@ -367,6 +359,18 @@ export default function Settings() {
               </div>
               <ChevronRight size={15} className="text-red-500 shrink-0" />
             </button>
+            <ConfirmDialog
+              isOpen={isConfirmResetOpen}
+              title="Reset Factory Job Records?"
+              description="This will remove all SQLite job records and intermediate render artifacts while preserving your 5-House training dataset."
+              confirmLabel="Reset Records"
+              onConfirm={() => {
+                setIsConfirmResetOpen(false);
+                clearJobsMutation.mutate();
+                clearCacheMutation.mutate();
+              }}
+              onCancel={() => setIsConfirmResetOpen(false)}
+            />
           </div>
         </div>
       </div>

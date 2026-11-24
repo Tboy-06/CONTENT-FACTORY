@@ -20,7 +20,7 @@ import {
   useContinueHarvesterMilestone,
   useLearnedRules
 } from '../api/client';
-import { Button, Badge, EmptyState, Tabs } from '../components/ui';
+import { Button, Badge, EmptyState, Tabs, ConfirmDialog } from '../components/ui';
 
 const STATUS_FILTERS = [
   { id: 'All', label: 'All Videos' },
@@ -41,6 +41,7 @@ export default function Vault() {
   const [activeTab, setActiveTab] = useState('Rendered Videos');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
 
   const vaultJobs = jobs.filter(
     (j: any) =>
@@ -86,19 +87,28 @@ export default function Vault() {
 
         <div className="flex items-center gap-2">
           {vaultJobs.length > 0 && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (confirm('Clear all vault videos and jobs?')) {
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setIsConfirmClearOpen(true)}
+                disabled={clearAllMutation.isPending}
+                className="hover:!text-red-500"
+              >
+                <Trash2 size={13} />
+                <span>Clear Vault</span>
+              </Button>
+              <ConfirmDialog
+                isOpen={isConfirmClearOpen}
+                title="Clear All Vault Videos and Jobs?"
+                description="This clears all rendered job records from the Director Vault while keeping your 5-House training dataset intact."
+                confirmLabel="Clear Vault"
+                onConfirm={() => {
+                  setIsConfirmClearOpen(false);
                   clearAllMutation.mutate();
-                }
-              }}
-              disabled={clearAllMutation.isPending}
-              className="hover:!text-red-500"
-            >
-              <Trash2 size={13} />
-              <span>Clear Vault</span>
-            </Button>
+                }}
+                onCancel={() => setIsConfirmClearOpen(false)}
+              />
+            </>
           )}
           <Button variant="primary" onClick={() => navigate('/create')}>
             <Plus size={14} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -32,14 +32,14 @@ import Terms from './pages/Terms';
 
 export type StudioTheme = 'light-glass' | 'dark-glass' | 'classic-dark';
 
-const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass }: any) => {
-  const navigate = useNavigate();
+const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass, onNavigate }: any) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
-    <div
-      onClick={() => navigate(to)}
-      className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
+    <button
+      type="button"
+      onClick={() => onNavigate(to)}
+      className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
         isActive
           ? isLightGlass
             ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
@@ -51,17 +51,38 @@ const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass }: any) => {
     >
       <Icon size={17} className="shrink-0" />
       {!isCollapsed && <span className="whitespace-nowrap font-medium text-xs">{label}</span>}
-    </div>
+    </button>
   );
 };
+
+function syncColorSchemeMeta(activeTheme: StudioTheme) {
+  const scheme = activeTheme === 'light-glass' ? 'light' : 'dark';
+  let meta = document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = 'color-scheme';
+    document.head.appendChild(meta);
+  }
+  meta.content = scheme;
+  document.documentElement.dataset.studioMode = activeTheme;
+  try {
+    localStorage.setItem('cf_studio_theme', activeTheme);
+    localStorage.setItem('color-scheme', scheme);
+  } catch {}
+}
 
 export default function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [theme, setTheme] = useState<StudioTheme>(() => {
-    const saved = localStorage.getItem('cf_studio_theme') as StudioTheme | null;
-    return saved || 'light-glass';
+    try {
+      const saved = localStorage.getItem('cf_studio_theme') as StudioTheme | null;
+      return saved || 'light-glass';
+    } catch {
+      return 'light-glass';
+    }
   });
   const [globalSearch, setGlobalSearch] = useState('');
+  const mainWorkspaceRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isOnline = useConnectivity();
@@ -69,9 +90,55 @@ export default function App() {
   const clearCacheMutation = useClearCache();
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('cf_studio_theme', theme);
+    syncColorSchemeMeta(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'cf_studio_theme' && e.newValue) {
+        const next = e.newValue as StudioTheme;
+        setTheme(next);
+        syncColorSchemeMeta(next);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  const transitionNavigate = useCallback(
+    (to: string) => {
+      if (location.pathname === to) return;
+      const doc = document as Document & {
+        startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+      };
+      if (!doc.startViewTransition) {
+        navigate(to);
+        mainWorkspaceRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      const transition = doc.startViewTransition(() => {
+        navigate(to);
+      });
+      transition.finished.finally(() => {
+        mainWorkspaceRef.current?.focus({ preventScroll: true });
+      });
+    },
+    [location.pathname, navigate]
+  );
+
+  const handleThemeSwitch = useCallback((nextTheme: StudioTheme) => {
+    const doc = document as Document & {
+      startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+    };
+    if (!doc.startViewTransition) {
+      setTheme(nextTheme);
+      return;
+    }
+    doc.startViewTransition(() => {
+      syncColorSchemeMeta(nextTheme);
+      setTheme(nextTheme);
+    });
+  }, []);
 
   const isLightGlass = theme === 'light-glass';
   const isClassic = theme === 'classic-dark';
@@ -113,12 +180,12 @@ export default function App() {
           )}
         </div>
 
-        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
-        <NavItem to="/create" icon={PlusCircle} label="Create Video" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
-        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
-        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
-        <NavItem to="/agents" icon={Bot} label="Agents" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
-        <NavItem to="/settings" icon={SettingsIcon} label="Settings" isCollapsed={isCollapsed} isLightGlass={isLightGlass} />
+        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/create" icon={PlusCircle} label="Create Video" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/agents" icon={Bot} label="Agents" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/settings" icon={SettingsIcon} label="Settings" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
 
         <div
           className={`mt-auto flex flex-col gap-2 pt-3 border-t text-[11px] ${
@@ -226,7 +293,8 @@ export default function App() {
               title="Switch between Light Frosted Glass, Dark Obsidian Glass, or revert to Classic Dark UI"
             >
               <button
-                onClick={() => setTheme('light-glass')}
+                type="button"
+                onClick={() => handleThemeSwitch('light-glass')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   theme === 'light-glass'
                     ? 'bg-white text-slate-900 shadow-xs'
@@ -237,7 +305,8 @@ export default function App() {
                 <span>Light Glass</span>
               </button>
               <button
-                onClick={() => setTheme('dark-glass')}
+                type="button"
+                onClick={() => handleThemeSwitch('dark-glass')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   theme === 'dark-glass'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -250,7 +319,8 @@ export default function App() {
                 <span>Dark Glass</span>
               </button>
               <button
-                onClick={() => setTheme('classic-dark')}
+                type="button"
+                onClick={() => handleThemeSwitch('classic-dark')}
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   theme === 'classic-dark'
                     ? 'bg-amber-600 text-white shadow-xs'
@@ -335,7 +405,12 @@ export default function App() {
         )}
 
         {/* Main Workspace Container */}
-        <main className={`flex-1 overflow-y-auto ${isClassic ? 'p-5' : 'p-4 md:p-6'} relative`}>
+        <main
+          id="main-workspace-container"
+          ref={mainWorkspaceRef}
+          tabIndex={-1}
+          className={`flex-1 overflow-y-auto outline-none ${isClassic ? 'p-5' : 'p-4 md:p-6'} relative`}
+        >
           <div className={isClassic ? 'min-h-full' : 'acrylic-shell min-h-full p-5 md:p-7'}>
             <Routes>
               <Route path="/" element={<Dashboard theme={theme} globalSearch={globalSearch} />} />

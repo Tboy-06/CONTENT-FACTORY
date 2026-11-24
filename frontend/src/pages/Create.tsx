@@ -21,7 +21,7 @@ import {
   Download,
   SlidersHorizontal
 } from 'lucide-react';
-import { Button, Card, Badge } from '../components/ui';
+import { Button, Card, Badge, ConfirmDialog } from '../components/ui';
 import {
   useCreateInstantJob,
   useBrainstormHooks,
@@ -80,6 +80,7 @@ export default function Create() {
   const [suggestedHooks, setSuggestedHooks] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDirectorChatOpen, setIsDirectorChatOpen] = useState(false);
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
   const [flowCopied, setFlowCopied] = useState(false);
 
   const { data: recentJobs = [] } = useJobs();
@@ -263,16 +264,26 @@ export default function Create() {
       <Card className="!p-6 space-y-6">
         {/* 1. Topic Input Box & Viral Hook Generator */}
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
+          <label
+            htmlFor="launchpad-topic-input"
+            className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]"
+          >
             1. Topic or Investigation Idea
           </label>
           <div className="flex flex-col sm:flex-row gap-2.5">
             <input
+              id="launchpad-topic-input"
               type="text"
               placeholder='e.g. "CIA Project Azorian" or "3 psychological tricks people use on you"'
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+                  handleGenerate();
+                }
+              }}
               disabled={isGenerating}
               className="glass-input flex-1 px-4 py-3 text-sm"
             />
@@ -604,11 +615,8 @@ export default function Create() {
             <div className="flex items-center gap-3">
               <span className="text-xs font-mono text-[var(--mu)]">{recentJobs.length} Projects Total</span>
               <button
-                onClick={() => {
-                  if (confirm('Clear all recent jobs?')) {
-                    clearAllMutation.mutate();
-                  }
-                }}
+                type="button"
+                onClick={() => setIsConfirmClearOpen(true)}
                 disabled={clearAllMutation.isPending}
                 className="text-[11px] font-semibold text-[var(--mu)] hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 transition-colors cursor-pointer"
                 title="Clear all job history"
@@ -616,6 +624,17 @@ export default function Create() {
                 <Trash2 size={12} />
                 <span>Clear All</span>
               </button>
+              <ConfirmDialog
+                isOpen={isConfirmClearOpen}
+                title="Clear All Recent Video Jobs?"
+                description="This removes all recent job history entries from the studio launchpad list."
+                confirmLabel="Clear All"
+                onConfirm={() => {
+                  setIsConfirmClearOpen(false);
+                  clearAllMutation.mutate();
+                }}
+                onCancel={() => setIsConfirmClearOpen(false)}
+              />
             </div>
           </div>
 

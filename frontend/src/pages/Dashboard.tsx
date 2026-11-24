@@ -12,7 +12,7 @@ import {
   useSpend,
   useOpenRouterCapabilities
 } from '../api/client';
-import { Button } from '../components/ui';
+import { Button, ConfirmDialog } from '../components/ui';
 import {
   Trash2,
   Search,
@@ -66,6 +66,7 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
   const [hoveredHouseIdx, setHoveredHouseIdx] = useState<number>(1);
   const [quickTopic, setQuickTopic] = useState<string>('');
   const [quickGenre, setQuickGenre] = useState<string>('crime_doc');
+  const [jobPendingDelete, setJobPendingDelete] = useState<any | null>(null);
 
   useEffect(() => {
     setLocalSearch(globalSearch);
@@ -1037,11 +1038,10 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
                             <Download size={13} />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm(`Delete video #${job.id} (${job.niche})?`)) {
-                                deleteJobMutation.mutate(job.id);
-                              }
+                              setJobPendingDelete(job);
                             }}
                             className="p-1 rounded hover:bg-red-500/15 text-slate-400 hover:text-red-500 cursor-pointer"
                             title="Delete Job"
@@ -1085,6 +1085,23 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
               </tbody>
             </table>
           </div>
+          <ConfirmDialog
+            isOpen={Boolean(jobPendingDelete)}
+            title={jobPendingDelete ? `Delete Video #${jobPendingDelete.id}?` : 'Delete Video?'}
+            description={
+              jobPendingDelete
+                ? `Remove "${jobPendingDelete.niche}" from the production studio history?`
+                : 'Remove this video from the production studio history?'
+            }
+            confirmLabel="Delete Video"
+            onConfirm={() => {
+              if (jobPendingDelete) {
+                deleteJobMutation.mutate(jobPendingDelete.id);
+              }
+              setJobPendingDelete(null);
+            }}
+            onCancel={() => setJobPendingDelete(null)}
+          />
         </div>
 
         {/* 07B | PRISMATIC RIM-LIT "LAUNCH INSTANT DOCUMENTARY" CARD (Right 1/3) */}
@@ -1110,7 +1127,11 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
               value={quickTopic}
               onChange={(e) => setQuickTopic(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleQuickLaunch();
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
+                  handleQuickLaunch();
+                }
               }}
               placeholder="Enter topic (e.g. CIA Project Azorian)..."
               className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs text-white placeholder:text-slate-400 outline-none focus:border-cyan-400"

@@ -10,11 +10,12 @@ import {
   Clock
 } from 'lucide-react';
 import { useJobs, useDeleteJob, useClearAllJobs } from '../api/client';
-import { Tabs, Badge, Button } from '../components/ui';
+import { Tabs, Badge, Button, ConfirmDialog } from '../components/ui';
 
 export default function Pipeline() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Board');
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
   const { data: jobs = [], isLoading, isError } = useJobs();
   const deleteJobMutation = useDeleteJob();
   const clearAllMutation = useClearAllJobs();
@@ -70,19 +71,28 @@ export default function Pipeline() {
 
         <div className="flex items-center gap-2">
           {jobs.length > 0 && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (confirm('Clear all job history?')) {
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setIsConfirmClearOpen(true)}
+                disabled={clearAllMutation.isPending}
+                className="hover:!text-red-500"
+              >
+                <Trash2 size={13} />
+                <span>Clear All</span>
+              </Button>
+              <ConfirmDialog
+                isOpen={isConfirmClearOpen}
+                title="Clear All Pipeline Jobs?"
+                description="This removes all queued, active, and completed job entries from the production pipeline."
+                confirmLabel="Clear All"
+                onConfirm={() => {
+                  setIsConfirmClearOpen(false);
                   clearAllMutation.mutate();
-                }
-              }}
-              disabled={clearAllMutation.isPending}
-              className="hover:!text-red-500"
-            >
-              <Trash2 size={13} />
-              <span>Clear All</span>
-            </Button>
+                }}
+                onCancel={() => setIsConfirmClearOpen(false)}
+              />
+            </>
           )}
 
           <Button variant="primary" onClick={() => navigate('/create')}>

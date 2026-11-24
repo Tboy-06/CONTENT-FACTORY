@@ -1,4 +1,47 @@
-import React from 'react';
+import React, { useEffect, useId, useRef } from 'react';
+
+/**
+ * Attaches the mandatory light-dismiss fallback for browsers without native
+ * HTMLDialogElement.prototype.closedBy support (e.g. Safari).
+ */
+export function useDialogLightDismissFallback(
+  dialogRef: React.RefObject<HTMLDialogElement | null>,
+  enabled: boolean = true
+) {
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog || !enabled) return;
+    if ('closedBy' in HTMLDialogElement.prototype) return;
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect();
+      return (
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom
+      );
+    };
+
+    let pressedOutside = false;
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = e.target === dialog && isOutside(e);
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && e.target === dialog && isOutside(e)) {
+        dialog.close();
+      }
+      pressedOutside = false;
+    };
+
+    dialog.addEventListener('pointerdown', onPointerDown);
+    dialog.addEventListener('pointerup', onPointerUp);
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown);
+      dialog.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [dialogRef, enabled]);
+}
 
 export const Card = ({ children, className = '', ...props }: any) => (
   <div className={`glass-panel p-5 ${className}`} {...props}>{children}</div>
@@ -74,18 +117,131 @@ export const EmptyState = ({ title, description }: any) => (
 );
 
 export const Modal = ({ isOpen, onClose, title, children }: any) => {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const titleId = useId();
+  useDialogLightDismissFallback(dialogRef, isOpen);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-lg shadow-2xl overflow-hidden">
+    <dialog
+      ref={dialogRef}
+      {...({ closedby: 'any' } as any)}
+      aria-labelledby={titleId}
+      onClose={onClose}
+      className="m-auto p-0 bg-transparent border-0 w-full max-w-lg overflow-visible"
+    >
+      <div className="glass-panel w-full shadow-2xl overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b border-[var(--ln-subtle)]">
-          <h2 className="font-bold text-base text-[var(--tx)]">{title}</h2>
-          <button onClick={onClose} className="text-[var(--mu)] hover:text-[var(--tx)] text-xl leading-none cursor-pointer">
+          <h1 id={titleId} className="font-bold text-base text-[var(--tx)]">
+            {title}
+          </h1>
+          <button
+            type="button"
+            onClick={() => dialogRef.current?.close()}
+            aria-label="Close dialog"
+            className="text-[var(--mu)] hover:text-[var(--tx)] text-xl leading-none cursor-pointer"
+          >
             &times;
           </button>
         </div>
         <div className="p-4">{children}</div>
       </div>
-    </div>
+    </dialog>
+  );
+};
+
+export const ConfirmDialog = ({
+  isOpen,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  variant = 'danger',
+  onConfirm,
+  onCancel
+}: {
+  isOpen: boolean;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary';
+  onConfirm: () => void;
+  onCancel: () => void;
+}) => {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const titleId = useId();
+  useDialogLightDismissFallback(dialogRef, isOpen);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <dialog
+      ref={dialogRef}
+      {...({ closedby: 'any' } as any)}
+      aria-labelledby={titleId}
+      onClose={() => {
+        const dialog = dialogRef.current;
+        const val = dialog?.returnValue || '';
+        if (dialog) dialog.returnValue = '';
+        if (val === 'confirm') {
+          onConfirm();
+        } else {
+          onCancel();
+        }
+      }}
+      className="m-auto p-0 bg-transparent border-0 w-full max-w-md overflow-visible"
+    >
+      <div className="glass-panel p-5 space-y-4 shadow-2xl">
+        <div className="space-y-1.5">
+          <h1 id={titleId} className="text-base font-bold text-[var(--tx)]">
+            {title}
+          </h1>
+          <p className="text-xs text-[var(--mu)] leading-relaxed">{description}</p>
+        </div>
+        <form method="dialog" className="flex items-center justify-end gap-2.5 pt-2">
+          <button
+            type="submit"
+            value="cancel"
+            autoFocus
+            className="rounded-xl font-semibold px-3.5 py-2 text-xs transition-all duration-150 border bg-[var(--gl2)] hover:brightness-105 text-[var(--tx)] border-[var(--input-border)] shadow-2xs cursor-pointer"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="submit"
+            value="confirm"
+            className={`rounded-xl font-semibold px-3.5 py-2 text-xs transition-all duration-150 border text-white shadow-sm cursor-pointer ${
+              variant === 'danger'
+                ? 'bg-red-600 hover:bg-red-500 border-red-500 shadow-red-600/20'
+                : 'bg-blue-600 hover:bg-blue-500 border-blue-500 shadow-blue-600/20'
+            }`}
+          >
+            {confirmLabel}
+          </button>
+        </form>
+      </div>
+    </dialog>
   );
 };

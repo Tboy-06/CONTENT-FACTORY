@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Film, X, Shield, Eye, EyeOff, Clock, Palette, Volume2, Plus, Minus, Loader2, Check } from 'lucide-react';
-import { Button, Badge } from './ui';
+import { Button, Badge, useDialogLightDismissFallback } from './ui';
 import SafeZoneOverlay from './SafeZoneOverlay';
 import { useRegenerateAudio } from '../api/client';
 
@@ -15,6 +15,8 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
   const [localScenes, setLocalScenes] = useState<any[]>([]);
   const [isApplying, setIsApplying] = useState(false);
   const [applyStatus, setApplyStatus] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  useDialogLightDismissFallback(dialogRef, isOpen);
 
   const regenerateMutation = useRegenerateAudio();
 
@@ -30,6 +32,16 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
       setLocalScenes(scenes);
     }
   }, [job]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,13 +74,14 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
   const totalCalculatedDur = localScenes.reduce((acc, s) => acc + (Number(s.duration) || 1.5), 0);
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-md p-4"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      {...({ closedby: 'any' } as any)}
       aria-labelledby="studio-modal-title"
+      onClose={onClose}
+      className="m-auto p-0 bg-transparent border-0 w-[calc(100%-2rem)] max-w-5xl max-h-[92vh] overflow-visible"
     >
-      <div className="light-adapt-surface acrylic-shell w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="light-adapt-surface acrylic-shell w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         
         {/* Header */}
         <div className="p-4 border-b border-[var(--ln-subtle)] flex items-center justify-between bg-[var(--gl)] shrink-0">
@@ -77,16 +90,17 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
               <Film size={18} />
             </div>
             <div>
-              <div id="studio-modal-title" className="font-bold text-[var(--tx)] text-base flex items-center gap-2">
+              <h1 id="studio-modal-title" className="font-bold text-[var(--tx)] text-base flex items-center gap-2">
                 <span>Vertical & Cinema Inspector: {jobNiche}</span>
                 <Badge variant="success">Shot Locked</Badge>
-              </div>
+              </h1>
               <div className="text-xs text-[var(--mu)]">Frame composition, cut durations, color grading & SFX placement</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => setShowSafeZone(!showSafeZone)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                 showSafeZone
@@ -99,7 +113,8 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
             </button>
 
             <button 
-              onClick={onClose}
+              type="button"
+              onClick={() => dialogRef.current?.close()}
               aria-label="Close"
               className="text-[var(--mu)] hover:text-[var(--tx)] text-lg p-1.5 rounded-lg hover:bg-[var(--gl2)] flex items-center justify-center cursor-pointer"
             >
@@ -315,6 +330,6 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
         </div>
 
       </div>
-    </div>
+    </dialog>
   );
 }
