@@ -504,6 +504,9 @@ export interface HouseQuotasResponse {
     milestone_step?: number;
     current_milestone_cap?: number;
     milestone_status?: string;
+    harvester_active?: boolean;
+    render_lock_active?: boolean;
+    state_age_seconds?: number | null;
     last_harvested_item?: {
       house: string;
       sub_room: string;

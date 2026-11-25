@@ -10,7 +10,7 @@ into CONTENT-FACTORY at $0 cost with strict zero-billing protection:
   * Fallback Space: `zerogpu-aoti/wan2-2-fp8da-aoti-faster` (Wan 2.2 14B Image-to-Video)
   * Fast Backup Space: `Lightricks/LTX-Video`
   * Passes user's free `HF_TOKEN` (5 min/day free ZeroGPU quota), inspects endpoints via `view_api()`,
-    saves `.mp4` clips strictly to `C:\\cf_training\\temp\\ai_clips\\` (0 MB bloat on D:), and trips a
+    saves `.mp4` clips strictly to configured external `ai_clips` scratch storage, and trips a
     cooldown circuit-breaker immediately if daily ZeroGPU quota is exhausted.
 - Tier 2 (Strict Opt-In Paid — `gemini-omni-1.2-flash`):
   * Hard-blocked by default (`enable_paid_gemini_video=False`) so $0 billing is guaranteed.
@@ -33,8 +33,8 @@ from backend.config import get_settings
 
 logger = logging.getLogger("engine.video_gen")
 
-# Strictly store generated AI video clips on C: drive (0 MB bloat on D:)
-AI_CLIPS_DIR = r"C:\cf_training\temp\ai_clips"
+# Store generated AI video clips in configured external scratch directory
+AI_CLIPS_DIR = get_settings().ai_clips_dir
 os.makedirs(AI_CLIPS_DIR, exist_ok=True)
 
 PRIMARY_LTX_SPACE = "Lightricks/LTX-2.5"
@@ -149,7 +149,7 @@ def _ensure_starting_image(prompt: str, image_path: Optional[str]) -> str:
     """
     Ensures a valid starting keyframe image exists on disk for Image-to-Video Spaces
     (`Lightricks/LTX-2.5` `/run` and `Wan 2.2` `/generate_video` both require a starting image).
-    If `image_path` is not provided, generates or creates a cinematic 832x1472 starting plate in C:\\cf_training\\temp\\ai_clips\\.
+    If `image_path` is not provided, generates or creates a cinematic 832x1472 starting plate in `AI_CLIPS_DIR`.
     """
     if image_path and os.path.exists(image_path):
         return image_path

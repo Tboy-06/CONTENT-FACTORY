@@ -169,7 +169,8 @@ def fetch_transcript_quote_yt_dlp(topic: str) -> Optional[str]:
     Immediately removes any temporary subtitle file.
     """
     try:
-        temp_dir = r"C:\cf_training\temp\research"
+        from backend.config import get_settings
+        temp_dir = get_settings().research_temp_dir
         os.makedirs(temp_dir, exist_ok=True)
         sub_prefix = os.path.join(temp_dir, f"quote_{abs(hash(topic)) % 100000}")
 

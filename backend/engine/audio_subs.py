@@ -2,10 +2,10 @@
 CONTENT-FACTORY Engine: Voiceover, Broadcast Mastering & Active-Word Subtitles (audio_subs)
 -------------------------------------------------------------------------------------------
 - 3-Tier $0 Voice Stack:
-  1. Kokoro-82M (`kokoro-onnx`) local CPU offline narrator (weights in `C:\\models\\kokoro\\`)
-  2. OpenRouter `:free` TTS (`fish-audio/s2.1-pro-free:free` when discovered & within quota)
-  3. Upgraded Edge-TTS Multilingual Neural voices (`en-US-AndrewMultilingualNeural`,
+  1. Upgraded Edge-TTS Multilingual Neural voices (`en-US-AndrewMultilingualNeural`,
      `en-US-BrianMultilingualNeural`, `en-US-AvaMultilingualNeural`)
+  2. Kokoro-82M (`kokoro-onnx`) local CPU offline narrator (weights in configured `kokoro_models_dir`)
+  3. OpenRouter `:free` TTS (`fish-audio/s2.1-pro-free:free` when discovered & within quota)
 - Broadcast Vocal Mastering FFmpeg Chain (80Hz highpass, 120Hz warmth, 3.2kHz presence,
   3:1 dynamic compressor, -14 LUFS loudness normalization)
 - Natural micro-pauses (0.25s between beats, 0.45s dramatic silence before climax)
@@ -23,10 +23,11 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 import edge_tts
+from backend.config import get_settings
 
 logger = logging.getLogger("engine.audio_subs")
 
-KOKORO_MODELS_DIR = r"C:\models\kokoro"
+KOKORO_MODELS_DIR = get_settings().kokoro_models_dir
 FONTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
 
 BROADCAST_VOCAL_MASTER_AF = (
@@ -77,14 +78,15 @@ def is_explicit_kokoro_voice(voice: Optional[str]) -> bool:
 
 def resolve_kokoro_model_paths() -> Optional[Tuple[str, str]]:
     """
-    Resolves local Kokoro-82M ONNX weights in C:\\models\\kokoro\\, preferring the compact
+    Resolves local Kokoro-82M ONNX weights in configured `kokoro_models_dir`, preferring the compact
     quantized `kokoro-v1.0.int8.onnx` (~88 MB) for 16 GB RAM laptops, or `kokoro-v1.0.onnx`.
     """
-    voices_path = os.path.join(KOKORO_MODELS_DIR, "voices-v1.0.bin")
+    models_dir = get_settings().kokoro_models_dir
+    voices_path = os.path.join(models_dir, "voices-v1.0.bin")
     if not os.path.exists(voices_path):
         return None
     for candidate in ("kokoro-v1.0.int8.onnx", "kokoro-v1.0.onnx"):
-        onnx_path = os.path.join(KOKORO_MODELS_DIR, candidate)
+        onnx_path = os.path.join(models_dir, candidate)
         if os.path.exists(onnx_path) and os.path.getsize(onnx_path) > 10 * 1024 * 1024:
             return onnx_path, voices_path
     return None
@@ -96,7 +98,7 @@ def try_kokoro_local_tts(
     voice: str = "am_michael"
 ) -> Optional[Tuple[float, List[Dict[str, Any]]]]:
     """
-    Local CPU Offline Narrator (`kokoro-onnx` with singleton cached session on `C:\\models\\kokoro\\`).
+    Local CPU Offline Narrator (`kokoro-onnx` with singleton cached session).
     Used when offline, when Edge-TTS is unreachable, or when `am_*` voice is explicitly chosen.
     """
     global _KOKORO_INSTANCE, _KOKORO_MODEL_LOADED_PATH
@@ -209,7 +211,7 @@ def try_openrouter_free_tts(
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:3000",
+            "HTTP-Referer": get_settings().public_app_url,
             "X-Title": "CONTENT-FACTORY Studio TTS",
         },
     )
@@ -334,7 +336,7 @@ async def generate_sentence_audio(
     3-Tier $0 Sentence Audio Synthesizer:
     1. Online Default: Upgraded Multilingual Edge-TTS (`en-US-AndrewMultilingualNeural`, `AvaMultilingualNeural`,
        `BrianMultilingualNeural`) with exact millisecond `WordBoundary` events for active-word captions.
-    2. Offline / Explicit Local Narrator: Cached `Kokoro-82M` int8 (`C:\\models\\kokoro\\`) when offline,
+    2. Offline / Explicit Local Narrator: Cached `Kokoro-82M` int8 (`kokoro_models_dir`) when offline,
        when `am_*` voice is explicitly chosen, or if Edge-TTS fails.
     3. OpenRouter `:free` TTS + deterministic FFmpeg fallback.
     """

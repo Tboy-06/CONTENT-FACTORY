@@ -19,12 +19,29 @@ import socket
 import subprocess
 import time
 import urllib.request
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+from urllib.parse import urlparse
+
+from backend.config import get_settings
 
 logger = logging.getLogger("engine.brain")
 
+
+def _local_llm_base_url() -> str:
+    env_url = os.environ.get("LOCAL_LLM_BASE_URL", "").strip()
+    if env_url:
+        return env_url.rstrip("/")
+    return get_settings().local_llm_base_url.rstrip("/")
+
+
+def _local_llm_host_port() -> Tuple[str, int]:
+    parsed = urlparse(_local_llm_base_url())
+    return (parsed.hostname or "127.0.0.1", int(parsed.port or 11434))
+
+
 DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "copilot-brain:latest")
-OLLAMA_ENDPOINT = os.environ.get("OLLAMA_ENDPOINT", "http://localhost:11434/api/chat")
+OLLAMA_ENDPOINT = os.environ.get("OLLAMA_ENDPOINT") or get_settings().ollama_endpoint
 
 # Current free-tier Gemini AI Studio candidate models (avoids deprecated 2.5 IDs per routing rules)
 GEMINI_FREE_CANDIDATE_MODELS = [
@@ -49,10 +66,9 @@ def clean_json_text(text: str) -> str:
 
 
 
-LLAMA_SERVER_BIN = r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe"
-SPARK_GGUF_BLOB = r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf"
-# Fallback paths on C: (zero GGUF models stored on D:)
-_FALLBACK_BIN = r"C:\cf_training\bin\llama-server.exe"
+LLAMA_SERVER_BIN = get_settings().llama_server_bin
+SPARK_GGUF_BLOB = get_settings().spark_gguf_blob
+_FALLBACK_BIN = str(get_settings().storage_root_path / "bin" / Path(LLAMA_SERVER_BIN).name)
 _LOCAL_BRAIN_PROC: Optional[subprocess.Popen] = None
 _LOCAL_BRAIN_LOCK = asyncio.Lock()
 
@@ -108,11 +124,12 @@ atexit.register(shutdown_local_brain)
 
 
 def get_preferred_gguf_blob() -> str:
-    """Returns the active GGUF model blob from C: models (zero GGUF weights on D:)."""
+    """Returns the active GGUF model blob from configured models storage."""
     if os.path.exists(SPARK_GGUF_BLOB):
         return SPARK_GGUF_BLOB
-    # Fallback to any GGUF found in C:\models or C:\Users\User\.ollama
-    for search_dir in [r"C:\models", r"C:\Users\User\.ollama\models\blobs"]:
+    # Fallback to any GGUF found in configured models root or ~/.ollama
+    cfg = get_settings()
+    for search_dir in [str(cfg.models_root_path), str(Path.home() / ".ollama" / "models" / "blobs")]:
         if os.path.exists(search_dir):
             for f in os.listdir(search_dir):
                 if f.lower().endswith(".gguf") or f.startswith("sha256-"):
@@ -144,12 +161,13 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
                 return False
 
             model_label = "Spark-X2.5-4B" if "spark" in blob_path.lower() else "Copilot-Brain"
+            llm_host, llm_port = _local_llm_host_port()
             logger.info(f"[Brain] Waking up {model_label} GGUF on demand via llama-server.exe ({blob_path})...")
             cmd = [
                 bin_path,
                 "-m", blob_path,
-                "--port", "11434",
-                "--host", "127.0.0.1",
+                "--port", str(llm_port),
+                "--host", llm_host,
                 "-c", "8192",  # Intentional 16GB RAM KV-cache cap (~240 MB) on native 1M-context Spark-X2.5-4B
                 "-t", "4",
                 "--log-disable",
@@ -172,7 +190,7 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
         for _ in range(timeout_secs):
             await asyncio.sleep(1)
             if is_ollama_ready():
-                logger.info("[Brain] Local GGUF llama-server is online, model loaded, and ready on http://127.0.0.1:11434")
+                logger.info(f"[Brain] Local GGUF llama-server is online, model loaded, and ready on {_local_llm_base_url()}")
                 return True
 
         return is_ollama_ready()
@@ -180,9 +198,10 @@ async def ensure_local_brain(timeout_secs: int = 60) -> bool:
 
 def is_ollama_ready(timeout: float = 1.0) -> bool:
     """Checks whether local llama-server or Ollama is online AND ready to serve completions."""
+    base_url = _local_llm_base_url()
     # 1. Try llama-server /health (returns 200 when ready, 503 while loading)
     try:
-        req = urllib.request.Request("http://127.0.0.1:11434/health")
+        req = urllib.request.Request(f"{base_url}/health")
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status == 200:
                 return True
@@ -193,7 +212,7 @@ def is_ollama_ready(timeout: float = 1.0) -> bool:
 
     # 2. Try standard Ollama root / (returns 200 'Ollama is running')
     try:
-        req = urllib.request.Request("http://127.0.0.1:11434/")
+        req = urllib.request.Request(f"{base_url}/")
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status == 200:
                 return True
@@ -206,9 +225,10 @@ def is_ollama_ready(timeout: float = 1.0) -> bool:
 def is_ollama_running(timeout: float = 0.2) -> bool:
     """Fast check whether local Ollama server is actually listening."""
     try:
+        llm_host, llm_port = _local_llm_host_port()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeout)
-        s.connect(("127.0.0.1", 11434))
+        s.connect((llm_host, llm_port))
         s.close()
         return True
     except OSError:
@@ -250,7 +270,7 @@ async def call_ollama(
         # 1. Try OpenAI-compatible endpoint (native to llama-server.exe)
         for attempt in range(4):
             try:
-                openai_url = "http://127.0.0.1:11434/v1/chat/completions"
+                openai_url = f"{_local_llm_base_url()}/v1/chat/completions"
                 payload = {
                     "messages": messages,
                     "max_tokens": min(num_predict, 2048),
@@ -517,7 +537,7 @@ async def call_openrouter_free(
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
+                "HTTP-Referer": openrouter_discovery.get_app_referer_url(),
                 "X-Title": "CONTENT-FACTORY Studio",
             },
         )
@@ -619,7 +639,7 @@ async def analyze_visual_reference_openrouter(
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost:3000",
+                    "HTTP-Referer": openrouter_discovery.get_app_referer_url(),
                     "X-Title": "CONTENT-FACTORY Studio Vision",
                 },
             )
@@ -695,7 +715,7 @@ async def _ask_brain_inner(
             )
             if res:
                 return clean_json_text(res) if format_json else res
-        raise RuntimeError(f"Offline GGUF brain server ({DEFAULT_OLLAMA_MODEL}) could not be initialized on http://localhost:11434. Please verify {LLAMA_SERVER_BIN} exists.")
+        raise RuntimeError(f"Offline GGUF brain server ({DEFAULT_OLLAMA_MODEL}) could not be initialized on {_local_llm_base_url()}. Please verify {LLAMA_SERVER_BIN} exists.")
 
     if engine_mode == "openrouter_free":
         or_res = await call_openrouter_free(prompt, system_prompt=system_prompt, format_json=format_json)

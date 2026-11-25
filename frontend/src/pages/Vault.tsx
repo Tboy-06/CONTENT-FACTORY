@@ -65,7 +65,8 @@ export default function Vault() {
   const totalRecords = qData?.total_records ?? 0;
   const masterTarget = qData?.target_total ?? 0;
   const milestoneCap = qData?.current_milestone_cap ?? 0;
-  const milestoneStatus = qData?.milestone_status ?? 'LOADING';
+  const milestoneStatus = qData?.milestone_status ?? 'IDLE';
+  const isHarvesterLive = Boolean(qData?.harvester_active);
   const isAtMilestone =
     milestoneStatus === 'PAUSED_AT_100K_CHECKPOINT' ||
     (milestoneCap > 0 && totalRecords >= milestoneCap);
@@ -182,8 +183,8 @@ export default function Vault() {
       {activeTab === 'Rendered Videos' && (
         <div className="space-y-4">
           {/* Search & Segmented Status Filter Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <search aria-label="Filter vault videos" className="flex flex-wrap items-center justify-between gap-3">
+            <div className="pill-row-balance items-center gap-1.5">
               {STATUS_FILTERS.map((f) => {
                 const active = statusFilter === f.id;
                 return (
@@ -212,7 +213,7 @@ export default function Vault() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-          </div>
+          </search>
 
           {isLoading ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
@@ -351,12 +352,12 @@ export default function Vault() {
           <div className="glass-panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <Radio size={14} className="text-emerald-500 animate-pulse" />
+                <Radio size={14} className={isHarvesterLive ? 'text-emerald-500 animate-pulse' : 'text-[var(--mu)]'} />
                 <span className="text-xs font-bold text-[var(--tx)]">
-                  Live 5-House Dataset Harvester
+                  5-House Dataset Harvester
                 </span>
-                <Badge variant={isAtMilestone ? 'warning' : 'success'}>
-                  {milestoneStatus}
+                <Badge variant={isAtMilestone ? 'warning' : isHarvesterLive ? 'success' : 'neutral'}>
+                  {isAtMilestone ? 'CHECKPOINT REACHED' : isHarvesterLive ? 'LIVE HARVESTING' : 'IDLE'}
                 </Badge>
                 <span className="text-[11px] font-mono text-[var(--mu)]">
                   {qData ? totalRecords.toLocaleString() : '--'} / {masterTarget > 0 ? masterTarget.toLocaleString() : '--'} (

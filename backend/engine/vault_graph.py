@@ -2,7 +2,7 @@
 CONTENT-FACTORY Engine: Live Vault-RAG & Director Second Brain (BM25)
 ---------------------------------------------------------------------
 Retrieves proven viral hooks, editing rules, and storytelling frameworks
-from D:\\CONTENT-FACTORY\\director_vault\\ and C:\\cf_training\\dataset.jsonl
+from curated `director_vault/` and configured `dataset_file`
 using fast pure-Python BM25 scoring (0 MB VRAM, 0 API keys, sub-50ms execution).
 
 Features:
@@ -20,11 +20,14 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from backend.config import get_settings
+
+_CFG = get_settings()
 VAULT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "director_vault"))
-HARVEST_VAULT_CACHE_DIR = r"C:\cf_training\director_vault_cache"
+HARVEST_VAULT_CACHE_DIR = _CFG.harvest_vault_cache_dir
 HOUSES_DIR = os.path.join(VAULT_DIR, "houses")
-DATASET_FILE = r"C:\cf_training\dataset.jsonl"
-STATE_FILE = r"C:\cf_training\harvest_state.json"
+DATASET_FILE = _CFG.dataset_file
+STATE_FILE = _CFG.harvest_state_file
 
 GENRES = ["crime_doc", "comedy_skit", "action_hype", "movie_cinema", "viral_edu"]
 HOUSES = [
@@ -288,7 +291,7 @@ def get_vault_corpus() -> BM25Corpus:
 
     corpus = BM25Corpus()
 
-    # 1. Ingest Markdown notes from curated director_vault/ and harvested C:\cf_training\director_vault_cache/
+    # 1. Ingest Markdown notes from curated director_vault/ and harvested cache directory
     for root_vault in (VAULT_DIR, HARVEST_VAULT_CACHE_DIR):
         if not os.path.exists(root_vault):
             continue
@@ -328,7 +331,7 @@ def get_vault_corpus() -> BM25Corpus:
                     except Exception:
                         pass
 
-    # 2. Ingest structured records from C:\cf_training\dataset.jsonl
+    # 2. Ingest structured records from configured dataset.jsonl
     if os.path.exists(DATASET_FILE):
         try:
             with open(DATASET_FILE, "r", encoding="utf-8", errors="ignore") as d_f:
@@ -461,7 +464,7 @@ def sync_obsidian_house_dashboards() -> Dict[str, Any]:
     - director_vault/houses/HOUSE_5_COPILOT_AND_REFLEXION.md
 
     D: DRIVE GUARD: Exactly 6 markdown files created on D: (< 100 KB total).
-    Raw harvested dataset rows remain strictly on C:\\cf_training\\dataset.jsonl.
+    Raw harvested dataset rows remain strictly in configured `dataset_file`.
     """
     os.makedirs(HOUSES_DIR, exist_ok=True)
 

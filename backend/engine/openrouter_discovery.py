@@ -30,7 +30,7 @@ OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_IMAGES_URL = "https://openrouter.ai/api/v1/images"
 OPENROUTER_SPEECH_URL = "https://openrouter.ai/api/v1/audio/speech"
 
-CATALOG_TTL_SECONDS = 6 * 3600  # 6 hours in-memory cache (0 MB disk bloat on D:\)
+CATALOG_TTL_SECONDS = 6 * 3600  # 6 hours in-memory cache (0 MB disk writes)
 COOLDOWN_402_SECONDS = 15 * 60  # 15 minutes cooldown on HTTP 402 (daily free cap / payment required)
 COOLDOWN_429_SECONDS = 60       # 60 seconds cooldown on HTTP 429 (per-minute rate limit)
 
@@ -106,14 +106,23 @@ def _is_valid_key_string(val: Optional[str]) -> bool:
     return True
 
 
+def get_app_referer_url() -> str:
+    """Returns the configured studio public URL for OpenRouter HTTP-Referer headers."""
+    try:
+        from backend.config import get_settings
+        return get_settings().public_app_url
+    except Exception:
+        return "https://content-factory.local"
+
+
 def resolve_openrouter_api_key() -> Optional[str]:
     """
     Dynamically resolves OPENROUTER_API_KEY without requiring a server restart.
     Checks:
       1. os.environ["OPENROUTER_API_KEY"]
       2. backend.config.get_settings().openrouter_api_key
-      3. D:\\CONTENT-FACTORY\\.env and ~/.env
-      4. C:\\Users\\User\\.gemini\\config\\plugins\\ruflow\\openrouter.config.json
+      3. Project .env and ~/.env
+      4. ~/.gemini/config/plugins/ruflow/openrouter.config.json
     """
     env_val = os.environ.get("OPENROUTER_API_KEY")
     if _is_valid_key_string(env_val):
@@ -301,7 +310,7 @@ def refresh_catalog_if_needed(force: bool = False, timeout: float = 12.0) -> Dic
         OPENROUTER_CATALOG_URL,
         headers={
             "Accept": "application/json",
-            "HTTP-Referer": "http://localhost:3000",
+            "HTTP-Referer": get_app_referer_url(),
             "X-Title": "CONTENT-FACTORY Studio",
             "User-Agent": "ContentFactoryStudio/3.0",
         },

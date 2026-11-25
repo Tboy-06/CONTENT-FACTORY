@@ -49,7 +49,7 @@ export default function Privacy() {
               3. Local File Storage and Retention
             </h2>
             <p>
-              Generated media assets, subtitles (.ass files), audio tracks, and temporary frame caches are written directly to your local file system under the configured workspace directories (`C:\cf_training\`). You maintain full administrative ownership and deletion control over all intermediate files, render caches, and project metadata.
+              Generated media assets, subtitles (.ass files), audio tracks, and temporary frame caches are written directly to your local file system under your configured workspace storage directories. You maintain full administrative ownership and deletion control over all intermediate files, render caches, and project metadata.
             </p>
           </section>
 

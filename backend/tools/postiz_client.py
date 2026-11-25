@@ -8,7 +8,9 @@ import httpx
 
 class PostizClient:
     def __init__(self):
-        self.base_url = os.getenv("POSTIZ_URL", "http://localhost:3000").rstrip("/")
+        from backend.config import get_settings
+        cfg = get_settings()
+        self.base_url = (os.getenv("POSTIZ_URL") or cfg.postiz_url or cfg.public_app_url).rstrip("/")
         self.api_key = os.getenv("POSTIZ_API_KEY", "")
         self._client: Optional[httpx.AsyncClient] = None
 

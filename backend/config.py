@@ -14,6 +14,47 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
 
+def _resolve_default_storage_root() -> str:
+    env_override = os.environ.get("CF_STORAGE_ROOT", "").strip()
+    if env_override:
+        return str(Path(env_override))
+    sys_drive = os.environ.get("SystemDrive", "").strip()
+    if sys_drive:
+        cand = Path(sys_drive + os.sep) / "cf_training"
+        if cand.exists() or os.name == "nt":
+            return str(cand)
+    return str(Path.home() / ".content_factory")
+
+
+def _resolve_default_models_root() -> str:
+    env_override = os.environ.get("CF_MODELS_ROOT", "").strip()
+    if env_override:
+        return str(Path(env_override))
+    sys_drive = os.environ.get("SystemDrive", "").strip()
+    if sys_drive:
+        cand = Path(sys_drive + os.sep) / "models"
+        if cand.exists() or os.name == "nt":
+            return str(cand)
+    return str(Path(_resolve_default_storage_root()) / "models")
+
+
+def _resolve_default_llama_bin() -> str:
+    bin_name = "llama-server.exe" if os.name == "nt" else "llama-server"
+    return str(BASE_DIR / "ollama" / "bin" / bin_name)
+
+
+def _resolve_default_llm_base_url() -> str:
+    host = os.environ.get("LOCAL_LLM_HOST", "127.0.0.1").strip()
+    port = int(os.environ.get("LOCAL_LLM_PORT", "11434"))
+    return f"http://{host}:{port}"
+
+
+def _resolve_default_app_domain() -> str:
+    host = os.environ.get("FRONTEND_HOST", "localhost").strip()
+    port = int(os.environ.get("FRONTEND_PORT", "3000"))
+    return f"{host}:{port}"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH) if ENV_PATH.exists() else ".env",
@@ -33,16 +74,20 @@ class Settings(BaseSettings):
     hf_token: str = Field(default="", description="Hugging Face token for free 5-min/day ZeroGPU video generation (LTX-2.5 / Wan 2.2)")
     enable_paid_gemini_video: bool = Field(default=False, description="Strict opt-in flag for paid gemini-omni-1.2-flash video generation (default False for $0 lock)")
     ollama_model: str = Field(default="copilot-brain:latest", description="Local Ollama model name")
-    ollama_endpoint: str = Field(default="http://localhost:11434/api/chat", description="Local Ollama endpoint")
+    local_llm_base_url: str = Field(default_factory=_resolve_default_llm_base_url, description="Local LLM base URL")
+    ollama_endpoint: str = Field(default_factory=lambda: f"{_resolve_default_llm_base_url()}/api/chat", description="Local Ollama chat endpoint")
+    custom_domain: str = Field(default_factory=_resolve_default_app_domain, description="Active studio domain/host")
 
     # ------------------------------------------------------------------
-    # Local Brain & C: Storage Paths (0 MB bloat on D:)
+    # Dynamic Workspace & Model Storage Roots (Zero Hardcoded Drive Paths)
     # ------------------------------------------------------------------
-    llama_server_bin: str = Field(default=r"D:\CONTENT-FACTORY\ollama\bin\llama-server.exe", description="Path to llama-server.exe")
-    spark_gguf_blob: str = Field(default=r"C:\models\Spark-X2.5-4B-Q4_K_M.gguf", description="Path to local GGUF weights on C:")
-    dataset_file: str = Field(default=r"C:\cf_training\dataset.jsonl", description="Harvester dataset JSONL path on C:")
-    harvest_state_file: str = Field(default=r"C:\cf_training\harvest_state.json", description="Harvester state JSON path on C:")
-    uploads_dir: str = Field(default=r"C:\cf_training\temp\uploads", description="Temporary upload storage on C:")
+    storage_root: str = Field(default_factory=_resolve_default_storage_root, description="External scratch, cache, and dataset storage root")
+    models_root: str = Field(default_factory=_resolve_default_models_root, description="Local model weights root directory")
+    llama_server_bin: str = Field(default_factory=_resolve_default_llama_bin, description="Path to llama-server binary")
+    spark_gguf_blob: str = Field(default_factory=lambda: str(Path(_resolve_default_models_root()) / "Spark-X2.5-4B-Q4_K_M.gguf"), description="Path to local GGUF weights")
+    dataset_file: str = Field(default_factory=lambda: str(Path(_resolve_default_storage_root()) / "dataset.jsonl"), description="Harvester dataset JSONL path")
+    harvest_state_file: str = Field(default_factory=lambda: str(Path(_resolve_default_storage_root()) / "harvest_state.json"), description="Harvester state JSON path")
+    uploads_dir: str = Field(default_factory=lambda: str(Path(_resolve_default_storage_root()) / "temp" / "uploads"), description="Temporary upload storage")
 
     # ------------------------------------------------------------------
     # Kimi K3 / Moonshot AI
@@ -56,7 +101,7 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     image_provider: str = Field(default="pexels", description="pexels | comfyui | nanobanana")
     pexels_api_key: str = Field(default="", description="Pexels API key")
-    comfyui_url: str = Field(default="http://127.0.0.1:8188", description="ComfyUI local URL")
+    comfyui_url: str = Field(default="", description="Optional ComfyUI URL")
 
     # ------------------------------------------------------------------
     # Video & Editors (FFmpeg, Nuzky, OpenCut)
@@ -70,12 +115,12 @@ class Settings(BaseSettings):
     # Voice (Edge-TTS)
     # ------------------------------------------------------------------
     tts_engine: str = Field(default="edge", description="TTS engine")
-    tts_voice: str = Field(default="en-US-AriaNeural", description="Edge-TTS voice")
+    tts_voice: str = Field(default="en-US-AndrewMultilingualNeural", description="Default TTS voice")
 
     # ------------------------------------------------------------------
     # Posting (Postiz)
     # ------------------------------------------------------------------
-    postiz_url: str = Field(default="http://localhost:3000", description="Postiz instance URL")
+    postiz_url: str = Field(default="", description="Postiz instance URL")
     postiz_api_key: str = Field(default="", description="Postiz API key")
 
     # ------------------------------------------------------------------
@@ -169,6 +214,76 @@ class Settings(BaseSettings):
     @property
     def skills_dir(self) -> Path:
         return Path(self.data_dir) / "skills"
+
+    @property
+    def storage_root_path(self) -> Path:
+        return Path(os.environ.get("CF_STORAGE_ROOT", "").strip() or self.storage_root)
+
+    @property
+    def models_root_path(self) -> Path:
+        return Path(os.environ.get("CF_MODELS_ROOT", "").strip() or self.models_root)
+
+    @property
+    def jobs_scratch_dir(self) -> str:
+        return str(self.storage_root_path / "jobs")
+
+    @property
+    def temp_root_dir(self) -> str:
+        return str(self.storage_root_path / "temp")
+
+    @property
+    def beat_cache_dir(self) -> str:
+        return str(self.storage_root_path / "temp" / "beat_cache")
+
+    @property
+    def ai_clips_dir(self) -> str:
+        return str(self.storage_root_path / "temp" / "ai_clips")
+
+    @property
+    def exports_dir(self) -> str:
+        return str(self.storage_root_path / "exports")
+
+    @property
+    def archive_outputs_dir(self) -> str:
+        return str(self.storage_root_path / "archive_outputs")
+
+    @property
+    def harvest_vault_cache_dir(self) -> str:
+        return str(self.storage_root_path / "director_vault_cache")
+
+    @property
+    def research_temp_dir(self) -> str:
+        return str(self.storage_root_path / "temp" / "research")
+
+    @property
+    def active_render_lock_file(self) -> str:
+        return str(self.storage_root_path / "temp" / "active_render.lock")
+
+    @property
+    def reflexion_log_file(self) -> str:
+        return str(self.storage_root_path / "reflexion_log.jsonl")
+
+    @property
+    def kokoro_models_dir(self) -> str:
+        return str(self.models_root_path / "kokoro")
+
+    @property
+    def public_app_url(self) -> str:
+        dom = (os.environ.get("CUSTOM_DOMAIN") or self.custom_domain or "").strip()
+        if not dom:
+            return "https://content-factory.local"
+        if dom.startswith(("http://", "https://")):
+            return dom.rstrip("/")
+        return f"http://{dom}".rstrip("/")
+
+    @property
+    def cors_origins(self) -> List[str]:
+        port = int(os.environ.get("FRONTEND_PORT", "3000"))
+        origins = [f"http://localhost:{port}", f"http://127.0.0.1:{port}"]
+        pub = self.public_app_url
+        if pub and pub not in origins:
+            origins.append(pub)
+        return origins
 
     @property
     def effective_database_url(self) -> str:

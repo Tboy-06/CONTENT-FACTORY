@@ -997,7 +997,9 @@ async def clear_all_jobs(status: Optional[str] = None):
     return {"status": "success", "deleted_count": deleted_count, "message": f"Cleared {deleted_count} jobs"}
 
 
-EXPORTS_DIR = r"C:\cf_training\exports"
+from backend.config import get_settings as _get_job_settings
+
+EXPORTS_DIR = _get_job_settings().exports_dir
 os.makedirs(EXPORTS_DIR, exist_ok=True)
 
 
@@ -1036,7 +1038,7 @@ def _convert_ass_to_srt(ass_content: str) -> str:
 async def build_job_export_zip(job_id: int, job_dir_override: Optional[str] = None) -> str:
     """
     Bundles final_9x16.mp4, thumbnail.jpg (if present), captions.ass, captions.srt,
-    and upload_copy.txt into C:\\cf_training\\exports\\job_{job_id}_export.zip (0 MB bloat on D:).
+    and upload_copy.txt into exports/job_{job_id}_export.zip in external scratch storage.
     """
     import json
     import re
@@ -1068,7 +1070,7 @@ async def build_job_export_zip(job_id: int, job_dir_override: Optional[str] = No
         os.path.join(job_dir, "final_9x16.mp4"),
         f"output/instant_{job_id}.mp4",
         f"output/video_{job_id}_9x16.mp4",
-        os.path.join(r"C:\cf_training\archive_outputs", f"instant_{job_id}.mp4"),
+        os.path.join(_get_job_settings().archive_outputs_dir, f"instant_{job_id}.mp4"),
     ]
     resolved_video = next((p for p in video_candidates if p and os.path.exists(p)), None)
 

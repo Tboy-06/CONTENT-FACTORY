@@ -27,9 +27,11 @@ from backend.engine.assembler import (
 from backend.engine.brain import unload_local_brain
 from backend.engine.thumbnail_engine import generate_job_thumbnails
 
+from backend.config import get_settings
+
 logger = logging.getLogger(__name__)
 
-ARCHIVE_OUTPUTS_DIR = r"C:\cf_training\archive_outputs"
+ARCHIVE_OUTPUTS_DIR = get_settings().archive_outputs_dir
 os.makedirs(ARCHIVE_OUTPUTS_DIR, exist_ok=True)
 
 
@@ -39,9 +41,9 @@ def archive_older_job_outputs(
     archive_dir: str = ARCHIVE_OUTPUTS_DIR
 ) -> Dict[str, Any]:
     """
-    Long-Term D: Drive Safeguard:
+    Long-Term Workspace Disk Safeguard:
     Moves finished instant_<id>.mp4 files older than the most recent `max_kept` jobs
-    to C:\\cf_training\\archive_outputs\\ to keep D: partition permanently above 3.5 GB free.
+    to the configured archive_outputs directory to protect primary workspace free space.
     """
     os.makedirs(archive_dir, exist_ok=True)
     if not os.path.exists(output_dir):

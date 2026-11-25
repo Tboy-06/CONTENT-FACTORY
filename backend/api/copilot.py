@@ -4,7 +4,7 @@ CONTENT-FACTORY Engine: AI Director Chat & Video Command Studio
 Enables interactive multi-modal video deconstruction & agentic editing:
 1. POST /api/copilot/analyze-video:
    - Deconstructs uploaded videos (.mp4/.mov) or existing jobs via Faster-Whisper + FFmpeg cut detection.
-   - Temporary uploads strictly saved to C:\\cf_training\\temp\\uploads\\ (0 MB bloat on D:).
+   - Temporary uploads strictly saved to configured external uploads scratch storage.
 2. POST /api/copilot/chat:
    - Agentic Director Chat with toggleable engine_mode: 'auto' | 'offline_spark' | 'cloud'.
    - Returns conversational reasoning + executable actions:
@@ -48,9 +48,9 @@ from backend.config import get_settings
 logger = logging.getLogger("api.copilot")
 router = APIRouter()
 
-# Safe upload storage on C: drive to strictly protect 8 GB D: partition
+# Safe upload storage in configured scratch root
 _settings = get_settings()
-UPLOADS_DIR = getattr(_settings, "uploads_dir", r"C:\cf_training\temp\uploads")
+UPLOADS_DIR = _settings.uploads_dir
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".mkv"}
@@ -72,9 +72,9 @@ def validate_safe_video_path(video_path: str) -> str:
         (project_root / "jobs").resolve(),
         (project_root / "temp").resolve(),
         Path(UPLOADS_DIR).resolve(),
-        Path(r"C:\cf_training\temp").resolve(),
-        Path(r"C:\cf_training\jobs").resolve(),
-        Path(r"C:\cf_training\archive_outputs").resolve(),
+        Path(_settings.temp_root_dir).resolve(),
+        Path(_settings.jobs_scratch_dir).resolve(),
+        Path(_settings.archive_outputs_dir).resolve(),
     ]
 
     try:
@@ -367,7 +367,7 @@ async def analyze_video(
 ):
     """
     Deconstructs video file or existing job into VideoContext telemetry:
-    - Stores uploaded videos strictly in C:\\cf_training\\temp\\uploads\\
+    - Stores uploaded videos strictly in configured uploads scratch storage
     - Runs ffprobe for dimensions, aspect ratio, fps
     - Runs FFmpeg scene filter for cut intervals & velocity
     - Runs Faster-Whisper on CPU for millisecond spoken sentences & silence gaps
@@ -402,11 +402,11 @@ async def analyze_video(
                         raise HTTPException(status_code=400, detail="Uploaded video exceeds 500 MB size limit.")
                     buffer.write(chunk)
             target_path = dest_path
-            logger.info(f"[copilot] Uploaded video stored on C: drive -> {target_path}")
+            logger.info(f"[copilot] Uploaded video stored in scratch storage -> {target_path}")
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed writing upload to C: drive: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed writing upload to scratch storage: {e}")
 
     elif job_id is not None:
         job = await repository.get_job(job_id)
@@ -885,7 +885,7 @@ async def execute_slice_viral_shorts(
 ) -> Dict[str, Any]:
     """
     Extracts top 3 viral 9:16 Shorts (30s-50s) from long video or YouTube URL:
-    1. Downloads or resolves video source safely in C:\\cf_training\\temp\\uploads\\ (0 MB on D:)
+    1. Downloads or resolves video source safely in configured uploads scratch storage
     2. Transcribes with Faster-Whisper to get timestamped sentences and words
     3. Uses ask_brain() / heuristic pacing analysis to locate the 3 highest-retention narrative arcs
     4. Auto-crops 16:9 to 9:16 vertical center framing
@@ -1004,7 +1004,7 @@ Output strictly valid JSON:
     from backend.engine.audio_subs import build_ass_subtitles
     shorts_results = []
     os.makedirs("output", exist_ok=True)
-    temp_dir = r"C:\cf_training\temp"
+    temp_dir = _settings.temp_root_dir
     os.makedirs(temp_dir, exist_ok=True)
 
     if is_widescreen:
@@ -1449,23 +1449,27 @@ async def list_manifest_history_endpoint(job_id: int):
 @router.get("/house-quotas")
 async def get_house_quotas_endpoint():
     """
-    Returns real-time 5-House Knowledge Quota status from C:\\cf_training\\harvest_state.json
-    and C:\\cf_training\\dataset.jsonl (Master Target: 2,000,000 with 100,000 milestone checkpoints).
-    Zero hardcoded numbers: every metric is read directly from disk.
+    Returns real-time 5-House Knowledge Quota status from harvest_state.json
+    and dataset.jsonl in configured workspace storage.
+    Zero hardcoded numbers: every metric and live heartbeat is read directly from disk.
     """
-    state_file = getattr(_settings, "harvest_state_file", r"C:\cf_training\harvest_state.json")
-    dataset_file = getattr(_settings, "dataset_file", r"C:\cf_training\dataset.jsonl")
+    state_file = _settings.harvest_state_file
+    dataset_file = _settings.dataset_file
     data: Dict[str, Any] = {
         "total_records": 0,
-        "target_total": 2000000,
+        "target_total": 50000,
         "milestone_step": 100000,
         "current_milestone_cap": 100000,
-        "milestone_status": "HARVESTING",
+        "milestone_status": "IDLE",
+        "harvester_active": False,
+        "render_lock_active": os.path.exists(_settings.active_render_lock_file),
         "last_harvested_item": None,
         "houses": {},
     }
+    state_mtime_age: Optional[float] = None
     if os.path.exists(state_file):
         try:
+            state_mtime_age = max(0.0, time.time() - os.path.getmtime(state_file))
             with open(state_file, "r", encoding="utf-8") as f:
                 raw_state = json.load(f)
             # Strip large processed_ids arrays from API response payload so polling is instant (<5 KB)
@@ -1485,9 +1489,17 @@ async def get_house_quotas_endpoint():
         except Exception as e:
             logger.warning(f"Error reading harvest_state.json: {e}")
 
-    data["target_total"] = max(int(data.get("target_total") or 2000000), 2000000)
-    data["milestone_step"] = int(data.get("milestone_step") or 100000)
-    data["current_milestone_cap"] = int(data.get("current_milestone_cap") or 100000)
+    data["target_total"] = max(int(data.get("target_total") or 50000), 1)
+    data["milestone_step"] = max(int(data.get("milestone_step") or 100000), 1)
+    data["current_milestone_cap"] = max(int(data.get("current_milestone_cap") or data["milestone_step"]), 1)
+    is_live = bool(
+        state_mtime_age is not None
+        and state_mtime_age <= 150.0
+        and data.get("milestone_status") == "HARVESTING"
+        and not data["render_lock_active"]
+    )
+    data["harvester_active"] = is_live
+    data["state_age_seconds"] = round(state_mtime_age, 1) if state_mtime_age is not None else None
 
     # Read last line of dataset.jsonl if last_harvested_item is missing
     if not data.get("last_harvested_item") and os.path.exists(dataset_file):
@@ -1516,16 +1528,16 @@ async def get_house_quotas_endpoint():
 @router.post("/harvester/continue-milestone")
 async def continue_harvester_milestone():
     """
-    Advances the current 100,000-record milestone checkpoint by +100,000 towards the 2,000,000 master target.
+    Advances the current milestone checkpoint by milestone_step towards target_total.
     """
-    state_file = getattr(_settings, "harvest_state_file", r"C:\cf_training\harvest_state.json")
+    state_file = _settings.harvest_state_file
     if not os.path.exists(state_file):
         raise HTTPException(status_code=404, detail="harvest_state.json not found")
     try:
         with open(state_file, "r", encoding="utf-8") as f:
             st = json.load(f)
-        master_target = max(int(st.get("target_total") or 2000000), 2000000)
-        step = int(st.get("milestone_step") or 100000)
+        master_target = max(int(st.get("target_total") or 2000000), 1)
+        step = max(int(st.get("milestone_step") or 100000), 1)
         cur_cap = int(st.get("current_milestone_cap") or step)
         next_cap = min(master_target, cur_cap + step)
         st["target_total"] = master_target

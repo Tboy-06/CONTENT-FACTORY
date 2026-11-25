@@ -67,11 +67,24 @@ async def get_settings():
     youtube_val = settings.youtube_api_key or os.environ.get("YOUTUBE_API_KEY", "")
     pexels_val = settings.pexels_api_key or os.environ.get("PEXELS_API_KEY", "")
 
+    api_host = f"{os.environ.get('BACKEND_HOST', '127.0.0.1').strip()}:{os.environ.get('BACKEND_PORT', '8000').strip()}"
+    raw_voice = (settings.tts_voice or "").strip()
+    valid_voices = {
+        "en-US-AndrewMultilingualNeural",
+        "en-US-AvaMultilingualNeural",
+        "en-US-BrianMultilingualNeural",
+        "am_michael",
+    }
+    normalized_voice = raw_voice if raw_voice in valid_voices else "en-US-AndrewMultilingualNeural"
+
     return {
         "ollama_model": os.environ.get("OLLAMA_MODEL", "SparkLLM/Spark-X2.5-4B"),
-        "default_voice": settings.tts_voice or "en-US-AndrewMultilingualNeural",
+        "default_voice": normalized_voice,
         "force_offline": os.environ.get("FORCE_OFFLINE", "false").lower() == "true",
-        "custom_domain": os.environ.get("CUSTOM_DOMAIN", "localhost:3000"),
+        "custom_domain": os.environ.get("CUSTOM_DOMAIN") or settings.custom_domain,
+        "api_host": api_host,
+        "storage_root": str(settings.storage_root_path),
+        "models_root": str(settings.models_root_path),
         "openai_key": mask_secret(gemini_val),
         "gemini_key": mask_secret(gemini_val),
         "moonshot_api_key": mask_secret(moonshot_val),

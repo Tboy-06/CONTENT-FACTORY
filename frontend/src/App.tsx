@@ -248,7 +248,7 @@ export default function App() {
           </div>
 
           {/* Center: Global Frosted Search Input */}
-          <div className="flex-1 max-w-md mx-2">
+          <search aria-label="Global studio search" className="flex-1 max-w-md mx-2">
             <div
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border transition-all ${
                 isLightGlass
@@ -258,7 +258,7 @@ export default function App() {
             >
               <Search size={14} className={isLightGlass ? 'text-slate-400' : 'text-slate-500'} />
               <input
-                type="text"
+                type="search"
                 value={globalSearch}
                 onChange={(e) => {
                   setGlobalSearch(e.target.value);
@@ -270,6 +270,7 @@ export default function App() {
               />
               {globalSearch && (
                 <button
+                  type="button"
                   onClick={() => {
                     setGlobalSearch('');
                     window.dispatchEvent(new CustomEvent('cf-global-search', { detail: '' }));
@@ -281,7 +282,7 @@ export default function App() {
                 </button>
               )}
             </div>
-          </div>
+          </search>
 
           {/* Right: Theme Switcher (Light Glass / Dark Glass / Classic Revert) + Telemetry + Avatar */}
           <div className="flex items-center gap-2.5 text-xs">

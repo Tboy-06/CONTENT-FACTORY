@@ -19,7 +19,8 @@ async def generate_script(niche: str, pipeline_mode: str = "Generate from Scratc
     Calls a local Ollama model (llama3.1 or mistral) to generate a short-form video script.
     Returns a dictionary with 'title', 'hook', 'body', 'cta', and 'search_terms'.
     """
-    OLLAMA_URL = "http://localhost:11434/api/generate"
+    from backend.config import get_settings
+    OLLAMA_URL = f"{get_settings().local_llm_base_url}/api/generate"
     
     if pipeline_mode == "Remix & Spin (Copyright Bypass)":
         prompt = f"Analyze the underlying concept of this reference ({reference_url}) and write a completely new, paraphrased script around the same concept."

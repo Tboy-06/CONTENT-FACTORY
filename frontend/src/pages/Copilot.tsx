@@ -1,22 +1,52 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Upload, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  Send,
+  Upload,
+  Target,
+  Bot,
+  Mic,
+  CheckCircle2,
+  Layers,
+  Film
+} from 'lucide-react';
 import { Button, Badge } from '../components/ui';
 import { useConnectivity } from '../lib/connectivity';
 import { useChat, useScoreNiche, useCreateJob, useCapabilities } from '../api/client';
+
+const VOICE_OPTIONS = [
+  { id: 'en-US-AndrewMultilingualNeural', label: 'Andrew Multilingual (Trailer Male)' },
+  { id: 'en-US-AvaMultilingualNeural', label: 'Ava Multilingual (Doc Female)' },
+  { id: 'en-US-BrianMultilingualNeural', label: 'Brian Multilingual (Editorial Male)' },
+  { id: 'am_michael', label: 'Kokoro-82M Michael (Local Offline CPU)' }
+];
+
+const STYLE_OPTIONS = [
+  'Dark Documentary',
+  'Vintage 35mm',
+  'Cyberpunk Neo-Noir',
+  'Minimalist Studio'
+];
+
+const SAMPLE_PROMPTS = [
+  'Score niche: Declassified Cold War submarine mysteries',
+  'Draft a 60s hook & beat plan on Operation Mincemeat',
+  'Compare retention potential: Aviation black-box vs Heist forensics'
+];
 
 export default function Copilot() {
   const { mode } = useParams();
   const navigate = useNavigate();
   const isOnline = useConnectivity();
 
-  const [isAdvanced, setIsAdvanced] = useState(false);
-  const [tier, setTier] = useState<'free' | 'premium'>('free');
+  const [showStageMatrix, setShowStageMatrix] = useState(false);
+  const [lastScore, setLastScore] = useState<{ total: number; recommendation?: string } | null>(null);
 
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: `Standing by in "${mode || 'studio'}" mode. Describe your niche or documentary idea and I will score it and draft the plan.`
+      text: `Standing by in "${mode || 'studio'}" mode. Describe a documentary niche or concept to evaluate its retention score and configure a production brief.`
     }
   ]);
   const [input, setInput] = useState('');
@@ -25,7 +55,7 @@ export default function Copilot() {
     format: '9:16',
     duration: '60s',
     platforms: ['YouTube', 'TikTok'],
-    voice: 'en-US-AriaNeural',
+    voice: 'en-US-AndrewMultilingualNeural',
     visualStyle: 'Dark Documentary',
     quality: '1080p',
     referenceUrl: ''
@@ -36,24 +66,29 @@ export default function Copilot() {
   const createMutation = useCreateJob();
   const { data: capabilities = [] } = useCapabilities();
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const userMsg = { role: 'user', text: input };
+  const handleSend = async (customPrompt?: string) => {
+    const textToSend = (customPrompt ?? input).trim();
+    if (!textToSend || chatMutation.isPending) return;
+    const userMsg = { role: 'user', text: textToSend };
     setMessages((prev) => [...prev, userMsg]);
-    setInput('');
+    if (!customPrompt) setInput('');
 
     try {
       const scoreRes = await scoreMutation.mutateAsync(userMsg.text);
       const scoreObj = scoreRes?.data || scoreRes;
       if (scoreObj && typeof scoreObj === 'object' && scoreObj.total_score !== undefined) {
+        setLastScore({
+          total: Number(scoreObj.total_score),
+          recommendation: scoreObj.recommendation
+        });
         const recSuffix = scoreObj.recommendation ? ` (${scoreObj.recommendation})` : '';
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', text: `Niche Score: ${scoreObj.total_score}/50${recSuffix}` }
+          { role: 'assistant', text: `Niche Evaluation: ${scoreObj.total_score}/50${recSuffix}` }
         ]);
       }
     } catch {
-      // silent score error fallback
+      // silent score fallback
     }
 
     try {
@@ -62,12 +97,16 @@ export default function Copilot() {
         typeof res === 'object' ? res.response || JSON.stringify(res) : String(res);
       setMessages((prev) => [...prev, { role: 'assistant', text: replyText }]);
     } catch {
-      setMessages((prev) => [...prev, { role: 'assistant', text: 'Failed to connect to Copilot.' }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: 'Unable to reach brain router. Verify backend server status.' }
+      ]);
     }
   };
 
-  const handleGenerate = async (_runNow: boolean) => {
-    const niche = messages.find((m) => m.role === 'user')?.text || 'Unknown niche';
+  const handleGenerate = async () => {
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.text;
+    const niche = lastUserMessage || input.trim() || 'Declassified Historical Investigation';
     await createMutation.mutateAsync({
       niche,
       referenceUrl: jobConfig.referenceUrl,
@@ -75,8 +114,8 @@ export default function Copilot() {
       format: jobConfig.format,
       voice: jobConfig.voice,
       style_preset: jobConfig.visualStyle,
-      premium: tier === 'premium',
-      manual_approval: isAdvanced,
+      premium: false,
+      manual_approval: true,
       pipelineMode: mode,
       platforms: jobConfig.platforms
     });
@@ -91,260 +130,391 @@ export default function Copilot() {
     }
   };
 
-  const isPremiumDisabled = !isOnline;
+  const togglePlatform = (plat: string) => {
+    setJobConfig((prev) => ({
+      ...prev,
+      platforms: prev.platforms.includes(plat)
+        ? prev.platforms.filter((p) => p !== plat)
+        : [...prev.platforms, plat]
+    }));
+  };
 
   return (
     <div className="animate-in fade-in min-h-full flex flex-col pb-8 space-y-5">
+      {/* Studio Header */}
       <div className="flex justify-between items-center flex-wrap gap-3 shrink-0">
         <div>
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-blue-600 dark:text-blue-400" />
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--tx)]">AI Copilot</h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="p-2 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/25">
+              <Target size={17} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--tx)]">
+              Niche Scorer &amp; Script Copilot
+            </h1>
+            <Badge variant={isOnline ? 'success' : 'warning'}>
+              {isOnline ? 'Hybrid $0 Cloud + Local' : 'Local Spark Offline'}
+            </Badge>
           </div>
-          <div className="text-[var(--mu)] text-xs mt-0.5">
-            Describe what you want to produce, inspect niche scores, and configure pipeline parameters.
-          </div>
+          <p className="text-[var(--mu)] text-xs mt-1">
+            Score documentary topics out of 50, refine narrative hooks, and queue structured pipeline jobs at $0 API spend.
+          </p>
         </div>
-        <Button variant="secondary" onClick={() => navigate('/create')}>
+        <Button type="button" variant="secondary" onClick={() => navigate('/create')}>
           <ArrowLeft size={13} />
-          <span>Back to Launchpad</span>
+          <span>Back to Production Deck</span>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-5 flex-1 min-h-[500px]">
-        {/* Chat Area */}
-        <div className="glass-panel flex flex-col p-4 !pb-0 min-h-0">
-          <div className="flex-1 overflow-auto flex flex-col gap-3 pr-1 mb-4">
+      {/* Main Split Studio Workspace */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-1 min-h-[540px]">
+        {/* Left Column (7/12): Interactive Brief & Niche Evaluation Stream */}
+        <div className="xl:col-span-7 glass-panel p-5 flex flex-col justify-between min-h-[480px] min-w-0">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[var(--ln-subtle)]">
+            <div className="flex items-center gap-2">
+              <Bot size={15} className="text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--tx)]">
+                Editorial Strategy Feed
+              </span>
+            </div>
+            {lastScore && (
+              <Badge variant={lastScore.total >= 35 ? 'success' : 'info'}>
+                Last Score: {lastScore.total}/50
+              </Badge>
+            )}
+          </div>
+
+          <div className="scroll-panel-stable flex-1 flex flex-col gap-3 py-4 pr-1">
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] p-3 rounded-xl text-xs leading-relaxed ${
+                className={`max-w-[88%] p-3.5 rounded-2xl text-xs leading-relaxed ${
                   m.role === 'user'
-                    ? 'self-end bg-blue-600 border border-blue-500/40 text-white shadow-sm'
-                    : 'glass-subcard text-[var(--tx)]'
+                    ? 'self-end bg-blue-600 border border-blue-500/40 text-white preserve-white shadow-sm rounded-br-sm'
+                    : 'self-start glass-subcard text-[var(--tx)] rounded-bl-sm'
                 }`}
               >
                 {m.text}
               </div>
             ))}
             {chatMutation.isPending && (
-              <div className="max-w-[85%] p-3 rounded-xl text-xs glass-subcard text-[var(--mu)]">
-                Processing request...
+              <div className="max-w-[85%] p-3 rounded-xl text-xs glass-subcard text-[var(--mu)]" role="status">
+                Scoring niche demand and drafting editorial brief...
               </div>
             )}
           </div>
 
-          <div className="flex gap-2 p-1.5 pl-3.5 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] items-center text-xs mb-4">
-            <input
-              type="text"
-              className="flex-1 bg-transparent outline-none text-[var(--tx)] placeholder:text-[var(--mu)]"
-              placeholder="Describe your topic or documentary angle..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <Button onClick={handleSend} disabled={!input.trim() || chatMutation.isPending}>
-              <Send size={13} />
-              <span>Send</span>
-            </Button>
+          {/* Quick Evaluation Prompts */}
+          <div className="space-y-2.5 pt-2 border-t border-[var(--ln-subtle)]">
+            <div className="pill-row-balance gap-1.5">
+              {SAMPLE_PROMPTS.map((sp) => (
+                <button
+                  key={sp}
+                  type="button"
+                  onClick={() => handleSend(sp)}
+                  disabled={chatMutation.isPending}
+                  className="px-2.5 py-1 rounded-lg bg-[var(--gl2)] border border-[var(--ln-subtle)] hover:border-blue-500/50 text-[11px] text-[var(--mu)] hover:text-[var(--tx)] transition-colors cursor-pointer"
+                >
+                  {sp}
+                </button>
+              ))}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+              className="flex gap-2 p-1.5 pl-3.5 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] items-center text-xs"
+            >
+              <label htmlFor="copilot-brief-input" className="visually-hidden-input">
+                Topic or documentary angle
+              </label>
+              <input
+                id="copilot-brief-input"
+                name="prompt"
+                type="text"
+                enterKeyHint="send"
+                className="flex-1 bg-transparent outline-none text-[var(--tx)] placeholder:text-[var(--mu)] min-w-0"
+                placeholder="Describe your topic, niche, or documentary angle..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <Button type="submit" disabled={!input.trim() || chatMutation.isPending}>
+                <Send size={13} />
+                <span>Evaluate</span>
+              </Button>
+            </form>
           </div>
         </div>
 
-        {/* Configuration Area */}
-        <div className="glass-panel p-5 flex flex-col overflow-auto min-h-0">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-sm text-[var(--tx)]">Job Configuration</h2>
-            <div className="flex gap-1 p-0.5 rounded-xl bg-[var(--gl2)] border border-[var(--ln-subtle)]">
+        {/* Right Column (5/12): Production Specification Deck */}
+        <div className="xl:col-span-5 glass-panel p-5 flex flex-col justify-between gap-4 min-w-0">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--ln-subtle)]">
+              <div className="flex items-center gap-2">
+                <Film size={15} className="text-amber-600 dark:text-amber-400" />
+                <h2 className="font-bold text-sm text-[var(--tx)]">Production Specification</h2>
+              </div>
               <button
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  !isAdvanced
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-[var(--mu)] hover:text-[var(--tx)]'
-                }`}
-                onClick={() => setIsAdvanced(false)}
+                type="button"
+                onClick={() => setShowStageMatrix((prev) => !prev)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[var(--gl2)] border border-[var(--ln-subtle)] text-[var(--mu)] hover:text-[var(--tx)] cursor-pointer"
               >
-                Basic
-              </button>
-              <button
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  isAdvanced
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-[var(--mu)] hover:text-[var(--tx)]'
-                }`}
-                onClick={() => setIsAdvanced(true)}
-              >
-                Advanced
+                {showStageMatrix ? 'Hide Stage Engines' : 'Stage Engines'}
               </button>
             </div>
-          </div>
 
-          <div className="flex justify-between items-center py-2.5 border-b border-[var(--ln-subtle)] text-xs">
-            <span className="text-[var(--mu)] font-medium">Format</span>
-            <select
-              value={jobConfig.format}
-              onChange={(e) => setJobConfig({ ...jobConfig, format: e.target.value })}
-              className="glass-input px-2.5 py-1.5 text-xs min-w-[140px] cursor-pointer"
-            >
-              <option value="9:16">9:16 Vertical</option>
-              <option value="16:9">16:9 Horizontal</option>
-            </select>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5 border-b border-[var(--ln-subtle)] text-xs">
-            <span className="text-[var(--mu)] font-medium">Duration</span>
-            <select
-              value={jobConfig.duration}
-              onChange={(e) => setJobConfig({ ...jobConfig, duration: e.target.value })}
-              className="glass-input px-2.5 py-1.5 text-xs min-w-[140px] cursor-pointer"
-            >
-              <option value="60s">60 seconds</option>
-              <option value="120s">120 seconds</option>
-            </select>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5 border-b border-[var(--ln-subtle)] text-xs">
-            <span className="text-[var(--mu)] font-medium">Target Platforms</span>
-            <div className="flex gap-1.5">
-              <Badge variant="danger">YouTube</Badge>
-              <Badge variant="info">TikTok</Badge>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5 border-b border-[var(--ln-subtle)] text-xs">
-            <span className="text-[var(--mu)] font-medium">AI Engine Tier</span>
-            <div className="flex gap-1 p-0.5 rounded-xl bg-[var(--gl2)] border border-[var(--ln-subtle)]">
-              <button
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  tier === 'free' || isPremiumDisabled
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-[var(--mu)] hover:text-[var(--tx)]'
-                }`}
-                onClick={() => setTier('free')}
-              >
-                Free ($0)
-              </button>
-              <button
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  !isPremiumDisabled && tier === 'premium'
-                    ? 'bg-blue-600 text-white shadow-xs cursor-pointer'
-                    : isPremiumDisabled
-                    ? 'text-[var(--mu)] opacity-40 cursor-not-allowed line-through'
-                    : 'text-[var(--mu)] hover:text-[var(--tx)] cursor-pointer'
-                }`}
-                onClick={() => !isPremiumDisabled && setTier('premium')}
-                disabled={isPremiumDisabled}
-              >
-                Premium
-              </button>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-[var(--mu)] py-2">
-            {isOnline
-              ? 'Online. Free uses strictly-free cloud and local workstation engines.'
-              : 'Offline. Cloud requests paused. Free runs locally.'}
-          </div>
-
-          {isAdvanced && (
-            <div className="animate-in fade-in space-y-2 pt-1">
-              {capabilities.length > 0 && (
-                <div className="py-2 border-b border-[var(--ln-subtle)]">
-                  <div className="text-[var(--mu)] text-[11px] font-semibold mb-1.5">
-                    Stage Engines
-                  </div>
-                  <table className="w-full text-[11px] text-left">
-                    <thead>
-                      <tr className="text-[var(--mu)]">
-                        <th className="py-1">Stage</th>
-                        <th className="py-1">Offline</th>
-                        <th className="py-1">Free</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {capabilities.map((c: any) => (
-                        <tr key={c.stage} className="border-t border-[var(--ln-subtle)] text-[var(--tx)]">
-                          <td className="py-1.5 font-semibold">{c.stage}</td>
-                          <td className="py-1.5 text-[var(--mu)]">{c.offline}</td>
-                          <td className="py-1.5">{c.free}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            {/* Format & Duration Radio Groups */}
+            <div className="grid grid-cols-2 gap-3">
+              <fieldset className="border-0 m-0 p-0">
+                <legend className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] mb-1.5 p-0">
+                  Aspect Ratio
+                </legend>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {['9:16', '16:9'].map((fmt) => {
+                    const active = jobConfig.format === fmt;
+                    const id = `copilot-fmt-${fmt.replace(':', 'x')}`;
+                    return (
+                      <div key={fmt} className="relative">
+                        <input
+                          id={id}
+                          type="radio"
+                          name="copilot_format"
+                          value={fmt}
+                          checked={active}
+                          onChange={() => setJobConfig({ ...jobConfig, format: fmt })}
+                          className="visually-hidden-input"
+                        />
+                        <label
+                          htmlFor={id}
+                          className={`py-2 px-2.5 rounded-xl border text-xs font-bold text-center block cursor-pointer transition-all ${
+                            active
+                              ? 'bg-blue-600 text-white border-blue-500'
+                              : 'bg-[var(--gl2)] text-[var(--tx)] border-[var(--ln)]'
+                          }`}
+                        >
+                          {fmt}
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </fieldset>
 
-              {mode === 'clone' && (
-                <div className="py-2 border-b border-[var(--ln-subtle)] space-y-2">
-                  <div className="text-[var(--mu)] text-[11px] font-semibold">Reference Video</div>
-                  <div className="border border-dashed border-[var(--input-border)] rounded-xl p-5 flex flex-col items-center justify-center text-center bg-[var(--input-bg)] hover:border-blue-500/60 transition-colors cursor-pointer">
-                    <Upload size={18} className="text-blue-600 dark:text-blue-400 mb-1.5" />
-                    <div className="text-xs font-semibold text-[var(--tx)]">
-                      Select reference video file to analyze
+              <fieldset className="border-0 m-0 p-0">
+                <legend className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] mb-1.5 p-0">
+                  Target Runtime
+                </legend>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {['45s', '60s', '3m'].map((dur) => {
+                    const active = jobConfig.duration === dur;
+                    const id = `copilot-dur-${dur}`;
+                    return (
+                      <div key={dur} className="relative">
+                        <input
+                          id={id}
+                          type="radio"
+                          name="copilot_duration"
+                          value={dur}
+                          checked={active}
+                          onChange={() => setJobConfig({ ...jobConfig, duration: dur })}
+                          className="visually-hidden-input"
+                        />
+                        <label
+                          htmlFor={id}
+                          className={`py-2 px-2 rounded-xl border text-xs font-bold font-mono text-center block cursor-pointer transition-all ${
+                            active
+                              ? 'bg-blue-600 text-white border-blue-500'
+                              : 'bg-[var(--gl2)] text-[var(--tx)] border-[var(--ln)]'
+                          }`}
+                        >
+                          {dur}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </div>
+
+            {/* Visual Style Radio Pills */}
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] mb-1.5 p-0">
+                Visual Aesthetic
+              </legend>
+              <div className="grid grid-cols-2 gap-2">
+                {STYLE_OPTIONS.map((st) => {
+                  const active = jobConfig.visualStyle === st;
+                  const id = `copilot-style-${st.replace(/\s+/g, '-').toLowerCase()}`;
+                  return (
+                    <div key={st} className="relative">
+                      <input
+                        id={id}
+                        type="radio"
+                        name="copilot_style"
+                        value={st}
+                        checked={active}
+                        onChange={() => setJobConfig({ ...jobConfig, visualStyle: st })}
+                        className="visually-hidden-input"
+                      />
+                      <label
+                        htmlFor={id}
+                        className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-between cursor-pointer transition-all ${
+                          active
+                            ? 'bg-blue-600/12 border-blue-500 text-[var(--tx)]'
+                            : 'bg-[var(--gl2)] border-[var(--ln)] text-[var(--mu)] hover:text-[var(--tx)]'
+                        }`}
+                      >
+                        <span className="truncate">{st}</span>
+                        {active && <CheckCircle2 size={12} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                      </label>
                     </div>
-                    <div className="text-[11px] text-[var(--mu)] mt-0.5">MP4, MOV up to 50MB</div>
-                  </div>
-                  <input
-                    type="text"
-                    value={jobConfig.referenceUrl}
-                    onChange={(e) => setJobConfig({ ...jobConfig, referenceUrl: e.target.value })}
-                    placeholder="Or paste reference URL: https://..."
-                    className="glass-input w-full px-3 py-2 text-xs"
-                  />
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* Narrator Voice Radio Stack */}
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] mb-1.5 flex items-center gap-1.5 p-0">
+                <Mic size={12} className="text-emerald-600 dark:text-emerald-400" />
+                <span>Narrator Voice (-14 LUFS)</span>
+              </legend>
+              <div className="grid grid-cols-1 gap-1.5">
+                {VOICE_OPTIONS.map((v) => {
+                  const active = jobConfig.voice === v.id;
+                  const id = `copilot-voice-${v.id}`;
+                  return (
+                    <div key={v.id} className="relative">
+                      <input
+                        id={id}
+                        type="radio"
+                        name="copilot_voice"
+                        value={v.id}
+                        checked={active}
+                        onChange={() => setJobConfig({ ...jobConfig, voice: v.id })}
+                        className="visually-hidden-input"
+                      />
+                      <label
+                        htmlFor={id}
+                        className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center justify-between cursor-pointer transition-all ${
+                          active
+                            ? 'bg-blue-600/12 border-blue-500 text-[var(--tx)] font-semibold'
+                            : 'bg-[var(--gl2)] border-[var(--ln)] text-[var(--mu)] hover:text-[var(--tx)]'
+                        }`}
+                      >
+                        <span className="truncate">{v.label}</span>
+                        {active && <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* Target Platforms Checkboxes */}
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] mb-1.5 p-0">
+                Target Export Platforms
+              </legend>
+              <div className="flex items-center flex-wrap gap-2">
+                {['YouTube', 'TikTok', 'Instagram Reels'].map((plat) => {
+                  const checked = jobConfig.platforms.includes(plat);
+                  return (
+                    <label
+                      key={plat}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer select-none transition-colors ${
+                        checked
+                          ? 'bg-blue-600/15 border-blue-500/50 text-[var(--tx)]'
+                          : 'bg-[var(--gl2)] border-[var(--ln)] text-[var(--mu)]'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => togglePlatform(plat)}
+                        className="accent-blue-600 rounded"
+                      />
+                      <span>{plat}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* Optional Reference URL */}
+            <div className="space-y-1">
+              <label
+                htmlFor="copilot-ref-url"
+                className="text-[11px] font-bold uppercase tracking-wider text-[var(--mu)] flex items-center gap-1.5"
+              >
+                <Upload size={12} />
+                <span>Reference Video URL (Optional)</span>
+              </label>
+              <input
+                id="copilot-ref-url"
+                name="reference_url"
+                type="url"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={jobConfig.referenceUrl}
+                onChange={(e) => setJobConfig({ ...jobConfig, referenceUrl: e.target.value })}
+                placeholder="https://youtube.com/watch?v=..."
+                className="glass-input w-full px-3 py-2 text-xs font-mono"
+              />
+            </div>
+
+            {showStageMatrix && capabilities.length > 0 && (
+              <div className="glass-subcard p-3 space-y-1.5">
+                <div className="text-[11px] font-bold text-[var(--tx)] flex items-center gap-1.5">
+                  <Layers size={12} className="text-blue-600 dark:text-blue-400" />
+                  <span>Active Stage Engines</span>
                 </div>
-              )}
-
-              <div className="flex justify-between items-center py-2 border-b border-[var(--ln-subtle)] text-xs">
-                <span className="text-[var(--mu)] font-medium">Voice</span>
-                <select
-                  value={jobConfig.voice}
-                  onChange={(e) => setJobConfig({ ...jobConfig, voice: e.target.value })}
-                  className="glass-input px-2.5 py-1.5 text-xs min-w-[160px] cursor-pointer"
-                >
-                  <option value="en-US-AriaNeural">Aria (Female)</option>
-                  <option value="en-US-ChristopherNeural">Christopher (Male)</option>
-                  <option value="en-US-GuyNeural">Guy (Male)</option>
-                  <option value="en-US-AndrewNeural">Andrew (Male)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-between items-center py-2 border-b border-[var(--ln-subtle)] text-xs">
-                <span className="text-[var(--mu)] font-medium">Visual Style</span>
-                <select
-                  value={jobConfig.visualStyle}
-                  onChange={(e) => setJobConfig({ ...jobConfig, visualStyle: e.target.value })}
-                  className="glass-input px-2.5 py-1.5 text-xs min-w-[160px] cursor-pointer"
-                >
-                  <option value="Dark Documentary">Dark Documentary</option>
-                  <option value="Vintage 35mm">Vintage 35mm</option>
-                  <option value="Cyberpunk Neo-Noir">Cyberpunk Neo-Noir</option>
-                  <option value="Minimalist Studio">Minimalist Studio</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-auto pt-4 flex flex-col gap-3">
-            <div className="glass-subcard flex justify-between items-center p-3.5">
-              <span className="text-[var(--mu)] text-xs font-medium">Estimated API Cost</span>
-              <b className="font-bold font-mono text-lg text-emerald-600 dark:text-emerald-400">
-                {tier === 'free' || isPremiumDisabled ? '$0.00' : 'Unavailable'}
-              </b>
-            </div>
-
-            {isOnline ? (
-              <Button className="w-full !py-2.5" onClick={() => handleGenerate(true)}>
-                Generate Production Plan
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button className="flex-1" variant="secondary" onClick={() => handleGenerate(true)}>
-                  Run Locally Now
-                </Button>
-                <Button className="flex-1" onClick={() => handleGenerate(false)}>
-                  Queue Until Online
-                </Button>
+                <table className="w-full text-[11px] text-left">
+                  <thead>
+                    <tr className="text-[var(--mu)]">
+                      <th className="py-1">Stage</th>
+                      <th className="py-1">Offline</th>
+                      <th className="py-1">Zero-Cost Cloud</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {capabilities.map((c: any) => (
+                      <tr key={c.stage} className="border-t border-[var(--ln-subtle)] text-[var(--tx)]">
+                        <td className="py-1 font-semibold">{c.stage}</td>
+                        <td className="py-1 text-[var(--mu)]">{c.offline}</td>
+                        <td className="py-1">{c.free}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
+          </div>
+
+          <div className="pt-3 border-t border-[var(--ln-subtle)] space-y-3">
+            <div className="glass-subcard flex justify-between items-center p-3">
+              <div>
+                <span className="text-[var(--tx)] text-xs font-bold block">Zero-Cost Budget Lock</span>
+                <span className="text-[11px] text-[var(--mu)]">
+                  {isOnline ? 'Strictly-free cloud + local engines' : 'Local offline execution'}
+                </span>
+              </div>
+              <b className="font-bold font-mono text-lg text-emerald-600 dark:text-emerald-400">$0.00</b>
+            </div>
+
+            <Button
+              type="button"
+              className="w-full !py-3 justify-center font-bold"
+              disabled={createMutation.isPending}
+              onClick={handleGenerate}
+            >
+              <span>
+                {createMutation.isPending ? 'Queueing Production Job...' : 'Queue Documentary Job'}
+              </span>
+            </Button>
           </div>
         </div>
       </div>

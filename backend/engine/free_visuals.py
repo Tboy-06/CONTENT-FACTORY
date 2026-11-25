@@ -94,7 +94,7 @@ def fetch_openrouter_free_image(
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:3000",
+            "HTTP-Referer": openrouter_discovery.get_app_referer_url(),
             "X-Title": "CONTENT-FACTORY Studio",
         },
     )

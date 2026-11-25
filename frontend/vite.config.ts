@@ -1,9 +1,13 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
+  const backendHost = process.env.BACKEND_HOST || '127.0.0.1';
+  const backendPort = process.env.BACKEND_PORT || '8000';
+  const apiTarget = process.env.VITE_BACKEND_URL || `http://${backendHost}:${backendPort}`;
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -12,27 +16,23 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
-      // Proxy API calls to FastAPI backend
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          target: apiTarget,
           changeOrigin: true,
         },
         '/output': {
-          target: 'http://localhost:8000',
+          target: apiTarget,
           changeOrigin: true,
         },
         '/temp': {
-          target: 'http://localhost:8000',
+          target: apiTarget,
           changeOrigin: true,
         },
         '/jobs': {
-          target: 'http://localhost:8000',
+          target: apiTarget,
           changeOrigin: true,
         },
       },

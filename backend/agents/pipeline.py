@@ -18,7 +18,7 @@ from backend.state import ACTIVE_JOBS
 logger = logging.getLogger(__name__)
 
 # Ensure output directory exists
-OUTPUT_DIR = Path("D:/CONTENT-FACTORY/backend/vault/outputs")
+OUTPUT_DIR = Path(__file__).resolve().parent.parent / "vault" / "outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 async def run_content_pipeline(job_id: str, niche: str, pipeline_mode: str = "Generate from Scratch", reference_url: str = None) -> dict:

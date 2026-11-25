@@ -157,7 +157,8 @@ def _load_hero_plate(job_id: int, job_dir: Optional[str] = None) -> Optional[Ima
     cand_dirs = []
     if job_dir and os.path.exists(job_dir):
         cand_dirs.append(job_dir)
-    cand_dirs.append(os.path.join(r"C:\cf_training\jobs", str(job_id)))
+    from backend.config import get_settings
+    cand_dirs.append(os.path.join(get_settings().jobs_scratch_dir, str(job_id)))
     cand_dirs.append(os.path.join("jobs", str(job_id)))
 
     for d in cand_dirs:

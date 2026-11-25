@@ -185,11 +185,11 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
 
                   <div className="flex items-center justify-between w-full mt-3 text-xs text-[var(--mu)] px-2 font-mono">
                     <span className="flex items-center gap-1">
-                      <Shield size={13} className="text-cyan-400" />
+                      <Shield size={13} className="text-cyan-600 dark:text-cyan-400" />
                       {isWidescreen ? '1920 x 1080 Widescreen' : '1080 x 1920'}
                     </span>
-                    <span className="flex items-center gap-1 text-slate-300">
-                      <Clock size={13} className="text-blue-400" />
+                    <span className="flex items-center gap-1 text-[var(--tx)]">
+                      <Clock size={13} className="text-blue-600 dark:text-blue-400" />
                       {totalCalculatedDur.toFixed(1)}s Total
                     </span>
                   </div>
@@ -199,49 +199,47 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
           </div>
 
           {/* Sequence Shots Breakdown & Direct Controls */}
-          <div className="flex-1 w-full space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex-1 w-full min-w-0 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--ln-subtle)]">
               <div>
-                <h3 className="text-sm font-semibold text-white">Interactive Shot Timeline</h3>
-                <p className="text-[11px] text-slate-400">Adjust individual cut pacing, color grade treatment, and SFX cues.</p>
+                <h3 className="text-sm font-bold text-[var(--tx)]">Interactive Shot Timeline</h3>
+                <p className="text-[11px] text-[var(--mu)]">Adjust individual cut pacing, color grade treatment, and SFX cues.</p>
               </div>
-              <span className="text-xs text-blue-400 font-mono bg-blue-950/60 border border-blue-500/30 px-2 py-0.5 rounded">
-                {localScenes.length} Beats
-              </span>
+              <Badge variant="info">{localScenes.length} Beats</Badge>
             </div>
 
-            <div className="space-y-2.5 max-h-[58vh] overflow-y-auto pr-1">
+            <div className="scroll-panel-stable space-y-2.5 max-h-[58vh] pr-1">
               {localScenes.map((sc: any, idx: number) => {
-                const cleanImg = sc.image_path ? sc.image_path.replace(/\\/g, '/').replace(/^\/+/, '') : '';
-                const thumbUrl = cleanImg ? `/${cleanImg}` : null;
                 return (
-                  <div key={idx} className="p-3 bg-slate-900/70 border border-slate-800 hover:border-slate-700 rounded-xl space-y-2 transition-all">
+                  <div key={idx} className="glass-subcard p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-md bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-6 h-6 rounded-md bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center text-xs font-bold shrink-0">
                           {idx + 1}
                         </span>
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-semibold text-[var(--tx)] truncate">
                           {sc.badge || `BEAT ${idx + 1}`}
                         </span>
                       </div>
 
                       {/* Duration Stepper */}
-                      <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 font-mono mr-1">Dur:</span>
+                      <div className="flex items-center gap-1.5 bg-[var(--input-bg)] px-2 py-1 rounded-lg border border-[var(--input-border)]">
+                        <span className="text-[10px] text-[var(--mu)] font-mono mr-1">Dur:</span>
                         <button
+                          type="button"
                           onClick={() => handleDurationDelta(idx, -0.5)}
-                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
+                          className="w-5 h-5 rounded bg-[var(--gl2)] hover:border-blue-500 border border-[var(--ln-subtle)] text-[var(--tx)] flex items-center justify-center text-xs cursor-pointer"
                           title="Shorten cut by 0.5s"
                         >
                           <Minus size={11} />
                         </button>
-                        <span className="text-xs font-mono font-bold text-sky-300 w-9 text-center">
+                        <span className="text-xs font-mono font-bold text-blue-600 dark:text-sky-300 w-9 text-center">
                           {(Number(sc.duration) || 1.5).toFixed(1)}s
                         </span>
                         <button
+                          type="button"
                           onClick={() => handleDurationDelta(idx, 0.5)}
-                          className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
+                          className="w-5 h-5 rounded bg-[var(--gl2)] hover:border-blue-500 border border-[var(--ln-subtle)] text-[var(--tx)] flex items-center justify-center text-xs cursor-pointer"
                           title="Extend cut by 0.5s"
                         >
                           <Plus size={11} />
@@ -250,21 +248,21 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
                     </div>
 
                     {/* Text or Prompt */}
-                    <p className="text-[11px] text-slate-300 line-clamp-2 bg-slate-950/60 p-2 rounded border border-slate-800/80">
-                      {sc.text || sc.prompt || "Visual beat"}
+                    <p className="text-[11px] text-[var(--tx)] line-clamp-2 bg-[var(--input-bg)] p-2 rounded-lg border border-[var(--ln-subtle)]">
+                      {sc.text || sc.prompt || 'Visual beat'}
                     </p>
 
                     {/* Color Grade & SFX Selectors */}
-                    <div className="flex items-center gap-3 pt-1 text-[11px]">
+                    <div className="flex items-center flex-wrap gap-3 pt-1 text-[11px]">
                       <div className="flex items-center gap-1.5">
-                        <Palette size={12} className="text-slate-400 shrink-0" />
-                        <span className="text-slate-400">Grade:</span>
+                        <Palette size={12} className="text-[var(--mu)] shrink-0" />
+                        <span className="text-[var(--mu)]">Grade:</span>
                         <select
-                          value={sc.grade || "hard_bw"}
+                          value={sc.grade || 'hard_bw'}
                           onChange={(e) => handleGradeChange(idx, e.target.value)}
-                          className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-200 text-[11px] outline-none"
+                          className="glass-input !rounded-md px-2 py-0.5 text-[11px] cursor-pointer"
                         >
-                          <option value="hard_bw">Hard B&W</option>
+                          <option value="hard_bw">Hard B&amp;W</option>
                           <option value="teal_split">Teal Split</option>
                           <option value="amber">Amber</option>
                           <option value="natural">Natural</option>
@@ -272,12 +270,12 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <Volume2 size={12} className="text-emerald-400 shrink-0" />
-                        <span className="text-slate-400">SFX:</span>
+                        <Volume2 size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-[var(--mu)]">SFX:</span>
                         <select
-                          value={sc.sfx || "whoosh.wav"}
+                          value={sc.sfx || 'whoosh.wav'}
                           onChange={(e) => handleSfxChange(idx, e.target.value)}
-                          className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-200 text-[11px] outline-none"
+                          className="glass-input !rounded-md px-2 py-0.5 text-[11px] cursor-pointer"
                         >
                           <option value="whoosh.wav">Whoosh</option>
                           <option value="thud.wav">Thud</option>
@@ -291,9 +289,9 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
               })}
             </div>
 
-            <div className="pt-3 flex items-center justify-between gap-2 border-t border-slate-800">
-              <div className="text-xs text-slate-400">
-                {applyStatus && <span className="text-emerald-400 font-medium">{applyStatus}</span>}
+            <div className="pt-3 flex items-center justify-between gap-2 border-t border-[var(--ln-subtle)]">
+              <div className="text-xs text-[var(--mu)]" role="status">
+                {applyStatus && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{applyStatus}</span>}
               </div>
               <div className="flex items-center gap-2">
                 <Button onClick={onClose} variant="ghost" className="!text-xs">

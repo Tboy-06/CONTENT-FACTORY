@@ -30,8 +30,14 @@ export default function Pipeline() {
   ];
 
   const getEngineBadge = (job: any) => {
-    if (job.config?.premium) return <Badge variant="info">Premium</Badge>;
-    return <Badge variant="success">Free</Badge>;
+    return <Badge variant="success">$0 Free</Badge>;
+  };
+
+  const formatVoiceShort = (v?: string) => {
+    if (!v) return 'Andrew';
+    if (v === 'am_michael' || v.includes('kokoro')) return 'Kokoro Michael';
+    const seg = String(v).split('-')[2];
+    return seg ? seg.replace('MultilingualNeural', '').replace('Neural', '') : v;
   };
 
   const getJobProgress = (job: any) => {
@@ -246,11 +252,7 @@ export default function Pipeline() {
                             </b>
 
                             <p className="text-[11px] text-[var(--mu)] flex items-center justify-between">
-                              <span>
-                                {job.config?.voice
-                                  ? String(job.config.voice).split('-')[2]?.replace('Neural', '')
-                                  : 'Aria'}
-                              </span>
+                              <span>{formatVoiceShort(job.config?.voice)}</span>
                               <span className="font-mono text-[10px] font-semibold">
                                 {job.config?.format || '9:16'}
                               </span>

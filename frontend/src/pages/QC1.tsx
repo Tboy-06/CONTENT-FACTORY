@@ -14,7 +14,6 @@ import {
   Download,
   Upload,
   Image as ImageIcon,
-  Sparkles,
   Copy,
   ShieldAlert,
   Smile,
@@ -115,7 +114,13 @@ export default function QC1() {
     job.status === 'COMPLETED';
   const displayScenes = editedScenes.length > 0 ? editedScenes : rawScenes;
   const stylePreset = jobMeta.style_preset || job.config?.style_preset || 'Dark Documentary';
-  const voiceName = jobMeta.voice || job.config?.voice || 'en-US-AriaNeural';
+  const voiceName = jobMeta.voice || job.config?.voice || 'en-US-AndrewMultilingualNeural';
+  const formatVoiceShort = (v: string) => {
+    if (!v) return 'Andrew Multilingual';
+    if (v === 'am_michael' || v.includes('kokoro')) return 'Kokoro-82M Michael';
+    const seg = v.split('-')[2];
+    return seg ? seg.replace('MultilingualNeural', ' Multilingual').replace('Neural', '') : v;
+  };
   const totalDuration = jobMeta.duration
     ? `${Math.round(jobMeta.duration)}s`
     : job.config?.duration || 'Pending';
@@ -339,7 +344,7 @@ export default function QC1() {
           </div>
           <p className="text-xs text-[var(--mu)] mt-1">
             Job #{job.id} · Genre: {genreBadgeConfig[currentGenre]?.label || currentGenre} ·{' '}
-            {stylePreset} · {totalDuration} · Voice: {voiceName.split('-')[2] || 'Aria'}
+            {stylePreset} · {totalDuration} · Voice: {formatVoiceShort(voiceName)}
           </p>
         </div>
 
@@ -347,10 +352,10 @@ export default function QC1() {
           <Button
             onClick={() => setIsDirectorChatOpen(true)}
             className="bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-sm"
-            title="Open AI Director Command Studio"
+            title="Open Director Command Studio"
           >
-            <Sparkles size={14} className="text-slate-950" />
-            <span>AI Director Studio</span>
+            <Clapperboard size={14} className="text-slate-950" />
+            <span>Director Studio</span>
           </Button>
 
           {activeVideoUrl && (
@@ -603,7 +608,7 @@ export default function QC1() {
             <div className="glass-subcard p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-[var(--tx)]">
                 <span className="flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-amber-600 dark:text-amber-400" />
+                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" />
                   <span>Curiosity A/B Title Suggestions</span>
                 </span>
                 <span className="text-[10px] text-[var(--mu)] font-normal">Click to copy</span>
@@ -866,7 +871,7 @@ export default function QC1() {
                         setTimeout(() => setCopiedFlowIdx(null), 2000);
                       }}
                       className="inline-flex items-center justify-center gap-1 text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-all cursor-pointer"
-                      title="1-Click Copy Prompt + Reference Image path for Google Flow (50 free daily credits)"
+                      title="Copy prompt + reference image spec for Google Flow"
                     >
                       {copiedFlowIdx === idx ? (
                         <Check size={12} className="text-emerald-600 dark:text-emerald-400" />
@@ -926,7 +931,7 @@ export default function QC1() {
                         </a>
                       </div>
                       <p className="text-[10px] text-[var(--mu)]">
-                        Prompt copied-ready. Generate clip in Google Flow (50 free daily credits) and drop the .mp4 into the Clip button above.
+                        Prompt ready in clipboard. Generate your clip in Google Flow and drop the .mp4 into the Clip button above.
                       </p>
                     </div>
                   )}

@@ -197,13 +197,12 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
                     Open in Studio
                   </Button>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete video #${job.id} (${job.niche})?`)) {
-                        deleteJobMutation.mutate(job.id);
-                      }
+                      setJobPendingDelete(job);
                     }}
-                    className="p-1.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                    className="p-1.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
                     title="Delete Job"
                   >
                     <Trash2 size={14} />
@@ -213,6 +212,23 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
             ))}
           </div>
         )}
+        <ConfirmDialog
+          isOpen={Boolean(jobPendingDelete)}
+          title={jobPendingDelete ? `Delete Video #${jobPendingDelete.id}?` : 'Delete Video?'}
+          description={
+            jobPendingDelete
+              ? `Remove "${jobPendingDelete.niche}" from the production studio history?`
+              : 'Remove this video from the production studio history?'
+          }
+          confirmLabel="Delete Video"
+          onConfirm={() => {
+            if (jobPendingDelete) {
+              deleteJobMutation.mutate(jobPendingDelete.id);
+            }
+            setJobPendingDelete(null);
+          }}
+          onCancel={() => setJobPendingDelete(null)}
+        />
       </div>
     );
   }
@@ -226,8 +242,12 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
   const targetHarvesterRecords = qData?.target_total ?? 0;
   const currentMilestoneCap = qData?.current_milestone_cap ?? 0;
   const milestoneStep = qData?.milestone_step ?? 1;
-  const milestoneStatus = qData?.milestone_status ?? 'LOADING';
+  const milestoneStatus = qData?.milestone_status ?? 'IDLE';
+  const isHarvesterLive = Boolean(qData?.harvester_active);
+  const isPausedForRender = Boolean(qData?.render_lock_active) || milestoneStatus === 'PAUSED_FOR_ACTIVE_RENDER';
   const lastHarvestedItem = qData?.last_harvested_item ?? null;
+  const formatCompactCount = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M` : n >= 1_000 ? `${Math.round(n / 1_000)}k` : String(n);
   const housesMap = qData?.houses || {};
   const learnedRules = learnedRulesData?.rules || [];
 
@@ -319,7 +339,7 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
         aspect_ratio: '9:16',
         duration: '45s',
         style_preset: 'Dark Documentary',
-        voice: 'en-US-AriaNeural'
+        voice: 'en-US-AndrewMultilingualNeural'
       },
       {
         onSuccess: () => {
@@ -333,8 +353,8 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
   return (
     <div className="animate-in fade-in flex flex-col gap-5 pb-4">
       {/* 02 | SEGMENTED FILTER PILL BAR */}
-      <div className="flex items-center justify-between flex-wrap gap-2.5">
-        <div className="flex items-center gap-2 flex-wrap">
+      <search aria-label="Filter pipeline jobs" className="flex items-center justify-between flex-wrap gap-2.5">
+        <div className="pill-row-balance items-center gap-2">
           {FILTER_PILLS.map((pill) => {
             const isSelected = activeFilter === pill.id;
             return (
@@ -384,16 +404,16 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
             </button>
           )}
         </div>
-      </div>
+      </search>
 
       {/* 03 | UNIFIED 3-ZONE KPI BANNER */}
       <div className="glass-panel p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
-          {/* Zone 1: Harvester Dataset (Live 2,000,000 Master Goal with 100k Checkpoints) */}
+          {/* Zone 1: Harvester Dataset (Live Dynamic Target & Checkpoints) */}
           <div className="flex flex-col justify-between">
             <div className="flex items-center gap-2">
               <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Harvester Dataset (2M Goal)
+                Harvester Dataset {targetHarvesterRecords > 0 ? `(${formatCompactCount(targetHarvesterRecords)} Target)` : ''}
               </span>
               {sessionDelta > 0 && (
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse">
@@ -662,12 +682,13 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
               <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                 {lastHarvestedItem
                   ? `Latest record [${lastHarvestedItem.house.replace('HOUSE_', 'H').split('_')[0]} · ${lastHarvestedItem.sub_room}]: "${lastHarvestedItem.preview}"`
-                  : 'Polling C:\\cf_training\\harvest_state.json every 2.5s (0 hardcoded values)'}
+                  : 'Live telemetry synced from workspace harvest state (0 hardcoded values)'}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {currentMilestoneCap < targetHarvesterRecords && (
                 <button
+                  type="button"
                   onClick={() => continueMilestoneMutation.mutate()}
                   disabled={continueMilestoneMutation.isPending}
                   className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border cursor-pointer transition-colors ${
@@ -675,15 +696,32 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
                       ? 'bg-white/80 hover:bg-white text-blue-700 border-blue-200'
                       : 'bg-slate-800 hover:bg-slate-700 text-blue-300 border-slate-700'
                   }`}
-                  title="Advance checkpoint cap by +100,000 towards 2,000,000"
+                  title={`Advance checkpoint cap by +${milestoneStep.toLocaleString()} towards ${targetHarvesterRecords.toLocaleString()}`}
                 >
-                  +100k Cap ({Math.min(targetHarvesterRecords, currentMilestoneCap + milestoneStep).toLocaleString()})
+                  +{formatCompactCount(milestoneStep)} Cap ({Math.min(targetHarvesterRecords, currentMilestoneCap + milestoneStep).toLocaleString()})
                 </button>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                <span className="w-2 h-2 rounded-xs bg-emerald-500 animate-pulse" />
-                <span>{milestoneStatus === 'PAUSED_AT_100K_CHECKPOINT' ? 'Checkpoint Reached' : 'Live Harvesting'}</span>
-              </div>
+              {milestoneStatus === 'PAUSED_AT_100K_CHECKPOINT' ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-xs bg-amber-500" />
+                  <span>Checkpoint Reached</span>
+                </div>
+              ) : isPausedForRender ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-xs bg-amber-500" />
+                  <span>Paused for Render</span>
+                </div>
+              ) : isHarvesterLive ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-xs bg-emerald-500 animate-pulse" />
+                  <span>Live Harvesting</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--gl2)] border border-[var(--ln-subtle)] text-[var(--mu)] text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-xs bg-slate-400" />
+                  <span>Harvester Idle</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -808,32 +846,26 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
 
             {/* Floating Glass Tooltip Pill */}
             {houseChartData[hoveredHouseIdx] && (
-              <div
-                className={`mt-1 flex items-center justify-between px-3.5 py-2 rounded-xl border text-xs ${
-                  isLight
-                    ? 'bg-slate-900/90 text-white border-slate-700 shadow-md'
-                    : 'bg-slate-950/90 text-slate-100 border-slate-800 shadow-md'
-                }`}
-              >
+              <div className="mt-1 flex items-center justify-between flex-wrap gap-2 px-3.5 py-2 rounded-xl glass-subcard text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-xs bg-sky-400" />
-                  <span className="font-bold">
+                  <span className="w-2 h-2 rounded-xs bg-blue-600 dark:bg-sky-400" />
+                  <span className="font-bold text-[var(--tx)]">
                     {houseChartData[hoveredHouseIdx].short}: {houseChartData[hoveredHouseIdx].name}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 font-mono text-[11px] flex-wrap">
+                <div className="flex items-center gap-4 font-mono text-[11px] text-[var(--mu)] flex-wrap">
                   <span>
-                    Live Count: <b>{houseChartData[hoveredHouseIdx].count.toLocaleString()}</b> /{' '}
+                    Live Count: <b className="text-[var(--tx)]">{houseChartData[hoveredHouseIdx].count.toLocaleString()}</b> /{' '}
                     {houseChartData[hoveredHouseIdx].masterTarget > 0
                       ? houseChartData[hoveredHouseIdx].masterTarget.toLocaleString()
                       : '--'}
                   </span>
                   <span>
                     Phase {currentMilestoneCap > 0 ? Math.max(1, Math.round(currentMilestoneCap / Math.max(1, milestoneStep))) : '--'} Progress:{' '}
-                    <b className="text-emerald-400">{houseChartData[hoveredHouseIdx].retention}%</b> ({houseChartData[hoveredHouseIdx].count.toLocaleString()} / {houseChartData[hoveredHouseIdx].phaseTarget.toLocaleString()})
+                    <b className="text-emerald-600 dark:text-emerald-400">{houseChartData[hoveredHouseIdx].retention}%</b> ({houseChartData[hoveredHouseIdx].count.toLocaleString()} / {houseChartData[hoveredHouseIdx].phaseTarget.toLocaleString()})
                   </span>
                   <span>
-                    Open Sub-Rooms: <b>{houseChartData[hoveredHouseIdx].openSubRooms}</b>
+                    Open Sub-Rooms: <b className="text-[var(--tx)]">{houseChartData[hoveredHouseIdx].openSubRooms}</b>
                   </span>
                 </div>
               </div>
@@ -899,7 +931,7 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
                       : `Clear Temp Cache (${cache?.temp_mb ?? '0.0'} MB)`}
                   </div>
                   <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Preserves C:\ SHA-256 beat cache &amp; master outputs
+                    Purges temp clips &amp; caches (300 MB LRU cap) while preserving master MP4s
                   </div>
                 </div>
               </div>

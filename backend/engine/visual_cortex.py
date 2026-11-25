@@ -78,9 +78,10 @@ def fetch_wikimedia_commons_image(
         f"&gsrsearch={encoded_q}&gsrnamespace=6&gsrlimit=5&prop=imageinfo"
         f"&iiprop=url|dimensions&iiurlwidth={max(width, 1080)}&format=json"
     )
+    from backend.config import get_settings
     req = urllib.request.Request(
         api_url,
-        headers={"User-Agent": "ContentFactoryDocumentaryStudio/2.0 (https://localhost:3000)"}
+        headers={"User-Agent": f"ContentFactoryDocumentaryStudio/2.0 ({get_settings().public_app_url})"}
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:

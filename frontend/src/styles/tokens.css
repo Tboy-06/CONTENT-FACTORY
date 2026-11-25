@@ -285,6 +285,63 @@ p, blockquote, li, .pretty-text {
   text-wrap: pretty;
 }
 
+/* Modern Web Guidance (forms): Accessible visually-hidden radio/checkbox inputs */
+.visually-hidden-input {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+.visually-hidden-input:focus-visible + label {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+/* Modern Web Guidance (css-layout): Balanced flex wrapping & stable scroll containers */
+.pill-row-balance {
+  display: flex;
+  flex-wrap: wrap;
+  flex-wrap: balance;
+}
+
+.scroll-panel-stable {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+/* Modern Web Guidance (size-aware-styling): Container query deck wrapper with @media fallback */
+.studio-monitor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .studio-monitor-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@supports (container-type: inline-size) {
+  .preview-deck-container {
+    container: previewdeck / inline-size;
+  }
+
+  @container previewdeck (min-width: 340px) {
+    .studio-monitor-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
 /* Modern Web Guidance: dialog & prevent-page-scroll-under-modal-dialog */
 dialog:modal {
   overscroll-behavior: contain;

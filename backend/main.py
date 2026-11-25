@@ -75,7 +75,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -91,12 +91,12 @@ app.add_api_route("/api/system/cache/clear", clear_cache, methods=["POST"], tags
 
 import shutil
 
-JOBS_SCRATCH_ROOT = r"C:\cf_training\jobs"
+JOBS_SCRATCH_ROOT = settings.jobs_scratch_dir
 os.makedirs("output", exist_ok=True)
 os.makedirs("temp", exist_ok=True)
 os.makedirs(JOBS_SCRATCH_ROOT, exist_ok=True)
 
-# Migrate any existing D:\CONTENT-FACTORY\jobs\<id> folders to C:\cf_training\jobs\<id> to keep D: free
+# Migrate any legacy local jobs/<id> folders into configured scratch storage
 if os.path.exists("jobs"):
     try:
         for entry in os.listdir("jobs"):
@@ -109,7 +109,7 @@ if os.path.exists("jobs"):
                     shutil.copytree(src_j, dst_j, dirs_exist_ok=True)
                     shutil.rmtree(src_j, ignore_errors=True)
     except Exception as _mig_err:
-        logger.warning(f"Could not migrate legacy D:\\jobs folder: {_mig_err}")
+        logger.warning(f"Could not migrate legacy jobs folder: {_mig_err}")
 
 app.mount("/output", StaticFiles(directory="output"), name="output")
 app.mount("/temp", StaticFiles(directory="temp"), name="temp")
@@ -160,4 +160,6 @@ async def root() -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+    api_host = os.environ.get("BACKEND_HOST", "127.0.0.1")
+    api_port = int(os.environ.get("BACKEND_PORT", "8000"))
+    uvicorn.run("backend.main:app", host=api_host, port=api_port, reload=True)

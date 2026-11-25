@@ -5,9 +5,9 @@ Implements Verbal Reinforcement Learning (Reflexion) and continuous mistake logg
 for autonomous documentary production (0 MB VRAM, 0 API cost).
 
 Architecture:
-1. Logs self-critic catches and human user corrections into D:\\CONTENT-FACTORY\\director_vault\\mistakes\\
+1. Logs self-critic catches and human user corrections into `director_vault/mistakes/`
    with occurrence counters and YAML frontmatter.
-2. Appends instruction-tuning pairs to C:\\cf_training\\dataset.jsonl & C:\\cf_training\\reflexion_log.jsonl.
+2. Appends instruction-tuning pairs to configured `dataset_file` & `reflexion_log_file`.
 3. Provides deterministic `audit_and_heal_beats` to auto-correct pacing, typography, and retention errors.
 4. Supplies top-ranked learned mistake rules for BM25 Vault-RAG injection into planner & copilot.
 """
@@ -20,14 +20,16 @@ import logging
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
+from backend.config import get_settings
 
 logger = logging.getLogger("engine.reflexion")
 
+_CFG = get_settings()
 VAULT_MISTAKES_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "director_vault", "mistakes")
 )
-DATASET_FILE = r"C:\cf_training\dataset.jsonl"
-REFLEXION_LOG_FILE = r"C:\cf_training\reflexion_log.jsonl"
+DATASET_FILE = _CFG.dataset_file
+REFLEXION_LOG_FILE = _CFG.reflexion_log_file
 
 
 def _slugify(text: str, max_words: int = 6) -> str:

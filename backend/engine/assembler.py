@@ -34,17 +34,20 @@ import backend.engine.depth_cortex as depth_cortex
 import backend.engine.zero_gpu_hook as zero_gpu_hook
 from backend.engine.reflexion import audit_and_heal_beats, log_system_fallback
 
+from backend.config import get_settings
+
 logger = logging.getLogger("engine.assembler")
 
 # 16 GB Laptop Thermal & Concurrency Guard: serialize heavy FFmpeg encodes
 _FFMPEG_SEMAPHORE = asyncio.Semaphore(1)
 
-# Beat-Level SHA-256 Render Cache & Scratch Directories on C: drive (0 MB bloat on 8 GB D: partition)
-BEAT_CACHE_DIR = r"C:\cf_training\temp\beat_cache"
-AI_CLIPS_CACHE_DIR = r"C:\cf_training\temp\ai_clips"
-EXPORTS_CACHE_DIR = r"C:\cf_training\exports"
-JOBS_SCRATCH_ROOT = r"C:\cf_training\jobs"
-ACTIVE_RENDER_LOCK_FILE = r"C:\cf_training\temp\active_render.lock"
+# Dynamic Render Cache & Scratch Directories resolved from backend.config.Settings
+_CFG = get_settings()
+BEAT_CACHE_DIR = _CFG.beat_cache_dir
+AI_CLIPS_CACHE_DIR = _CFG.ai_clips_dir
+EXPORTS_CACHE_DIR = _CFG.exports_dir
+JOBS_SCRATCH_ROOT = _CFG.jobs_scratch_dir
+ACTIVE_RENDER_LOCK_FILE = _CFG.active_render_lock_file
 MAX_TEMP_CACHE_MB = 300.0
 
 for _d in (BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR, JOBS_SCRATCH_ROOT):
@@ -63,9 +66,9 @@ SFX_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "a
 
 def get_job_scratch_dir(job_id: int | str) -> str:
     """
-    Returns the job working directory on C:\\cf_training\\jobs\\<job_id>
-    so intermediate beat clips, raw sentence MP3s, and stitched_temp.mp4 never touch the 8 GB D: drive.
-    Automatically migrates any legacy D:\\CONTENT-FACTORY\\jobs\\<job_id> directory if present.
+    Returns the job working directory inside the configured external scratch root
+    so intermediate beat clips, raw sentence MP3s, and stitched_temp.mp4 stay off the app partition.
+    Automatically migrates any legacy local jobs/<job_id> directory if present.
     """
     target_dir = os.path.join(JOBS_SCRATCH_ROOT, str(job_id))
     legacy_dir = os.path.abspath(os.path.join("jobs", str(job_id)))
@@ -85,8 +88,8 @@ def get_job_scratch_dir(job_id: int | str) -> str:
 
 def to_public_job_url(local_path: str, job_id: int | str) -> str:
     """
-    Maps a physical file inside `C:\\cf_training\\jobs\\<job_id>\\...` to its browser-accessible
-    static URL (`jobs/<job_id>/...`) so `<img src="/jobs/..." />` never 404s on `C:/cf_training/...`.
+    Maps a physical file inside the configured job scratch folder to its browser-accessible
+    static URL (`jobs/<job_id>/...`) so `<img src="/jobs/..." />` never 404s on filesystem paths.
     """
     if not local_path:
         return ""
@@ -186,8 +189,7 @@ def get_optimal_h264_encoder_args() -> List[str]:
 
 def enforce_lru_cache_cap(max_mb: float = MAX_TEMP_CACHE_MB) -> Dict[str, Any]:
     """
-    Enforces a hard 500 MB LRU cache ceiling across C:\\cf_training\\temp\\beat_cache,
-    C:\\cf_training\\temp\\ai_clips, C:\\cf_training\\exports, and local temp/.
+    Enforces a hard LRU cache ceiling across configured beat_cache, ai_clips, exports, and local temp/.
     Evicts oldest files first whenever total size exceeds `max_mb`.
     """
     cache_dirs = [BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR, os.path.abspath("temp")]

@@ -1,22 +1,17 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { 
-  Sparkles, 
+  Clapperboard,
   X, 
   Send, 
   Upload, 
   Film, 
   Sliders, 
-  Cpu, 
-  Cloud, 
   Zap, 
   Loader2, 
   CheckCircle2, 
-  AlertCircle, 
-  RefreshCw, 
   RotateCcw,
   ChevronDown, 
   ChevronUp, 
-  Volume2, 
   Layers, 
   FileText,
   Play,
@@ -25,7 +20,7 @@ import {
   Link as LinkIcon,
   Brain
 } from 'lucide-react';
-import { Button, Badge, Card } from './ui';
+import { Button } from './ui';
 import { 
   useAnalyzeVideo, 
   useDirectorChat, 
@@ -280,11 +275,11 @@ export default function DirectorChatDrawer({
       <div className="p-4 border-b border-[var(--ln-subtle)] flex items-center justify-between bg-[var(--gl)]">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
-            <Sparkles size={18} />
+            <Clapperboard size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-[var(--tx)] tracking-wide">AI Director Studio</h2>
+              <h2 className="text-sm font-bold text-[var(--tx)] tracking-wide">Director Command Studio</h2>
               {jobId && (
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
                   Job #{jobId}
@@ -366,7 +361,7 @@ export default function DirectorChatDrawer({
       </div>
 
       {/* Video Deconstruction Bar */}
-      <div className="px-4 py-2 border-b border-slate-800/60 bg-slate-900/30 flex items-center justify-between gap-2 text-xs">
+      <div className="px-4 py-2 border-b border-[var(--ln-subtle)] bg-[var(--gl)] flex items-center justify-between gap-2 text-xs">
         <input 
           type="file"
           ref={fileInputRef}
@@ -380,20 +375,20 @@ export default function DirectorChatDrawer({
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
             disabled={analyzeMutation.isPending}
-            className="!py-1 !px-2.5 text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 rounded-lg"
-            title="Upload reference video (.mp4/.mov) stored safely on C:\cf_training\temp\uploads"
+            className="!py-1 !px-2.5 text-[11px] bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border border-[var(--input-border)] flex items-center gap-1.5 rounded-lg"
+            title="Upload reference video (.mp4/.mov) stored safely in workspace scratch storage"
           >
-            {analyzeMutation.isPending ? <Loader2 size={12} className="animate-spin text-amber-400" /> : <Upload size={12} className="text-amber-400" />}
+            {analyzeMutation.isPending ? <Loader2 size={12} className="animate-spin text-amber-500" /> : <Upload size={12} className="text-amber-600 dark:text-amber-400" />}
             <span>Upload Video</span>
           </Button>
 
           <Button
             variant="ghost"
             onClick={() => setShowUrlInput(prev => !prev)}
-            className="!py-1 !px-2.5 text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 rounded-lg"
+            className="!py-1 !px-2.5 text-[11px] bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border border-[var(--input-border)] flex items-center gap-1.5 rounded-lg"
             title="Paste YouTube link to extract viral shorts"
           >
-            <LinkIcon size={12} className="text-red-400" />
+            <LinkIcon size={12} className="text-red-500" />
             <span>YouTube URL</span>
           </Button>
 
@@ -402,15 +397,15 @@ export default function DirectorChatDrawer({
             onClick={() => setShowLearnedRules(prev => !prev)}
             className={`!py-1 !px-2.5 text-[11px] border flex items-center gap-1.5 rounded-lg transition-colors ${
               showLearnedRules
-                ? 'bg-cyan-950/80 border-cyan-500/60 text-cyan-200'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-700 dark:text-cyan-200'
+                : 'bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border-[var(--input-border)]'
             }`}
             title="Reflexion Continuous Learning Memory (Mistakes Caught & Prevented)"
           >
-            <Brain size={12} className="text-cyan-400" />
+            <Brain size={12} className="text-cyan-600 dark:text-cyan-400" />
             <span>Learned Rules</span>
             {learnedData?.total_rules ? (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
                 {learnedData.total_rules}
               </span>
             ) : null}
@@ -424,7 +419,7 @@ export default function DirectorChatDrawer({
                 ? 'bg-amber-500/20 border-amber-500/60 text-amber-700 dark:text-amber-300'
                 : 'bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border-[var(--input-border)]'
             }`}
-            title="5-House 2,000,000 Master Brain Quota Architecture"
+            title="5-House Knowledge Quota Architecture"
           >
             <Layers size={12} className="text-amber-500" />
             <span>Brain Quota</span>
@@ -440,10 +435,10 @@ export default function DirectorChatDrawer({
               variant="ghost"
               onClick={handleDeconstructCurrentJob}
               disabled={analyzeMutation.isPending}
-              className="!py-1 !px-2.5 text-[11px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 rounded-lg"
+              className="!py-1 !px-2.5 text-[11px] bg-[var(--gl2)] hover:bg-[var(--gl)] text-[var(--tx)] border border-[var(--input-border)] flex items-center gap-1.5 rounded-lg"
               title="Deconstruct the current active job's video pacing and speech telemetry"
             >
-              <Film size={12} className="text-blue-400" />
+              <Film size={12} className="text-blue-600 dark:text-blue-400" />
               <span>Deconstruct Job</span>
             </Button>
           )}
@@ -495,10 +490,11 @@ export default function DirectorChatDrawer({
 
         {videoContext && (
           <button
+            type="button"
             onClick={() => setShowTranscript(prev => !prev)}
-            className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 shrink-0 px-2 py-1 rounded bg-slate-800/40 border border-slate-700/50"
+            className="text-[11px] text-[var(--mu)] hover:text-[var(--tx)] flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg bg-[var(--gl2)] border border-[var(--input-border)] cursor-pointer"
           >
-            <FileText size={11} className="text-emerald-400" />
+            <FileText size={11} className="text-emerald-600 dark:text-emerald-400" />
             <span>Telemetry</span>
             {showTranscript ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
@@ -507,13 +503,16 @@ export default function DirectorChatDrawer({
 
       {/* YouTube URL Quick Clipper Bar */}
       {showUrlInput && (
-        <div className="px-4 py-2 bg-slate-900/60 border-b border-slate-800/80 flex items-center gap-2 text-xs animate-in fade-in">
+        <div className="px-4 py-2 bg-[var(--gl)] border-b border-[var(--ln-subtle)] flex items-center gap-2 text-xs animate-in fade-in">
           <input
             type="url"
             value={ytUrl}
             onChange={(e) => setYtUrl(e.target.value)}
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder="Paste YouTube URL: https://youtube.com/watch?v=..."
-            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-red-500 font-mono"
+            className="glass-input flex-1 px-2.5 py-1.5 text-xs font-mono"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && ytUrl.trim()) {
                 e.preventDefault();
@@ -533,7 +532,7 @@ export default function DirectorChatDrawer({
               }
             }}
             disabled={!ytUrl.trim() || chatMutation.isPending}
-            className="!py-1.5 !px-3 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center gap-1 font-semibold"
+            className="!py-1.5 !px-3 text-xs bg-red-600 hover:bg-red-500 text-white preserve-white rounded-lg flex items-center gap-1 font-semibold"
           >
             <Scissors size={12} />
             <span>Extract Shorts</span>
@@ -543,29 +542,29 @@ export default function DirectorChatDrawer({
 
       {/* Video Telemetry Dropdown */}
       {videoContext && showTranscript && (
-        <div className="p-3 bg-slate-900/90 border-b border-slate-800 text-xs space-y-2 animate-in fade-in">
+        <div className="p-3 bg-[var(--gl)] border-b border-[var(--ln-subtle)] text-xs space-y-2 animate-in fade-in">
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-              <span className="block text-[10px] text-slate-400 uppercase">Pacing</span>
-              <span className="text-xs font-bold text-amber-400">{videoContext.pacing?.cuts_per_minute || 0} cuts/m</span>
+            <div className="p-2 rounded-lg glass-subcard">
+              <span className="block text-[10px] text-[var(--mu)] uppercase">Pacing</span>
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{videoContext.pacing?.cuts_per_minute || 0} cuts/m</span>
             </div>
-            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-              <span className="block text-[10px] text-slate-400 uppercase">Avg Cut</span>
-              <span className="text-xs font-bold text-blue-400">{videoContext.pacing?.avg_cut_interval || 0}s</span>
+            <div className="p-2 rounded-lg glass-subcard">
+              <span className="block text-[10px] text-[var(--mu)] uppercase">Avg Cut</span>
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{videoContext.pacing?.avg_cut_interval || 0}s</span>
             </div>
-            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-              <span className="block text-[10px] text-slate-400 uppercase">Speech</span>
-              <span className="text-xs font-bold text-emerald-400">{videoContext.audio?.words_per_minute || 0} WPM</span>
+            <div className="p-2 rounded-lg glass-subcard">
+              <span className="block text-[10px] text-[var(--mu)] uppercase">Speech</span>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{videoContext.audio?.words_per_minute || 0} WPM</span>
             </div>
-            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-              <span className="block text-[10px] text-slate-400 uppercase">Dead Air</span>
-              <span className="text-xs font-bold text-red-400">{videoContext.audio?.total_silence_seconds || 0}s</span>
+            <div className="p-2 rounded-lg glass-subcard">
+              <span className="block text-[10px] text-[var(--mu)] uppercase">Dead Air</span>
+              <span className="text-xs font-bold text-red-600 dark:text-red-400">{videoContext.audio?.total_silence_seconds || 0}s</span>
             </div>
           </div>
 
           {videoContext.full_text && (
-            <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 max-h-24 overflow-y-auto text-[11px] text-slate-300 leading-relaxed font-mono">
-              <span className="text-slate-500 font-bold block mb-1">TRANSCRIPTION:</span>
+            <div className="scroll-panel-stable p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--ln-subtle)] max-h-24 text-[11px] text-[var(--tx)] leading-relaxed font-mono">
+              <span className="text-[var(--mu)] font-bold block mb-1">TRANSCRIPTION:</span>
               "{videoContext.full_text}"
             </div>
           )}
@@ -574,7 +573,7 @@ export default function DirectorChatDrawer({
 
       {/* Status banner */}
       {statusMsg && (
-        <div className="px-4 py-2 bg-blue-950/60 border-b border-blue-900/50 text-blue-300 text-xs flex items-center gap-2">
+        <div className="px-4 py-2 bg-blue-500/15 border-b border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs flex items-center gap-2" role="status">
           <Loader2 size={13} className="animate-spin shrink-0" />
           <span>{statusMsg}</span>
         </div>
@@ -582,13 +581,13 @@ export default function DirectorChatDrawer({
 
       {/* Learned Rules Panel (Reflexion RL) */}
       {showLearnedRules && (
-        <div className="p-3 bg-cyan-950/20 border-b border-cyan-900/40 text-xs space-y-2 animate-in fade-in max-h-60 overflow-y-auto">
-          <div className="flex items-center justify-between pb-1 border-b border-cyan-900/30">
-            <div className="flex items-center gap-1.5 text-cyan-300 font-semibold text-[11px]">
-              <Brain size={13} className="text-cyan-400" />
+        <div className="scroll-panel-stable p-3 bg-[var(--gl)] border-b border-[var(--ln-subtle)] text-xs space-y-2 animate-in fade-in max-h-60">
+          <div className="flex items-center justify-between pb-1 border-b border-[var(--ln-subtle)]">
+            <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-300 font-semibold text-[11px]">
+              <Brain size={13} className="text-cyan-600 dark:text-cyan-400" />
               <span>Reflexion Memory: Active Learned Guardrails</span>
             </div>
-            <span className="text-[10px] text-cyan-400/70 font-mono">
+            <span className="text-[10px] text-[var(--mu)] font-mono">
               {learnedData?.total_rules || 0} active rules
             </span>
           </div>
@@ -596,18 +595,18 @@ export default function DirectorChatDrawer({
           {learnedData?.rules && learnedData.rules.length > 0 ? (
             <div className="space-y-1.5 pt-0.5">
               {learnedData.rules.map((rule, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-slate-900/90 border border-cyan-900/30 text-[11px]">
+                <div key={idx} className="p-2 rounded-lg glass-subcard text-[11px]">
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-cyan-950 border border-cyan-500/40 text-cyan-300">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-cyan-500/15 border border-cyan-500/35 text-cyan-700 dark:text-cyan-300">
                       #{rule.category}
                     </span>
-                    <span className="text-[10px] text-amber-400 font-mono font-medium">
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-medium">
                       Caught {rule.occurrences}x
                     </span>
                   </div>
-                  <p className="text-slate-200 leading-snug">{rule.lesson}</p>
+                  <p className="text-[var(--tx)] leading-snug">{rule.lesson}</p>
                   {rule.context_topic && (
-                    <p className="text-[10px] text-slate-500 mt-1 italic">
+                    <p className="text-[10px] text-[var(--mu)] mt-1 italic">
                       Topic context: {rule.context_topic}
                     </p>
                   )}
@@ -615,7 +614,7 @@ export default function DirectorChatDrawer({
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-[11px] italic py-1">
+            <p className="text-[var(--mu)] text-[11px] italic py-1">
               No mistakes logged yet. Every user timeline edit or auto-critic catch is recorded and injected into future scripts.
             </p>
           )}
@@ -686,9 +685,9 @@ export default function DirectorChatDrawer({
 
       {/* 5-Genre Re-Cut Action Bar */}
       {jobId && (
-        <div className="px-4 py-2 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between gap-1.5 text-xs">
-          <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
-            <Film size={12} className="text-amber-400" />
+        <div className="px-4 py-2 border-b border-[var(--ln-subtle)] bg-[var(--gl)] flex items-center justify-between gap-1.5 text-xs">
+          <span className="text-[11px] font-semibold text-[var(--mu)] flex items-center gap-1 shrink-0">
+            <Film size={12} className="text-amber-500" />
             <span>Re-Cut Genre:</span>
           </span>
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
@@ -704,7 +703,7 @@ export default function DirectorChatDrawer({
                 type="button"
                 onClick={() => handleRecutGenre(g.id)}
                 disabled={isRecutting || recutMutation.isPending}
-                className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 text-slate-300 hover:text-white text-[10px] font-medium transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                className="px-2.5 py-0.5 rounded-md bg-[var(--gl2)] border border-[var(--input-border)] hover:border-amber-500/60 text-[var(--tx)] text-[10px] font-semibold transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
                 title={`Re-cut Job #${jobId} with ${g.label} editing physics`}
               >
                 <span>{g.label}</span>
@@ -715,7 +714,7 @@ export default function DirectorChatDrawer({
       )}
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="scroll-panel-stable flex-1 p-4 space-y-4">
         {messages.map((m) => {
           const isUser = m.role === 'user';
           return (
@@ -729,7 +728,7 @@ export default function DirectorChatDrawer({
               >
                 {!isUser && (
                   <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[var(--ln-subtle)] text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                    <Sparkles size={11} />
+                    <Clapperboard size={11} />
                     <span>Creative Director</span>
                   </div>
                 )}
@@ -895,8 +894,8 @@ export default function DirectorChatDrawer({
         })}
 
         {chatMutation.isPending && (
-          <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-900/60 p-3 rounded-2xl border border-slate-800 w-fit">
-            <Loader2 size={14} className="animate-spin text-amber-400" />
+          <div className="flex items-start gap-2 text-xs text-[var(--mu)] glass-subcard p-3 rounded-2xl w-fit">
+            <Loader2 size={14} className="animate-spin text-amber-500" />
             <span>Director is analyzing timeline, re-rendering frames, and mixing audio...</span>
           </div>
         )}
