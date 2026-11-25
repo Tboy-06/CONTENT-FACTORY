@@ -13,6 +13,7 @@ import {
   CheckCircle2, 
   AlertCircle, 
   RefreshCw, 
+  RotateCcw,
   ChevronDown, 
   ChevronUp, 
   Volume2, 
@@ -31,6 +32,8 @@ import {
   useLearnedRules,
   useHouseQuotas,
   useRecutGenre,
+  useManifestHistory,
+  useRollbackManifest,
   VideoContext, 
   DirectorChatResponse 
 } from '../api/client';
@@ -81,6 +84,10 @@ export default function DirectorChatDrawer({
   const { data: learnedData } = useLearnedRules();
   const { data: houseQuotasData } = useHouseQuotas();
   const recutMutation = useRecutGenre();
+  const { data: manifestHistoryData } = useManifestHistory(jobId);
+  const rollbackMutation = useRollbackManifest();
+  const historyVersions = manifestHistoryData?.versions || [];
+  const latestUndoVersion = historyVersions.length > 0 ? historyVersions[historyVersions.length - 1] : null;
 
   const handleRecutGenre = async (targetGenre: string) => {
     if (!jobId || isRecutting) return;
@@ -438,6 +445,50 @@ export default function DirectorChatDrawer({
             >
               <Film size={12} className="text-blue-400" />
               <span>Deconstruct Job</span>
+            </Button>
+          )}
+
+          {jobId && latestUndoVersion && (
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                if (!jobId || rollbackMutation.isPending) return;
+                setStatusMsg(`Rolling back Job #${jobId} to v${latestUndoVersion.version}...`);
+                try {
+                  const res = await rollbackMutation.mutateAsync({
+                    jobId,
+                    version: latestUndoVersion.version,
+                    reRender: true,
+                  });
+                  if (res?.video_url && onVideoUpdated) {
+                    onVideoUpdated(res.video_url);
+                  }
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `undo-${Date.now()}`,
+                      role: 'director',
+                      content: `Reverted timeline to snapshot v${latestUndoVersion.version} (${latestUndoVersion.action_label}).`,
+                      videoUrl: res?.video_url,
+                      timestamp: new Date(),
+                    },
+                  ]);
+                } catch (err: any) {
+                  setStatusMsg(`Rollback error: ${err?.message || 'failed'}`);
+                } finally {
+                  setTimeout(() => setStatusMsg(null), 2500);
+                }
+              }}
+              disabled={rollbackMutation.isPending}
+              className="!py-1 !px-2.5 text-[11px] bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/40 flex items-center gap-1.5 rounded-lg"
+              title={`Undo last Director edit -> snapshot v${latestUndoVersion.version}`}
+            >
+              {rollbackMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin text-amber-500" />
+              ) : (
+                <RotateCcw size={12} className="text-amber-500" />
+              )}
+              <span>Undo (v{latestUndoVersion.version})</span>
             </Button>
           )}
         </div>

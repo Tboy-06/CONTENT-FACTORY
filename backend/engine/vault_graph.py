@@ -21,6 +21,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 VAULT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "director_vault"))
+HARVEST_VAULT_CACHE_DIR = r"C:\cf_training\director_vault_cache"
 HOUSES_DIR = os.path.join(VAULT_DIR, "houses")
 DATASET_FILE = r"C:\cf_training\dataset.jsonl"
 STATE_FILE = r"C:\cf_training\harvest_state.json"
@@ -287,10 +288,12 @@ def get_vault_corpus() -> BM25Corpus:
 
     corpus = BM25Corpus()
 
-    # 1. Ingest Markdown notes from director_vault/
-    if os.path.exists(VAULT_DIR):
+    # 1. Ingest Markdown notes from curated director_vault/ and harvested C:\cf_training\director_vault_cache/
+    for root_vault in (VAULT_DIR, HARVEST_VAULT_CACHE_DIR):
+        if not os.path.exists(root_vault):
+            continue
         for sub in ["houses", "hooks", "techniques", "styles", "sfx", "mistakes"]:
-            sub_dir = os.path.join(VAULT_DIR, sub)
+            sub_dir = os.path.join(root_vault, sub)
             if not os.path.exists(sub_dir):
                 continue
             for f in os.listdir(sub_dir):

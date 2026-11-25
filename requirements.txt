@@ -27,5 +27,7 @@ aiosqlite==0.20.*
 aiofiles==24.*
 Pillow>=10.0
 gradio_client>=1.0.0
+kokoro-onnx>=0.4.0
+soundfile>=0.12.1
 apscheduler>=3.10.0
 python-telegram-bot>=21.0

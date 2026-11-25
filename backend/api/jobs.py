@@ -422,6 +422,110 @@ async def clear_cache():
         "message": f"Freed {round(freed_bytes / (1024 * 1024), 2)} MB across beat_cache, ai_clips, exports, and temp storage."
     }
 
+async def _rebuild_job_via_pass2(
+    job_id: int,
+    scenes: List[Dict[str, Any]],
+    action_label: str = "qc1_edit",
+    modified_indices: Optional[List[int]] = None,
+    regenerate_voice: Optional[str] = None,
+) -> tuple[str, List[Dict[str, Any]], float]:
+    """
+    Unified 2-Pass Documentary Re-Assembler for all `QC1` edits (`AI Video`, `Re-roll`, `Upload Clip`, `Regenerate Audio`).
+    - Saves a `manifest_history/v{N}.json` undo snapshot first
+    - Preserves `.ASS` active-word captions, sidechain-ducked BGM, timed SFX, and SHA-256 cached beats
+    - Writes master output to `output/instant_{job_id}.mp4`
+    """
+    import json
+    from backend.api.copilot import get_or_create_manifest, save_manifest_history_snapshot
+    from backend.engine.assembler import (
+        assemble_final_pass2,
+        get_job_scratch_dir,
+        render_beat_pass1,
+        resolve_local_media_path,
+        to_public_job_url,
+    )
+    from backend.engine.audio_subs import synthesize_documentary_audio_and_subs
+
+    job_dir = get_job_scratch_dir(job_id)
+    manifest = await get_or_create_manifest(job_id)
+    save_manifest_history_snapshot(job_id, manifest, action_label=action_label)
+
+    # Flatten beats from manifest
+    beats = manifest.get("beats") or []
+    if not beats and manifest.get("sentences"):
+        for s in manifest["sentences"]:
+            beats.extend(s.get("beats", []))
+        manifest["beats"] = beats
+
+    # Sync scene edits onto beats
+    mod_set = set(modified_indices or [])
+    for idx, sc in enumerate(scenes):
+        if idx >= len(beats):
+            break
+        b = beats[idx]
+        if sc.get("prompt"):
+            b["prompt"] = sc["prompt"]
+            b["visual_prompt"] = sc["prompt"]
+        if sc.get("duration"):
+            b["duration"] = max(0.65, float(sc["duration"]))
+
+        vid_cand = resolve_local_media_path(sc.get("video_path"))
+        img_cand = resolve_local_media_path(sc.get("image_path"))
+        if idx in mod_set:
+            b["_force_reroll"] = True
+            if vid_cand and os.path.exists(vid_cand):
+                b["custom_media"] = vid_cand
+                b["type"] = "ai_video" if sc.get("visual_type") == "ai_video" else "broll_video"
+            elif sc.get("_uploaded_image") and img_cand and os.path.exists(img_cand):
+                b["custom_media"] = img_cand
+                b["type"] = "treated_image"
+            else:
+                b.pop("custom_media", None)
+                if b.get("type") in ("motion_card", "declassified_scan", "evidence_board", "map_flyover"):
+                    b["type"] = "treated_image"
+                old_plate = os.path.join(job_dir, "beats", f"{b['id']}_plate.png")
+                if os.path.exists(old_plate):
+                    try:
+                        os.remove(old_plate)
+                    except OSError:
+                        pass
+
+    # Optional full voice + active-word .ASS subtitle regeneration when narration or voice changes
+    if regenerate_voice:
+        sentences = manifest.get("sentences") or []
+        if sentences:
+            # Map non-empty scene text edits back onto sentences (each sentence owns ~2 beats)
+            non_empty_texts = [str(sc.get("text") or "").strip() for sc in scenes if str(sc.get("text") or "").strip()]
+            if len(non_empty_texts) == len(sentences):
+                for s_i, s_obj in enumerate(sentences):
+                    s_obj["text"] = non_empty_texts[s_i]
+        manifest = await synthesize_documentary_audio_and_subs(manifest, job_dir, voice=regenerate_voice)
+
+    # Re-render modified beats via Pass 1 (untouched beats hit SHA-256 cache in ~0ms)
+    for idx in sorted(mod_set):
+        if 0 <= idx < len(beats):
+            b = beats[idx]
+            rendered_p = await render_beat_pass1(b, job_dir)
+            plate_p = os.path.join(job_dir, "beats", f"{b['id']}_plate.png")
+            if os.path.exists(plate_p):
+                scenes[idx]["image_path"] = to_public_job_url(plate_p, job_id)
+            elif rendered_p and os.path.exists(rendered_p):
+                scenes[idx]["image_path"] = to_public_job_url(rendered_p, job_id)
+
+    manifest_path = os.path.join(job_dir, "manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as mf:
+        json.dump(manifest, mf, indent=2)
+
+    final_video_path = f"output/instant_{job_id}.mp4"
+    ok = await assemble_final_pass2(manifest, job_dir, final_video_path)
+    if not ok or not os.path.exists(final_video_path):
+        raise HTTPException(status_code=500, detail="Failed to assemble documentary master video")
+
+    ts = int(datetime.utcnow().timestamp())
+    total_dur = float(manifest.get("actual_duration") or manifest.get("total_duration") or 45.0)
+    return f"/output/instant_{job_id}.mp4?t={ts}", scenes, total_dur
+
+
 @router.get('/video-gen/status')
 async def get_video_gen_engine_status():
     from backend.engine.video_gen import get_video_gen_status
@@ -432,11 +536,11 @@ async def get_video_gen_engine_status():
 async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVideoRequest):
     """
     Generates a real moving AI video clip for a specific beat using Hugging Face ZeroGPU
-    (`Lightricks/LTX-2.5` with native audio or `Wan 2.2 14B I2V`) at $0 cost.
-    If daily 5-min ZeroGPU quota is exhausted, returns `status="quota_exhausted"` with a
-    `flow_handoff` payload so the Studio UI can offer 1-click Google Flow copy + clip upload.
+    (`Lightricks/LTX-2.5` with native audio or `Wan 2.2 14B I2V`) at $0 cost, and re-stitches
+    via Pass 2 while preserving `.ASS` captions, BGM ducking, and SFX.
     """
     from backend.engine import video_gen
+    from backend.engine.assembler import resolve_local_media_path
 
     job = await repository.get_job(job_id)
     if not job:
@@ -450,7 +554,6 @@ async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVid
     meta = dict(video_asset.metadata_json)
     scenes = meta.get("scenes", [])
 
-    # Resolve beat_id as integer index ("0", "1", "beat_01")
     scene_index = 0
     if beat_id.isdigit():
         scene_index = int(beat_id)
@@ -466,11 +569,8 @@ async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVid
 
     sc = scenes[scene_index]
     prompt = (req.prompt or sc.get("prompt") or sc.get("text") or job.niche).strip()
-    ref_img = req.image_path or sc.get("image_path") or (job.config or {}).get("anchor_image_path")
-    if ref_img and ref_img.startswith("/"):
-        ref_img = ref_img.lstrip("/")
-    if ref_img and not os.path.exists(ref_img):
-        ref_img = None
+    raw_ref = req.image_path or sc.get("image_path") or (job.config or {}).get("anchor_image_path")
+    ref_img = resolve_local_media_path(raw_ref)
 
     dur = float(req.duration or sc.get("duration") or 4.0)
     gen_res = await asyncio.to_thread(
@@ -491,7 +591,6 @@ async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVid
             "flow_handoff": gen_res.get("flow_handoff"),
         }
 
-    # Normalize generated clip into scene and re-stitch video
     clip_path = gen_res["video_path"]
     sc["video_path"] = clip_path
     sc["visual_type"] = "ai_video"
@@ -499,21 +598,21 @@ async def generate_beat_ai_video(job_id: int, beat_id: str, req: GenerateBeatVid
     sc["ai_engine"] = gen_res.get("engine_used")
     sc["has_native_audio"] = gen_res.get("has_native_audio", False)
 
-    ts = int(datetime.utcnow().timestamp())
-    audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)
-    audio_path = audio_asset.path if audio_asset else f"output/audio_{job_id}.mp3"
-    final_video_path = f"output/video_{job_id}_9x16.mp4"
-
-    await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
+    video_url, scenes, _ = await _rebuild_job_via_pass2(
+        job_id=job_id,
+        scenes=scenes,
+        action_label=f"ai_video_beat_{scene_index + 1}",
+        modified_indices=[scene_index],
+    )
     meta["scenes"] = scenes
-    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    meta["video_url"] = video_url
     await repository.update_asset_metadata(video_asset.id, meta)
 
     return {
         "status": "success",
         "scene_index": scene_index,
-        "scene": sc,
-        "video_url": meta["video_url"],
+        "scene": scenes[scene_index],
+        "video_url": video_url,
         "video_gen": gen_res,
     }
 
@@ -527,28 +626,14 @@ async def reroll_visual(job_id: int, req: RerollVisualRequest):
     video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
     if not video_asset or not video_asset.metadata_json:
         raise HTTPException(status_code=400, detail="Video asset not found for job")
-    
+
     meta = dict(video_asset.metadata_json)
     scenes = meta.get("scenes", [])
     if req.scene_index < 0 or req.scene_index >= len(scenes):
         raise HTTPException(status_code=400, detail="Invalid scene index")
-    
+
     sc = scenes[req.scene_index]
     style = req.style_preset or meta.get("style_preset", "Dark Documentary")
-    ts = int(datetime.utcnow().timestamp())
-    img_path = f"temp/instant_{job_id}_{req.scene_index}_{ts}.jpg"
-    
-    render_scene_card(
-        output_path=img_path,
-        topic=meta.get("title", job.niche),
-        badge=sc.get("badge", "SCENE"),
-        scene_index=req.scene_index,
-        total_scenes=len(scenes),
-        text=sc.get("text", ""),
-        style_preset=style,
-        image_prompt=req.custom_prompt or sc.get("prompt")
-    )
-    sc["image_path"] = img_path
     if req.custom_prompt:
         try:
             from backend.engine.reflexion import log_editorial_mistake
@@ -564,21 +649,21 @@ async def reroll_visual(job_id: int, req: RerollVisualRequest):
         except Exception:
             pass
         sc["prompt"] = req.custom_prompt
-    
-    audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)
-    audio_path = audio_asset.path if audio_asset else f"output/audio_{job_id}.mp3"
-    final_video_path = f"output/video_{job_id}_9x16.mp4"
-    
-    success = await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to assemble updated video")
-        
+    sc.pop("video_path", None)
+
+    video_url, scenes, _ = await _rebuild_job_via_pass2(
+        job_id=job_id,
+        scenes=scenes,
+        action_label=f"reroll_beat_{req.scene_index + 1}",
+        modified_indices=[req.scene_index],
+    )
     meta["scenes"] = scenes
     meta["style_preset"] = style
-    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    meta["video_url"] = video_url
     await repository.update_asset_metadata(video_asset.id, meta)
-    
-    return {"status": "success", "scene": sc, "video_url": meta["video_url"]}
+
+    return {"status": "success", "scene": scenes[req.scene_index], "video_url": video_url}
+
 
 @router.post('/{job_id}/scenes/{scene_index}/upload-custom-media')
 async def upload_custom_scene_media(
@@ -586,6 +671,9 @@ async def upload_custom_scene_media(
     scene_index: int,
     file: UploadFile = File(...)
 ):
+    from backend.engine.assembler import AI_CLIPS_CACHE_DIR
+    from backend.engine.visual_cortex import normalize_custom_media
+
     job = await repository.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -593,72 +681,72 @@ async def upload_custom_scene_media(
     video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
     if not video_asset or not video_asset.metadata_json:
         raise HTTPException(status_code=400, detail="Video asset not found for job")
-    
+
     meta = dict(video_asset.metadata_json)
     scenes = meta.get("scenes", [])
     if scene_index < 0 or scene_index >= len(scenes):
         raise HTTPException(status_code=400, detail="Invalid scene index")
-    
+
     sc = scenes[scene_index]
     aspect_ratio = meta.get("aspect_ratio", "9:16")
     duration = float(sc.get("duration", 4.0))
     ts = int(datetime.utcnow().timestamp())
-    
+
+    os.makedirs(AI_CLIPS_CACHE_DIR, exist_ok=True)
     raw_ext = os.path.splitext(file.filename or "")[1].lower() or ".mp4"
-    raw_path = f"temp/custom_upload_{job_id}_{scene_index}_{ts}_raw{raw_ext}"
-    os.makedirs("temp", exist_ok=True)
-    
+    raw_path = os.path.join(AI_CLIPS_CACHE_DIR, f"custom_upload_{job_id}_{scene_index}_{ts}_raw{raw_ext}")
+
     content = await file.read()
     with open(raw_path, "wb") as f:
         f.write(content)
-        
-    from backend.engine.visual_cortex import normalize_custom_media
+
     is_video = raw_ext in (".mp4", ".mov", ".mkv", ".webm", ".avi")
-    normalized_path = f"temp/custom_{job_id}_{scene_index}_{ts}{'.mp4' if is_video else '.jpg'}"
+    normalized_path = os.path.join(AI_CLIPS_CACHE_DIR, f"custom_{job_id}_{scene_index}_{ts}{'.mp4' if is_video else '.jpg'}")
     norm_result = normalize_custom_media(
         input_file=raw_path,
         output_path=normalized_path,
         aspect_ratio=aspect_ratio,
         duration=duration
     )
-    
+
     if os.path.exists(raw_path):
         try:
             os.remove(raw_path)
         except OSError:
             pass
-            
+
     if not norm_result.get("success"):
         raise HTTPException(status_code=500, detail="Failed to normalize uploaded media")
-        
+
     if norm_result["type"] == "video":
         sc["video_path"] = normalized_path
-        sc["image_path"] = None
         sc["visual_type"] = "broll_video"
+        sc.pop("_uploaded_image", None)
     else:
         sc["image_path"] = normalized_path
         sc["video_path"] = None
         sc["visual_type"] = "treated_image"
-        
-    audio_asset = next((a for a in assets if (a.asset_type or "").upper() == "AUDIO"), None)
-    audio_path = audio_asset.path if audio_asset else f"output/audio_{job_id}.mp3"
-    final_video_path = f"output/video_{job_id}_9x16.mp4"
-    
-    success = await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to assemble updated video")
-        
+        sc["_uploaded_image"] = True
+
+    video_url, scenes, _ = await _rebuild_job_via_pass2(
+        job_id=job_id,
+        scenes=scenes,
+        action_label=f"upload_media_beat_{scene_index + 1}",
+        modified_indices=[scene_index],
+    )
+    scenes[scene_index].pop("_uploaded_image", None)
     meta["scenes"] = scenes
-    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    meta["video_url"] = video_url
     await repository.update_asset_metadata(video_asset.id, meta)
-    
+
     return {
         "status": "success",
-        "scene": sc,
-        "video_url": meta["video_url"],
+        "scene": scenes[scene_index],
+        "video_url": video_url,
         "media_type": norm_result["type"],
-        "message": f"Custom {norm_result['type']} applied to Scene #{scene_index + 1}"
+        "message": f"Custom {norm_result['type']} applied to Scene #{scene_index + 1} with captions & BGM preserved"
     }
+
 
 @router.post('/{job_id}/regenerate-audio')
 async def regenerate_audio(job_id: int, req: RegenerateAudioRequest):
@@ -669,47 +757,26 @@ async def regenerate_audio(job_id: int, req: RegenerateAudioRequest):
     video_asset = next((a for a in assets if (a.asset_type or "").upper() == "VIDEO"), None)
     if not video_asset or not video_asset.metadata_json:
         raise HTTPException(status_code=400, detail="Video asset not found")
-    
+
     meta = dict(video_asset.metadata_json)
     scenes = req.scenes or meta.get("scenes", [])
-    voice = req.voice or meta.get("voice", "en-US-AriaNeural")
-    
-    full_narration = " ".join(s["text"] for s in scenes)
-    audio_path = f"output/audio_{job_id}.mp3"
-    
-    import edge_tts
-    communicate = edge_tts.Communicate(full_narration, voice)
-    with open(audio_path, "wb") as f:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                f.write(chunk["data"])
-                
-    total_audio_duration = get_audio_duration(audio_path)
-    total_words = sum(len(s["text"].split()) for s in scenes) or 1
-    current_time = 0.0
-    for s in scenes:
-        w_count = len(s["text"].split())
-        calc_dur = round((w_count / total_words) * total_audio_duration, 2)
-        calc_dur = max(calc_dur, 2.5)
-        s["start"] = round(current_time, 2)
-        s["duration"] = calc_dur
-        current_time += calc_dur
-        
-    scale_factor = total_audio_duration / max(current_time, 1.0)
-    for s in scenes:
-        s["duration"] = round(s["duration"] * scale_factor, 2)
-        
-    final_video_path = f"output/video_{job_id}_9x16.mp4"
-    await render_video_from_scenes(job_id, scenes, audio_path, final_video_path)
-    
-    ts = int(datetime.utcnow().timestamp())
+    voice = req.voice or meta.get("voice", "en-US-AndrewMultilingualNeural")
+
+    video_url, scenes, total_audio_duration = await _rebuild_job_via_pass2(
+        job_id=job_id,
+        scenes=scenes,
+        action_label="regenerate_audio_and_pacing",
+        modified_indices=list(range(len(scenes))),
+        regenerate_voice=voice,
+    )
+
     meta["scenes"] = scenes
     meta["duration"] = total_audio_duration
     meta["voice"] = voice
-    meta["video_url"] = f"/output/video_{job_id}_9x16.mp4?t={ts}"
+    meta["video_url"] = video_url
     await repository.update_asset_metadata(video_asset.id, meta)
-    
-    return {"status": "success", "duration": total_audio_duration, "video_url": meta["video_url"], "scenes": scenes}
+
+    return {"status": "success", "duration": total_audio_duration, "video_url": video_url, "scenes": scenes}
 
 @router.post('/{job_id}/publish')
 async def publish_job(job_id: int, req: PublishRequest):

@@ -45,7 +45,7 @@ AI_CLIPS_CACHE_DIR = r"C:\cf_training\temp\ai_clips"
 EXPORTS_CACHE_DIR = r"C:\cf_training\exports"
 JOBS_SCRATCH_ROOT = r"C:\cf_training\jobs"
 ACTIVE_RENDER_LOCK_FILE = r"C:\cf_training\temp\active_render.lock"
-MAX_TEMP_CACHE_MB = 500.0
+MAX_TEMP_CACHE_MB = 300.0
 
 for _d in (BEAT_CACHE_DIR, AI_CLIPS_CACHE_DIR, EXPORTS_CACHE_DIR, JOBS_SCRATCH_ROOT):
     os.makedirs(_d, exist_ok=True)
@@ -81,6 +81,43 @@ def get_job_scratch_dir(job_id: int | str) -> str:
             logger.debug(f"[assembler] Legacy job dir migration note: {e}")
     os.makedirs(target_dir, exist_ok=True)
     return target_dir
+
+
+def to_public_job_url(local_path: str, job_id: int | str) -> str:
+    """
+    Maps a physical file inside `C:\\cf_training\\jobs\\<job_id>\\...` to its browser-accessible
+    static URL (`jobs/<job_id>/...`) so `<img src="/jobs/..." />` never 404s on `C:/cf_training/...`.
+    """
+    if not local_path:
+        return ""
+    norm = local_path.replace("\\", "/")
+    job_root_norm = get_job_scratch_dir(job_id).replace("\\", "/").rstrip("/")
+    if norm.lower().startswith(job_root_norm.lower() + "/"):
+        rel = norm[len(job_root_norm) + 1 :]
+        return f"jobs/{job_id}/{rel}"
+    return norm.lstrip("/")
+
+
+def resolve_local_media_path(url_or_path: Optional[str]) -> Optional[str]:
+    """
+    Resolves either a public static route (`/jobs/7/beats/b01_plate.png`, `/temp/...`, `/output/...`)
+    or a physical filesystem path back to an existing local file on disk.
+    """
+    if not url_or_path or not isinstance(url_or_path, str):
+        return None
+    raw = url_or_path.split("?", 1)[0].strip()
+    if os.path.exists(raw):
+        return os.path.abspath(raw)
+    trimmed = raw.lstrip("/\\").replace("/", os.sep)
+    if os.path.exists(trimmed):
+        return os.path.abspath(trimmed)
+    norm_fwd = raw.lstrip("/").replace("\\", "/")
+    if norm_fwd.startswith("jobs/"):
+        rel_after_jobs = norm_fwd[len("jobs/") :].replace("/", os.sep)
+        cand_c = os.path.join(JOBS_SCRATCH_ROOT, rel_after_jobs)
+        if os.path.exists(cand_c):
+            return cand_c
+    return None
 
 
 def set_active_render_lock(job_id: int | str, stage: str = "FFMPEG") -> None:
@@ -461,29 +498,81 @@ async def render_beat_pass1(
                 apply_color_grade(plate_path, plate_path, grade=beat.get("grade", "hard_bw"))
 
     else:
-        # Tier 1: Free AI Photorealistic Plates via Pollinations Flux ($0 spend, 0 API keys)
+        # "Real Camera Footage First" Hybrid Visual Priority:
+        # 1. Try real 1080p moving Pexels camera B-Roll first (uses active PEXELS_API_KEY, 0% AI look)
+        # 2. Try real Wikimedia Commons archival photograph -> 2-Layer Depth Parallax clip
+        # 3. Fallback to Pollinations Flux / OpenRouter :free image plate
         grade = beat.get("grade", "hard_bw")
         prompt = beat.get("visual_prompt") or beat.get("prompt", "declassified intelligence document archival photo")
+        broll_query = beat.get("broll_query") or prompt
+        broll_dest = os.path.join(beats_dir, f"{beat_id}_broll.mp4")
 
-        fetched = await asyncio.to_thread(
-            free_visuals.resolve_image_plate,
-            prompt=prompt,
-            output_path=raw_img_path,
-            width=fetch_w,
-            height=fetch_h
-        )
-        if fetched and os.path.exists(raw_img_path):
-            apply_color_grade(raw_img_path, plate_path, grade=grade)
-        else:
-            render_motion_card(
-                template="quote_box",
-                headline="ARCHIVAL EVIDENCE",
-                highlight=prompt[:45],
-                output_path=plate_path,
-                width=out_w,
-                height=out_h
+        fetched_real_broll = False
+        if beat.get("prefer_broll", True):
+            fetched_real_broll = await asyncio.to_thread(
+                visual_cortex.fetch_pexels_broll,
+                query=broll_query,
+                output_path=broll_dest,
+                aspect_ratio=aspect_ratio,
+                duration=duration,
             )
-            apply_color_grade(plate_path, plate_path, grade=grade)
+
+        if fetched_real_broll and os.path.exists(broll_dest):
+            is_video_input = True
+            video_source_path = broll_dest
+            # Save a preview frame for QC1 storyboard thumbnails if missing
+            if not os.path.exists(plate_path):
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", broll_dest, "-frames:v", "1", "-q:v", "3", plate_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=10,
+                    creationflags=_NO_WIN,
+                )
+        else:
+            wiki_ok = await asyncio.to_thread(
+                visual_cortex.fetch_wikimedia_commons_image,
+                query=prompt,
+                output_path=raw_img_path,
+                width=fetch_w,
+                height=fetch_h,
+            )
+            if wiki_ok and os.path.exists(raw_img_path):
+                apply_color_grade(raw_img_path, plate_path, grade=grade, target_width=out_w, target_height=out_h)
+                parallax_mp4 = os.path.join(beats_dir, f"{beat_id}_parallax.mp4")
+                parallax_ok = await asyncio.to_thread(
+                    depth_cortex.render_2layer_depth_parallax,
+                    input_image_path=plate_path,
+                    output_video_path=parallax_mp4,
+                    duration=duration,
+                    fps=fps,
+                    width=out_w,
+                    height=out_h,
+                )
+                if parallax_ok and os.path.exists(parallax_mp4):
+                    is_video_input = True
+                    video_source_path = parallax_mp4
+            else:
+                fetched = await asyncio.to_thread(
+                    free_visuals.resolve_image_plate,
+                    prompt=prompt,
+                    output_path=raw_img_path,
+                    width=fetch_w,
+                    height=fetch_h,
+                    prefer_archival=False,
+                )
+                if fetched and os.path.exists(raw_img_path):
+                    apply_color_grade(raw_img_path, plate_path, grade=grade, target_width=out_w, target_height=out_h)
+                else:
+                    render_motion_card(
+                        template="quote_box",
+                        headline="ARCHIVAL EVIDENCE",
+                        highlight=prompt[:45],
+                        output_path=plate_path,
+                        width=out_w,
+                        height=out_h,
+                    )
+                    apply_color_grade(plate_path, plate_path, grade=grade)
 
     # 2. Build Video / Image Filter & Transition SFX
     total_frames = max(30, int(duration * fps))
@@ -828,6 +917,17 @@ async def assemble_final_pass2(
         pass
 
     set_active_render_lock(manifest.get("job_id", os.path.basename(job_dir)), stage="FFMPEG_PASS2")
+    try:
+        return await _assemble_final_pass2_inner(manifest, job_dir, output_mp4)
+    finally:
+        clear_active_render_lock()
+
+
+async def _assemble_final_pass2_inner(
+    manifest: Dict[str, Any],
+    job_dir: str,
+    output_mp4: str
+) -> bool:
     beats_dir = os.path.join(job_dir, "beats")
     os.makedirs(beats_dir, exist_ok=True)
     concat_txt = os.path.join(beats_dir, "concat_beats.txt")
@@ -989,7 +1089,6 @@ async def assemble_final_pass2(
                 logger.info(f"[assembler] Pass 2 fallback merge complete: {output_mp4}")
                 success = True
 
-    clear_active_render_lock()
     if success:
         # Automatic disk cleanup: purge intermediate stitched video, beat clips, raw sentence MP3s, and enforce 500 MB LRU cap
         cleanup_job_temp_files(job_dir)

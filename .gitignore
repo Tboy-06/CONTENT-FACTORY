@@ -34,3 +34,11 @@ frontend_old/
 
 # Local AI / Ollama Binaries and Model Blobs
 ollama/
+
+# Scraped Harvester Vault Notes (stored in C:\cf_training\director_vault_cache)
+director_vault/hooks/
+director_vault/techniques/
+director_vault/styles/
+director_vault/sfx/
+director_vault/scripts/
+director_vault/mistakes/

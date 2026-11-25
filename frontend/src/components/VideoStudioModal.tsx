@@ -212,7 +212,8 @@ export default function VideoStudioModal({ isOpen, onClose, job }: VideoStudioMo
 
             <div className="space-y-2.5 max-h-[58vh] overflow-y-auto pr-1">
               {localScenes.map((sc: any, idx: number) => {
-                const thumbUrl = sc.image_path ? `/${sc.image_path.replace(/\\/g, '/')}` : null;
+                const cleanImg = sc.image_path ? sc.image_path.replace(/\\/g, '/').replace(/^\/+/, '') : '';
+                const thumbUrl = cleanImg ? `/${cleanImg}` : null;
                 return (
                   <div key={idx} className="p-3 bg-slate-900/70 border border-slate-800 hover:border-slate-700 rounded-xl space-y-2 transition-all">
                     <div className="flex items-center justify-between gap-3">

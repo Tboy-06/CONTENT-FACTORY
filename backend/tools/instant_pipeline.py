@@ -47,31 +47,31 @@ def archive_older_job_outputs(
     if not os.path.exists(output_dir):
         return {"archived_count": 0, "freed_mb": 0.0}
 
-    pattern = re.compile(r"^instant_(\d+)\.mp4$")
-    job_files = []
+    pattern = re.compile(r"^(?:instant|video|audio|thumb|opencut)_(\d+)(?:[_.].*)?\.(?:mp4|mp3|jpg|png|json)$")
+    job_buckets: Dict[int, List[str]] = {}
     for f in os.listdir(output_dir):
         m = pattern.match(f)
         if m:
             j_id = int(m.group(1))
-            job_files.append((j_id, f))
+            job_buckets.setdefault(j_id, []).append(f)
 
-    job_files.sort(key=lambda x: x[0], reverse=True)
+    sorted_job_ids = sorted(job_buckets.keys(), reverse=True)
     freed_bytes = 0
     archived_count = 0
 
-    if len(job_files) > max_kept:
-        to_archive = job_files[max_kept:]
-        for j_id, fname in to_archive:
-            src_path = os.path.join(output_dir, fname)
-            dest_path = os.path.join(archive_dir, fname)
-            try:
-                sz = os.path.getsize(src_path)
-                shutil.move(src_path, dest_path)
-                freed_bytes += sz
-                archived_count += 1
-                logger.info(f"[archive] Moved older job video {fname} ({sz/(1024*1024):.1f} MB) -> {archive_dir}")
-            except Exception as err:
-                logger.warning(f"[archive] Error archiving {fname}: {err}")
+    if len(sorted_job_ids) > max_kept:
+        for j_id in sorted_job_ids[max_kept:]:
+            for fname in job_buckets[j_id]:
+                src_path = os.path.join(output_dir, fname)
+                dest_path = os.path.join(archive_dir, fname)
+                try:
+                    sz = os.path.getsize(src_path)
+                    shutil.move(src_path, dest_path)
+                    freed_bytes += sz
+                    archived_count += 1
+                    logger.info(f"[archive] Moved older job artifact {fname} ({sz/(1024*1024):.1f} MB) -> {archive_dir}")
+                except Exception as err:
+                    logger.warning(f"[archive] Error archiving {fname}: {err}")
 
     return {
         "archived_count": archived_count,

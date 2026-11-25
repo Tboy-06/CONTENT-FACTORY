@@ -65,6 +65,16 @@ def upgrade_legacy_edge_voice(voice: str) -> str:
     return v
 
 
+_KOKORO_INSTANCE: Any = None
+_KOKORO_MODEL_LOADED_PATH: Optional[str] = None
+
+
+def is_explicit_kokoro_voice(voice: Optional[str]) -> bool:
+    """Returns True when the caller explicitly requested an offline Kokoro voice ID (e.g. am_michael)."""
+    v = (voice or "").strip().lower()
+    return v in KOKORO_VOICE_MAP or v.startswith(("am_", "af_", "bm_", "bf_"))
+
+
 def resolve_kokoro_model_paths() -> Optional[Tuple[str, str]]:
     """
     Resolves local Kokoro-82M ONNX weights in C:\\models\\kokoro\\, preferring the compact
@@ -86,10 +96,10 @@ def try_kokoro_local_tts(
     voice: str = "am_michael"
 ) -> Optional[Tuple[float, List[Dict[str, Any]]]]:
     """
-    Tier 1 Local CPU Offline Narrator (`kokoro-onnx` with weights on `C:\\models\\kokoro\\`).
-    Returns `(duration, word_boundaries)` when `kokoro_onnx` and local weights are present,
-    or `None` to fall back cleanly to OpenRouter `:free` / Edge-TTS Multilingual.
+    Local CPU Offline Narrator (`kokoro-onnx` with singleton cached session on `C:\\models\\kokoro\\`).
+    Used when offline, when Edge-TTS is unreachable, or when `am_*` voice is explicitly chosen.
     """
+    global _KOKORO_INSTANCE, _KOKORO_MODEL_LOADED_PATH
     resolved = resolve_kokoro_model_paths()
     if not resolved:
         return None
@@ -99,9 +109,12 @@ def try_kokoro_local_tts(
         import soundfile as sf
         from kokoro_onnx import Kokoro
 
-        kokoro_voice = voice if voice in KOKORO_VOICE_MAP else "am_michael"
-        kokoro = Kokoro(onnx_path, voices_path)
-        samples, sample_rate = kokoro.create(text, voice=kokoro_voice, speed=1.0, lang="en-us")
+        if _KOKORO_INSTANCE is None or _KOKORO_MODEL_LOADED_PATH != onnx_path:
+            _KOKORO_INSTANCE = Kokoro(onnx_path, voices_path)
+            _KOKORO_MODEL_LOADED_PATH = onnx_path
+
+        kokoro_voice = voice if is_explicit_kokoro_voice(voice) else "am_michael"
+        samples, sample_rate = _KOKORO_INSTANCE.create(text, voice=kokoro_voice, speed=1.0, lang="en-us")
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         wav_tmp = output_path + ".kokoro.wav"
         sf.write(wav_tmp, samples, sample_rate)
@@ -319,22 +332,26 @@ async def generate_sentence_audio(
 ) -> Tuple[float, List[Dict[str, Any]]]:
     """
     3-Tier $0 Sentence Audio Synthesizer:
-    1. Kokoro-82M (`kokoro-onnx` on `C:\\models\\kokoro\\`) when local weights exist
-    2. Upgraded Multilingual Edge-TTS (`en-US-AndrewMultilingualNeural`, `AvaMultilingualNeural`, `BrianMultilingualNeural`)
-    3. OpenRouter `:free` TTS (`fish-audio/s2.1-pro-free:free`) + deterministic FFmpeg fallback
-    Appends natural micro-pause (`pause_after=0.25s`, or `0.45s` before climax) so sentences breathe.
+    1. Online Default: Upgraded Multilingual Edge-TTS (`en-US-AndrewMultilingualNeural`, `AvaMultilingualNeural`,
+       `BrianMultilingualNeural`) with exact millisecond `WordBoundary` events for active-word captions.
+    2. Offline / Explicit Local Narrator: Cached `Kokoro-82M` int8 (`C:\\models\\kokoro\\`) when offline,
+       when `am_*` voice is explicitly chosen, or if Edge-TTS fails.
+    3. OpenRouter `:free` TTS + deterministic FFmpeg fallback.
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     words: List[Dict[str, Any]] = []
+    force_offline = os.environ.get("FORCE_OFFLINE", "false").lower() == "true"
 
-    # Tier 1: Local CPU Kokoro-82M check
-    kokoro_res = await asyncio.to_thread(try_kokoro_local_tts, text, output_path, voice)
-    if kokoro_res is not None:
-        _, words = kokoro_res
-        for w in words:
-            w["start"] = round(w["start"] + pause_before, 3)
-    else:
-        # Tier 2: Upgraded Edge-TTS Multilingual Neural Voice
+    # Only run Kokoro first if the user explicitly picked an offline Kokoro voice OR force_offline is enabled
+    if force_offline or is_explicit_kokoro_voice(voice):
+        kokoro_res = await asyncio.to_thread(try_kokoro_local_tts, text, output_path, voice)
+        if kokoro_res is not None:
+            _, words = kokoro_res
+            for w in words:
+                w["start"] = round(w["start"] + pause_before, 3)
+
+    if not words and not (os.path.exists(output_path) and os.path.getsize(output_path) > 500):
+        # Tier 1 Online: Upgraded Edge-TTS Multilingual Neural Voice (exact WordBoundary sync)
         effective_voice = upgrade_legacy_edge_voice(voice)
 
         async def _stream_edge_tts():
@@ -367,29 +384,35 @@ async def generate_sentence_audio(
         try:
             await asyncio.wait_for(_stream_edge_tts(), timeout=30.0)
         except Exception as e:
-            logger.warning(f"[audio_subs] Edge-TTS error ({e}), trying OpenRouter :free TTS / offline fallback.")
-            or_ok = await asyncio.to_thread(try_openrouter_free_tts, text, output_path)
-            clean_words = text.split()
-            if or_ok and os.path.exists(output_path):
-                est_duration = get_exact_audio_duration(output_path)
+            logger.warning(f"[audio_subs] Edge-TTS error ({e}), trying offline Kokoro-82M -> OpenRouter :free TTS.")
+            kokoro_fb = await asyncio.to_thread(try_kokoro_local_tts, text, output_path, "am_michael")
+            if kokoro_fb is not None:
+                _, words = kokoro_fb
+                for w in words:
+                    w["start"] = round(w["start"] + pause_before, 3)
             else:
-                est_duration = max(2.0, len(clean_words) * 0.38)
-                cmd = [
-                    "ffmpeg", "-y",
-                    "-f", "lavfi",
-                    "-i", f"aevalsrc=0:d={est_duration}",
-                    "-c:a", "libmp3lame",
-                    "-b:a", "128k",
-                    "-ar", "44100",
-                    output_path
-                ]
-                await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            words = []
-            cur_t = pause_before
-            step = est_duration / max(1, len(clean_words))
-            for w in clean_words:
-                words.append({"text": w, "start": cur_t, "duration": step * 0.9})
-                cur_t += step
+                or_ok = await asyncio.to_thread(try_openrouter_free_tts, text, output_path)
+                clean_words = text.split()
+                if or_ok and os.path.exists(output_path):
+                    est_duration = get_exact_audio_duration(output_path)
+                else:
+                    est_duration = max(2.0, len(clean_words) * 0.38)
+                    cmd = [
+                        "ffmpeg", "-y",
+                        "-f", "lavfi",
+                        "-i", f"aevalsrc=0:d={est_duration}",
+                        "-c:a", "libmp3lame",
+                        "-b:a", "128k",
+                        "-ar", "44100",
+                        output_path
+                    ]
+                    await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                words = []
+                cur_t = pause_before
+                step = est_duration / max(1, len(clean_words))
+                for w in clean_words:
+                    words.append({"text": w, "start": cur_t, "duration": step * 0.9})
+                    cur_t += step
 
     # Apply pre-sentence comedic/dramatic dead-air delay and post-sentence micro-pause pad
     af_filters = []

@@ -624,3 +624,44 @@ export function useGenerateBeatVideo() {
     },
   });
 }
+
+export interface ManifestHistoryEntry {
+  version: number;
+  action_label: string;
+  timestamp?: number;
+}
+
+export function useManifestHistory(jobId?: string | number) {
+  return useQuery({
+    queryKey: ['manifest-history', String(jobId ?? '')],
+    queryFn: async (): Promise<{ status: string; job_id: number; versions: ManifestHistoryEntry[] }> => {
+      if (!jobId) return { status: 'success', job_id: 0, versions: [] };
+      return await api.get(`/api/copilot/jobs/${jobId}/history`);
+    },
+    enabled: Boolean(jobId),
+    refetchInterval: 8000,
+  });
+}
+
+export function useRollbackManifest() {
+  return useMutation({
+    mutationFn: async ({
+      jobId,
+      version,
+      reRender = true,
+    }: {
+      jobId: string | number;
+      version?: number;
+      reRender?: boolean;
+    }) => {
+      return await api.post(`/api/copilot/jobs/${jobId}/rollback`, {
+        version,
+        re_render: reRender,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['manifest-history', String(variables.jobId)] });
+    },
+  });
+}

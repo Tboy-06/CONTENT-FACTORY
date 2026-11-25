@@ -49,6 +49,11 @@ def _get_fonts(is_vertical: bool = False) -> Dict[str, ImageFont.ImageFont]:
     f_badge_size = int(48 * scale)
     f_sub_size = int(40 * scale)
 
+    fonts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+    anton_ttf = os.path.join(fonts_dir, "Anton-Regular.ttf")
+    mont_ttf = os.path.join(fonts_dir, "Montserrat-Black.ttf")
+    inter_ttf = os.path.join(fonts_dir, "Inter-Bold.ttf")
+
     def _load(names: List[str], size: int) -> ImageFont.ImageFont:
         for name in names:
             try:
@@ -58,11 +63,11 @@ def _get_fonts(is_vertical: bool = False) -> Dict[str, ImageFont.ImageFont]:
         return ImageFont.load_default()
 
     return {
-        "impact": _load(["impact.ttf", "arialbd.ttf", "Impact", "Arial Bold"], f_impact_size),
-        "title": _load(["arialbd.ttf", "impact.ttf", "Arial Bold"], f_title_size),
-        "badge": _load(["arialbd.ttf", "impact.ttf", "Arial Bold"], f_badge_size),
-        "mono": _load(["courbd.ttf", "arialbd.ttf", "Courier Bold"], f_sub_size),
-        "small": _load(["arialbd.ttf", "Arial Bold"], int(30 * scale)),
+        "impact": _load([anton_ttf, mont_ttf, "impact.ttf", "arialbd.ttf"], f_impact_size),
+        "title": _load([mont_ttf, anton_ttf, "arialbd.ttf", "impact.ttf"], f_title_size),
+        "badge": _load([mont_ttf, inter_ttf, "arialbd.ttf"], f_badge_size),
+        "mono": _load([inter_ttf, "courbd.ttf", "arialbd.ttf"], f_sub_size),
+        "small": _load([inter_ttf, mont_ttf, "arialbd.ttf"], int(30 * scale)),
     }
 
 
@@ -152,6 +157,7 @@ def _load_hero_plate(job_id: int, job_dir: Optional[str] = None) -> Optional[Ima
     cand_dirs = []
     if job_dir and os.path.exists(job_dir):
         cand_dirs.append(job_dir)
+    cand_dirs.append(os.path.join(r"C:\cf_training\jobs", str(job_id)))
     cand_dirs.append(os.path.join("jobs", str(job_id)))
 
     for d in cand_dirs:

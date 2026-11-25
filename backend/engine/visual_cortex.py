@@ -168,13 +168,33 @@ def fetch_pexels_broll(
     Normalizes resolution to 1080x1920 or 1920x1080 and trims to target duration.
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    key = api_key or os.environ.get("PEXELS_API_KEY", "").strip()
+    cfg_key = ""
+    try:
+        from backend.config import get_settings
+        cfg_key = getattr(get_settings(), "pexels_api_key", "") or ""
+    except Exception:
+        cfg_key = ""
+    key = (api_key or os.environ.get("PEXELS_API_KEY", "") or cfg_key).strip()
     if not key:
         return False
 
+    # Strip synthetic AI camera prompt fluff so Pexels Video Search matches real HD camera clips
+    stop_words = {
+        "cinematic", "35mm", "anamorphic", "film", "shot", "volumetric", "chiaroscuro",
+        "shadows", "kodak", "grain", "photorealistic", "documentary", "archival", "still",
+        "slow", "dramatic", "push", "in", "zoom", "8k", "uhd", "lighting", "optical", "texture",
+        "photojournalism", "high", "contrast", "dark", "moody", "plate", "scene", "beat", "photograph"
+    }
+    raw_words = [
+        re.sub(r"[^a-zA-Z0-9]", "", w)
+        for w in query.split()
+        if len(w) > 2 and re.sub(r"[^a-zA-Z0-9]", "", w).lower() not in stop_words
+    ]
+    effective_query = " ".join(raw_words[:4]).strip() or query.strip()[:50] or "cinematic city night"
+
     orientation = "portrait" if aspect_ratio == "9:16" else "landscape"
-    clean_query = urllib.parse.quote(query.strip()[:60] or "cinematic documentary")
-    search_url = f"https://api.pexels.com/videos/search?query={clean_query}&per_page=5&orientation={orientation}"
+    clean_query = urllib.parse.quote(effective_query)
+    search_url = f"https://api.pexels.com/videos/search?query={clean_query}&per_page=6&orientation={orientation}"
 
     req = urllib.request.Request(
         search_url,
@@ -220,6 +240,7 @@ def fetch_pexels_broll(
                 "-vf", vf_filter,
                 "-c:v", "libx264",
                 "-preset", "veryfast",
+                "-threads", "4",
                 "-pix_fmt", "yuv420p",
                 "-an",
                 output_path

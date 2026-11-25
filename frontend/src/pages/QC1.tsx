@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   RotateCw,
+  RotateCcw,
   Mic,
   Check,
   Trash2,
@@ -33,7 +34,9 @@ import {
   useUploadCustomSceneMedia,
   useJobThumbnails,
   useRegenerateThumbnails,
-  useGenerateBeatVideo
+  useGenerateBeatVideo,
+  useManifestHistory,
+  useRollbackManifest
 } from '../api/client';
 import { Button, Badge, Card } from '../components/ui';
 import SafeZoneOverlay from '../components/SafeZoneOverlay';
@@ -70,6 +73,10 @@ export default function QC1() {
   const { data: thumbnailData, isLoading: isThumbLoading } = useJobThumbnails(id);
   const regenerateThumbsMutation = useRegenerateThumbnails();
   const generateBeatVideoMutation = useGenerateBeatVideo();
+  const { data: manifestHistoryData } = useManifestHistory(id);
+  const rollbackMutation = useRollbackManifest();
+  const historyVersions = manifestHistoryData?.versions || [];
+  const latestUndoVersion = historyVersions.length > 0 ? historyVersions[historyVersions.length - 1] : null;
   const [anchorUploadMsg, setAnchorUploadMsg] = useState<string | null>(null);
   const [activeUploadingIndex, setActiveUploadingIndex] = useState<number | null>(null);
   const [activeAiVideoIndex, setActiveAiVideoIndex] = useState<number | null>(null);
@@ -647,7 +654,38 @@ export default function QC1() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {latestUndoVersion && (
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    if (!id || rollbackMutation.isPending) return;
+                    try {
+                      const res = await rollbackMutation.mutateAsync({
+                        jobId: id,
+                        version: latestUndoVersion.version,
+                        reRender: true,
+                      });
+                      if (res?.video_url) {
+                        setOverrideVideoUrl(res.video_url);
+                      }
+                    } catch (err) {
+                      console.error('Rollback failed:', err);
+                    }
+                  }}
+                  disabled={rollbackMutation.isPending}
+                  title={`Revert timeline to snapshot v${latestUndoVersion.version} (${latestUndoVersion.action_label})`}
+                >
+                  {rollbackMutation.isPending ? (
+                    <Loader2 size={13} className="animate-spin text-amber-500" />
+                  ) : (
+                    <RotateCcw size={13} className="text-amber-600 dark:text-amber-400" />
+                  )}
+                  <span>
+                    {rollbackMutation.isPending ? 'Reverting...' : `Undo Edit (v${latestUndoVersion.version})`}
+                  </span>
+                </Button>
+              )}
               <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-xl border border-[var(--input-border)] bg-[var(--gl2)] hover:border-blue-500 text-[var(--tx)] transition-colors">
                 {uploadAnchorMutation.isPending ? (
                   <Loader2 size={13} className="animate-spin text-blue-500" />
@@ -712,7 +750,8 @@ export default function QC1() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {displayScenes.map((sc: any, idx: number) => {
               const isRerolling = activeRerollingIndex === idx;
-              const thumbUrl = sc.image_path ? `/${sc.image_path.replace(/\\/g, '/')}` : null;
+              const cleanImgPath = sc.image_path ? sc.image_path.replace(/\\/g, '/').replace(/^\/+/, '') : '';
+              const thumbUrl = cleanImgPath ? `/${cleanImgPath}` : null;
 
               return (
                 <Card key={idx} className="!p-4 flex flex-col justify-between space-y-3">

@@ -34,6 +34,7 @@ from backend.engine.assembler import (
     cleanup_job_temp_files,
     render_beat_pass1,
     get_job_scratch_dir,
+    to_public_job_url,
 )
 from backend.engine.brain import ask_brain
 from backend.engine.reflexion import log_editorial_mistake, get_learned_mistakes
@@ -780,11 +781,11 @@ async def execute_modify_timeline_beats(job_id: int, beat_mods: List[Dict[str, A
         for b_idx in modified_indices:
             if b_idx < len(scenes):
                 b = beats[b_idx]
-                plate_png = os.path.join(job_dir, "beats", f"{b['id']}_plate.png").replace("\\", "/")
+                raw_plate = os.path.join(job_dir, "beats", f"{b['id']}_plate.png")
                 scenes[b_idx]["badge"] = b.get("headline") or f"BEAT {b_idx + 1}"
                 scenes[b_idx]["title"] = b.get("headline") or f"Beat {b_idx + 1}"
                 scenes[b_idx]["prompt"] = b.get("prompt") or b.get("highlight", "")
-                scenes[b_idx]["image_path"] = plate_png
+                scenes[b_idx]["image_path"] = to_public_job_url(raw_plate, job_id)
         meta["scenes"] = scenes
         ts = int(time.time())
         meta["video_url"] = f"/output/instant_{job_id}.mp4?t={ts}"
