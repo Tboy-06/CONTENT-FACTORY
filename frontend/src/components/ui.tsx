@@ -44,7 +44,9 @@ export function useDialogLightDismissFallback(
 }
 
 export const Card = ({ children, className = '', ...props }: any) => (
-  <div className={`glass-panel p-5 ${className}`} {...props}>{children}</div>
+  <div className={`glass-panel p-5 ${className}`} {...props}>
+    {children}
+  </div>
 );
 
 export const Button = ({ children, variant = 'primary', className = '', ...props }: any) => {
@@ -76,38 +78,175 @@ export const Badge = ({ children, variant = 'info', className = '' }: any) => {
   };
   const chosen = variants[variant] || variants.info;
   return (
-    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1 ${chosen} ${className}`}>
+    <span
+      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1 ${chosen} ${className}`}
+    >
       {children}
     </span>
   );
 };
 
-export const Tabs = ({ tabs, activeTab, onChange }: any) => (
-  <div className="flex items-center gap-2 mb-5 flex-wrap">
-    {tabs.map((t: string) => {
-      const isActive = activeTab === t;
-      return (
-        <button
-          key={t}
-          onClick={() => onChange(t)}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
-            isActive
-              ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/25'
-              : 'bg-[var(--gl)] text-[var(--mu)] border-[var(--ln)] hover:bg-[var(--gl2)] hover:text-[var(--tx)]'
-          }`}
-        >
-          {t}
-        </button>
-      );
-    })}
-  </div>
-);
+export const Tabs = ({
+  tabs,
+  activeTab,
+  onChange,
+  ariaLabel = 'Studio view tabs',
+  counts = {}
+}: {
+  tabs: string[];
+  activeTab: string;
+  onChange: (next: string) => void;
+  ariaLabel?: string;
+  counts?: Record<string, number>;
+}) => {
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-export const Progress = ({ value }: { value: number }) => (
-  <div className="h-1.5 bg-[var(--ln-subtle)] rounded-md overflow-hidden mt-1.5">
-    <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${value}%` }} />
-  </div>
-);
+  const activateAt = (idx: number) => {
+    const wrapped = (idx + tabs.length) % tabs.length;
+    const nextTab = tabs[wrapped];
+    onChange(nextTab);
+    const btn = tabRefs.current[wrapped];
+    if (btn) {
+      btn.focus();
+      btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  };
+
+  return (
+    <div
+      role="tablist"
+      aria-label={ariaLabel}
+      {...({ focusgroup: 'tablist nomemory' } as any)}
+      className="studio-tablist mb-4 p-1 rounded-2xl bg-[var(--gl)] border border-[var(--ln)] w-fit max-w-full"
+    >
+      {tabs.map((t: string, idx: number) => {
+        const isActive = activeTab === t;
+        const count = counts[t];
+        return (
+          <button
+            key={t}
+            ref={(el) => {
+              tabRefs.current[idx] = el;
+            }}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            tabIndex={isActive ? 0 : -1}
+            {...(isActive ? ({ focusgroupstart: '' } as any) : {})}
+            onClick={(e) => {
+              onChange(t);
+              e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                activateAt(idx + 1);
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                activateAt(idx - 1);
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                activateAt(0);
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                activateAt(tabs.length - 1);
+              }
+            }}
+            className={`studio-tab px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-2 ${
+              isActive
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-[var(--mu)] hover:text-[var(--tx)] hover:bg-[var(--gl2)]'
+            }`}
+          >
+            <span>{t}</span>
+            {count !== undefined && (
+              <span
+                className={`font-mono text-[10px] px-1.5 py-0.2 rounded-md ${
+                  isActive
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[var(--input-bg)] text-[var(--mu)] border border-[var(--ln-subtle)]'
+                }`}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+export const Progress = ({
+  value,
+  max = 100,
+  label = 'Progress',
+  color,
+  className = ''
+}: {
+  value: number;
+  max?: number;
+  label?: string;
+  color?: string;
+  className?: string;
+}) => {
+  const clamped = Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
+  return (
+    <progress
+      value={clamped}
+      max={max}
+      aria-label={label}
+      style={color ? ({ '--progress-fill': color } as React.CSSProperties) : undefined}
+      className={`studio-progress ${className}`}
+    />
+  );
+};
+
+export const ProgressRing = ({
+  value,
+  max = 100,
+  size = 54,
+  thickness = 5.5,
+  color = 'var(--ac)',
+  label,
+  centerText
+}: {
+  value: number;
+  max?: number;
+  size?: number;
+  thickness?: number;
+  color?: string;
+  label: string;
+  centerText?: string;
+}) => {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  const display = centerText ?? `${Math.round(pct)}%`;
+  return (
+    <div className="progress-ring-wrapper" style={{ width: size, height: size }}>
+      <progress
+        value={Math.round(pct)}
+        max={100}
+        aria-label={label}
+        aria-valuetext={display}
+        style={
+          {
+            '--ring-value': pct,
+            '--ring-size': `${size}px`,
+            '--ring-thickness': `${thickness}px`,
+            '--ring-fill': color
+          } as React.CSSProperties
+        }
+        className="progress-ring"
+      />
+      <div
+        className="progress-ring-content text-[11px] font-extrabold font-mono text-[var(--tx)]"
+        aria-hidden="true"
+      >
+        {display}
+      </div>
+    </div>
+  );
+};
 
 export const EmptyState = ({ title, description }: any) => (
   <div className="p-8 text-center glass-panel">

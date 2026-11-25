@@ -15,10 +15,11 @@ import {
   Moon,
   RotateCcw,
   SlidersHorizontal,
+  Target,
   X
 } from 'lucide-react';
 import { useConnectivity } from './lib/connectivity';
-import { useCacheStatus, useClearCache } from './api/client';
+import { useCacheStatus, useClearCache, useJobs } from './api/client';
 import Create from './pages/Create';
 import Copilot from './pages/Copilot';
 import Pipeline from './pages/Pipeline';
@@ -32,14 +33,19 @@ import Terms from './pages/Terms';
 
 export type StudioTheme = 'light-glass' | 'dark-glass' | 'classic-dark';
 
-const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass, onNavigate }: any) => {
+const NavItem = ({ to, icon: Icon, label, badgeCount, isCollapsed, isLightGlass, onNavigate }: any) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  const isActive =
+    to === '/'
+      ? location.pathname === '/'
+      : location.pathname === to || location.pathname.startsWith(`${to}/`);
   return (
     <button
       type="button"
+      aria-current={isActive ? 'page' : undefined}
       onClick={() => onNavigate(to)}
-      className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
+      title={isCollapsed ? label : undefined}
+      className={`w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
         isActive
           ? isLightGlass
             ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
@@ -49,8 +55,23 @@ const NavItem = ({ to, icon: Icon, label, isCollapsed, isLightGlass, onNavigate 
           : 'text-slate-400 hover:text-white hover:bg-slate-900/60 border-transparent'
       }`}
     >
-      <Icon size={17} className="shrink-0" />
-      {!isCollapsed && <span className="whitespace-nowrap font-medium text-xs">{label}</span>}
+      <span className="flex items-center gap-3 min-w-0">
+        <Icon size={17} className="shrink-0" />
+        {!isCollapsed && <span className="whitespace-nowrap font-medium text-xs truncate">{label}</span>}
+      </span>
+      {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
+        <span
+          className={`font-mono text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 ${
+            isActive
+              ? 'bg-white/20 text-white'
+              : isLightGlass
+              ? 'bg-slate-200/90 text-slate-700'
+              : 'bg-slate-800 text-slate-300 border border-slate-700'
+          }`}
+        >
+          {badgeCount}
+        </span>
+      )}
     </button>
   );
 };
@@ -87,7 +108,38 @@ export default function App() {
   const location = useLocation();
   const isOnline = useConnectivity();
   const { data: cache } = useCacheStatus();
+  const { data: navJobs = [] } = useJobs();
   const clearCacheMutation = useClearCache();
+
+  const pipelineAlertCount = navJobs.filter(
+    (j: any) =>
+      j.current_stage === 'QC1' ||
+      j.status === 'AWAITING_APPROVAL' ||
+      j.status === 'RUNNING'
+  ).length;
+  const vaultReadyCount = navJobs.filter(
+    (j: any) =>
+      j.status === 'COMPLETED' ||
+      j.status === 'PUBLISHED' ||
+      j.current_stage === 'QC1' ||
+      j.current_stage === 'READY_TO_PUBLISH'
+  ).length;
+
+  const activeRoomName = location.pathname.startsWith('/create')
+    ? 'Production Deck'
+    : location.pathname.startsWith('/copilot')
+    ? 'Niche Scorer'
+    : location.pathname.startsWith('/pipeline')
+    ? 'Render Pipeline'
+    : location.pathname.startsWith('/qc1')
+    ? 'QC1 Studio'
+    : location.pathname.startsWith('/vault')
+    ? 'Director Vault'
+    : location.pathname.startsWith('/agents')
+    ? 'Signal Topology'
+    : location.pathname.startsWith('/settings')
+    ? 'Control Center'
+    : 'Command Center';
 
   useEffect(() => {
     syncColorSchemeMeta(theme);
@@ -182,8 +234,9 @@ export default function App() {
 
         <NavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
         <NavItem to="/create" icon={PlusCircle} label="Create Video" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
-        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
-        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/copilot" icon={Target} label="Niche Scorer" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/pipeline" icon={AlignEndHorizontal} label="Pipeline" badgeCount={pipelineAlertCount} isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
+        <NavItem to="/vault" icon={VaultIcon} label="Director Vault" badgeCount={vaultReadyCount} isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
         <NavItem to="/agents" icon={Bot} label="Agents" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
         <NavItem to="/settings" icon={SettingsIcon} label="Settings" isCollapsed={isCollapsed} isLightGlass={isLightGlass} onNavigate={transitionNavigate} />
 
@@ -243,7 +296,7 @@ export default function App() {
                   : 'bg-slate-800 text-slate-300 border-slate-700'
               }`}
             >
-              studio
+              {activeRoomName}
             </span>
           </div>
 

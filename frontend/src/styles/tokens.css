@@ -342,6 +342,157 @@ p, blockquote, li, .pretty-text {
   }
 }
 
+/* Modern Web Guidance (tabs): Single-row scrollable tablist with non-color underline indicator */
+.studio-tablist {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: inline proximity;
+  scrollbar-width: none;
+  gap: 0.5rem;
+}
+
+.studio-tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.studio-tab {
+  position: relative;
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.studio-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 10px 0 10px;
+  border-block-end: 2.5px solid currentColor;
+}
+
+/* Modern Web Guidance (progress): Native <progress> with separate -webkit- and -moz- rules */
+progress.studio-progress {
+  appearance: none;
+  border: 0 solid;
+  overflow: clip;
+  display: block;
+  inline-size: 100%;
+  block-size: 7px;
+  border-radius: 6px;
+  background: var(--ln-subtle);
+}
+
+progress.studio-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+progress.studio-progress::-webkit-progress-value {
+  background: var(--progress-fill, var(--ac));
+  border-radius: 6px;
+  transition: inline-size 0.3s ease;
+}
+
+progress.studio-progress::-moz-progress-bar {
+  background: var(--progress-fill, var(--ac));
+  border-radius: 6px;
+  transition: inline-size 0.3s ease;
+}
+
+/* Modern Web Guidance (progress-ring): Semantic <progress> ring with mask fallback & forced-colors */
+@property --ring-value {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.progress-ring-wrapper {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+progress.progress-ring {
+  --ring-size: 52px;
+  --ring-thickness: 5.5px;
+  --ring-track: var(--ln-subtle);
+  --ring-fill: var(--ac);
+  appearance: none;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-fill) calc(var(--ring-value, 0) * 1%),
+    var(--ring-track) 0
+  );
+  background-clip: border-area;
+  border: var(--ring-thickness) solid transparent;
+  background-origin: border-box;
+  transition: --ring-value 0s ease-in-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  progress.progress-ring {
+    transition-duration: 0.4s;
+  }
+}
+
+@media (forced-colors: active) {
+  progress.progress-ring {
+    forced-color-adjust: none;
+    --ring-fill: CanvasText;
+    --ring-track: Canvas;
+  }
+}
+
+progress.progress-ring::-webkit-progress-bar {
+  display: none;
+  background: none;
+}
+
+progress.progress-ring::-webkit-progress-value {
+  display: none;
+  background: none;
+}
+
+progress.progress-ring::-moz-progress-bar {
+  display: none;
+  background: none;
+}
+
+@supports not (background-clip: border-area) {
+  progress.progress-ring {
+    mask-image: radial-gradient(
+      transparent calc(50% - var(--ring-thickness)),
+      black calc(50% - var(--ring-thickness) + 0.5px)
+    );
+    -webkit-mask-image: radial-gradient(
+      transparent calc(50% - var(--ring-thickness)),
+      black calc(50% - var(--ring-thickness) + 0.5px)
+    );
+    border: 0;
+  }
+}
+
+.progress-ring-content {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Modern Web Guidance (responsive-table): Scrollable region with sticky header */
+.studio-table-region {
+  overflow: auto;
+  max-inline-size: 100%;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  container-type: inline-size;
+}
+
+.studio-table-region thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
 /* Modern Web Guidance: dialog & prevent-page-scroll-under-modal-dialog */
 dialog:modal {
   overscroll-behavior: contain;

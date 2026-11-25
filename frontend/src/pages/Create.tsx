@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Zap,
   ListPlus,
@@ -166,12 +166,27 @@ const pipelineSteps = [
 
 export default function Create() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const topicInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState(() => searchParams.get('topic') || '');
   const [topicError, setTopicError] = useState<string | null>(null);
   const [topicTouched, setTopicTouched] = useState(false);
-  const [genre, setGenre] = useState('auto');
+  const [genre, setGenre] = useState(() => {
+    const g = searchParams.get('genre');
+    return g && genres.some((item) => item.id === g) ? g : 'auto';
+  });
+
+  useEffect(() => {
+    const g = searchParams.get('genre');
+    if (g && genres.some((item) => item.id === g)) {
+      setGenre(g);
+    }
+    const t = searchParams.get('topic');
+    if (t) {
+      setTopic(t);
+    }
+  }, [searchParams]);
   const [stylePreset, setStylePreset] = useState('Dark Documentary');
   const [voice, setVoice] = useState('en-US-AndrewMultilingualNeural');
   const [aspectRatio, setAspectRatio] = useState('9:16');

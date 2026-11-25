@@ -12,7 +12,7 @@ import {
   useSpend,
   useOpenRouterCapabilities
 } from '../api/client';
-import { Button, ConfirmDialog } from '../components/ui';
+import { Button, ConfirmDialog, Progress, ProgressRing } from '../components/ui';
 import {
   Trash2,
   Search,
@@ -26,7 +26,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Cpu,
-  ShieldCheck
+  ShieldCheck,
+  Play
 } from 'lucide-react';
 import type { StudioTheme } from '../App';
 
@@ -410,40 +411,50 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
       <div className="glass-panel p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
           {/* Zone 1: Harvester Dataset (Live Dynamic Target & Checkpoints) */}
-          <div className="flex flex-col justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Harvester Dataset {targetHarvesterRecords > 0 ? `(${formatCompactCount(targetHarvesterRecords)} Target)` : ''}
-              </span>
-              {sessionDelta > 0 && (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse">
-                  +{sessionDelta} live
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col justify-between min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Harvester Dataset {targetHarvesterRecords > 0 ? `(${formatCompactCount(targetHarvesterRecords)} Target)` : ''}
                 </span>
-              )}
+                {sessionDelta > 0 && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse">
+                    +{sessionDelta} live
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
+                <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {qData ? totalHarvesterRecords.toLocaleString() : '--'}
+                </span>
+                <span className={`text-sm font-semibold tabular-nums ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  / {targetHarvesterRecords > 0 ? targetHarvesterRecords.toLocaleString() : '--'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Phase {currentMilestoneCap > 0 ? Math.max(1, Math.round(currentMilestoneCap / Math.max(1, milestoneStep))) : '--'} Checkpoint:{' '}
+                  <b>{currentMilestoneCap > 0 ? currentMilestoneCap.toLocaleString() : '--'}</b>
+                </span>
+                {(milestoneStatus === 'PAUSED_AT_100K_CHECKPOINT' || (currentMilestoneCap > 0 && totalHarvesterRecords >= currentMilestoneCap)) && (
+                  <button
+                    type="button"
+                    onClick={() => continueMilestoneMutation.mutate()}
+                    disabled={continueMilestoneMutation.isPending}
+                    className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold hover:bg-blue-500 cursor-pointer"
+                  >
+                    {continueMilestoneMutation.isPending ? 'Advancing...' : 'Continue Next Milestone'}
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
-              <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {qData ? totalHarvesterRecords.toLocaleString() : '--'}
-              </span>
-              <span className={`text-sm font-semibold tabular-nums ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                / {targetHarvesterRecords > 0 ? targetHarvesterRecords.toLocaleString() : '--'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Phase {currentMilestoneCap > 0 ? Math.max(1, Math.round(currentMilestoneCap / Math.max(1, milestoneStep))) : '--'} Checkpoint:{' '}
-                <b>{currentMilestoneCap > 0 ? currentMilestoneCap.toLocaleString() : '--'}</b>
-              </span>
-              {(milestoneStatus === 'PAUSED_AT_100K_CHECKPOINT' || (currentMilestoneCap > 0 && totalHarvesterRecords >= currentMilestoneCap)) && (
-                <button
-                  onClick={() => continueMilestoneMutation.mutate()}
-                  disabled={continueMilestoneMutation.isPending}
-                  className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold hover:bg-blue-500 cursor-pointer"
-                >
-                  {continueMilestoneMutation.isPending ? 'Advancing...' : 'Continue Next Milestone'}
-                </button>
-              )}
-            </div>
+            <ProgressRing
+              value={totalHarvesterRecords}
+              max={Math.max(1, currentMilestoneCap || 100000)}
+              size={50}
+              color="var(--ac)"
+              label="Harvester phase checkpoint progress"
+            />
           </div>
 
           {/* Zone 2: API Spend & Quota (Live from /api/jobs/spend & /api/copilot/openrouter-capabilities) */}
@@ -551,19 +562,22 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
         {/* Card 1: CRIME / CIA DOC */}
         <div
           onClick={() => setActiveFilter(activeFilter === 'crime_doc' ? 'all' : 'crime_doc')}
-          className="iridescent-card-crime rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-transform hover:-translate-y-0.5 relative overflow-hidden"
+          className={`iridescent-card-crime rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-all hover:-translate-y-0.5 relative overflow-hidden ${
+            activeFilter === 'crime_doc' ? 'ring-2 ring-cyan-300' : ''
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="px-2.5 py-0.5 rounded-lg bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider border border-white/25">
-              18-24 cuts/min · hard_bw
+              {activeFilter === 'crime_doc' ? 'Active Filter · 18-24 cpm' : '18-24 cuts/min · hard_bw'}
             </span>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate('/create');
+                navigate('/create?genre=crime_doc');
               }}
               className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:bg-emerald-400 cursor-pointer"
-              title="Create Crime / CIA Documentary"
+              title="Launch Crime / CIA Documentary in Production Deck"
             >
               <Plus size={15} />
             </button>
@@ -592,11 +606,13 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
         {/* Card 2: VIRAL EDU */}
         <div
           onClick={() => setActiveFilter(activeFilter === 'viral_edu' ? 'all' : 'viral_edu')}
-          className="iridescent-card-edu rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-transform hover:-translate-y-0.5 relative overflow-hidden"
+          className={`iridescent-card-edu rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-all hover:-translate-y-0.5 relative overflow-hidden ${
+            activeFilter === 'viral_edu' ? 'ring-2 ring-teal-200' : ''
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="px-2.5 py-0.5 rounded-lg bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider border border-white/25">
-              28-38 cuts/min · teal_split
+              {activeFilter === 'viral_edu' ? 'Active Filter · 28-38 cpm' : '28-38 cuts/min · teal_split'}
             </span>
             <span className="px-2.5 py-0.5 rounded-lg bg-black/25 text-[11px] font-bold uppercase tracking-wider">
               Explainer
@@ -618,11 +634,13 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
               {(housesMap?.HOUSE_2_SCREENWRITER_ARC?.sub_rooms?.viral_edu?.count ?? 0).toLocaleString()} records · H2
             </span>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate('/create');
+                navigate('/create?genre=viral_edu');
               }}
               className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 border border-white/40 flex items-center justify-center cursor-pointer"
+              title="Launch Viral Edu Documentary in Production Deck"
             >
               <ChevronRight size={15} />
             </button>
@@ -632,11 +650,13 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
         {/* Card 3: MOVIE CINEMA */}
         <div
           onClick={() => setActiveFilter(activeFilter === 'movie_cinema' ? 'all' : 'movie_cinema')}
-          className="iridescent-card-cinema rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-transform hover:-translate-y-0.5 relative overflow-hidden"
+          className={`iridescent-card-cinema rounded-2xl p-5 text-white flex flex-col justify-between min-h-[156px] cursor-pointer transition-all hover:-translate-y-0.5 relative overflow-hidden ${
+            activeFilter === 'movie_cinema' ? 'ring-2 ring-amber-200' : ''
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="px-2.5 py-0.5 rounded-lg bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider border border-white/25">
-              12-18 cuts/min · cinema_scope
+              {activeFilter === 'movie_cinema' ? 'Active Filter · 12-18 cpm' : '12-18 cuts/min · cinema_scope'}
             </span>
             <span className="px-2.5 py-0.5 rounded-lg bg-white/20 text-[11px] font-bold uppercase tracking-wider">
               2.35:1
@@ -658,11 +678,13 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
               {(housesMap?.HOUSE_2_SCREENWRITER_ARC?.sub_rooms?.movie_cinema?.count ?? 0).toLocaleString()} records · H2
             </span>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate('/create');
+                navigate('/create?genre=movie_cinema');
               }}
               className="w-7 h-7 rounded-lg bg-white text-slate-900 flex items-center justify-center shadow-xs hover:bg-amber-50 cursor-pointer"
+              title="Launch Movie Cinema Documentary in Production Deck"
             >
               <Plus size={15} />
             </button>
@@ -873,18 +895,63 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
           </div>
         </div>
 
-        {/* 06 | TACTILE ACTION STACK (Right 1/3) */}
+        {/* 06 | TACTILE ACTION STACK + LATEST MASTER & SCRATCH METER (Right 1/3) */}
         <div className="glass-panel p-5 flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
             <h2 className={`text-sm font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Studio Controls
+              Studio Controls &amp; Latest Cut
             </h2>
             <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               {cache?.output_count ?? 0} RENDERS
             </span>
           </div>
 
-          <div className="flex flex-col gap-2.5 my-auto">
+          {/* Latest Master Quick Screening Card */}
+          {latestExportableJob && (
+            <div
+              onClick={() => navigate(`/qc1/${latestExportableJob.id}`)}
+              className="glass-subcard p-2.5 flex items-center justify-between gap-3 cursor-pointer group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="relative w-12 h-9 rounded-lg iridescent-card-crime overflow-hidden shrink-0 flex items-center justify-center">
+                  <img
+                    src={`/output/thumb_${latestExportableJob.id}_v1_16x9.jpg`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <Play size={11} className="text-white absolute drop-shadow" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[var(--tx)] group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                    {latestExportableJob.niche}
+                  </div>
+                  <div className="text-[10px] font-mono text-[var(--mu)]">
+                    Latest #{latestExportableJob.id} · {latestExportableJob.config?.format || '9:16'}
+                  </div>
+                </div>
+              </div>
+              <ArrowRight size={14} className="text-[var(--mu)] group-hover:text-blue-500 shrink-0" />
+            </div>
+          )}
+
+          {/* Scratch LRU Usage Meter */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--mu)]">
+              <span>SCRATCH LRU CACHE</span>
+              <span>{Number(cache?.temp_mb ?? 0).toFixed(1)} / 300 MB</span>
+            </div>
+            <Progress
+              value={Number(cache?.temp_mb ?? 0)}
+              max={300}
+              label="Dashboard scratch cache meter"
+              color={Number(cache?.temp_mb ?? 0) > 240 ? 'var(--wa)' : 'var(--ac)'}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 my-auto">
             {/* Action 1: Export Publish-Ready ZIP Pack */}
             <button
               onClick={handleExportZip}
@@ -1000,18 +1067,23 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div
+            role="region"
+            aria-label="Pipeline and Reflexion audit log table"
+            tabIndex={0}
+            className="studio-table-region"
+          >
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="bg-[var(--table-head)]">
                 <tr
                   className={`border-b text-[11px] font-bold uppercase tracking-wider ${
                     isLight ? 'border-slate-300/60 text-slate-500' : 'border-slate-800 text-slate-400'
                   }`}
                 >
-                  <th className="py-2 pr-3">Subject / Event</th>
-                  <th className="py-2 px-3">Stage</th>
-                  <th className="py-2 px-3">Engine</th>
-                  <th className="py-2 pl-3 text-right">Time / Actions</th>
+                  <th scope="col" className="py-2 pr-3">Subject / Event</th>
+                  <th scope="col" className="py-2 px-3">Stage</th>
+                  <th scope="col" className="py-2 px-3">Engine</th>
+                  <th scope="col" className="py-2 pl-3 text-right">Time / Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300/40 dark:divide-slate-800/70 text-xs">
@@ -1031,15 +1103,21 @@ export default function Dashboard({ theme = 'light-glass', globalSearch = '' }: 
                       }`}
                     >
                       <td className="py-2.5 pr-3 font-semibold flex items-center gap-2.5">
-                        {isReady ? (
-                          <span className="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <CheckCircle2 size={13} />
-                          </span>
-                        ) : (
-                          <span className="w-5 h-5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                            <AlertTriangle size={13} />
-                          </span>
-                        )}
+                        <div className="relative w-9 h-6 rounded-md iridescent-card-crime overflow-hidden shrink-0 flex items-center justify-center">
+                          <img
+                            src={`/output/thumb_${job.id}_v1_16x9.jpg`}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          {isReady ? (
+                            <CheckCircle2 size={11} className="text-emerald-300" />
+                          ) : (
+                            <AlertTriangle size={11} className="text-amber-300" />
+                          )}
+                        </div>
                         <span className="truncate max-w-[230px]">{job.niche}</span>
                       </td>
                       <td className="py-2.5 px-3">
